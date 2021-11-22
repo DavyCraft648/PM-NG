@@ -201,13 +201,13 @@
             "version": "dev-master",
             "source": {
                 "type": "git",
-                "url": "https://github.com/NetherGamesMC/BedrockData.git",
-                "reference": "dcc57d21246109bacdc11e0d5edf912788ae8b8b"
+                "url": "https://github.com/DavyCraft648/BedrockData.git",
+                "reference": "e19734628c209bf261d26cdcf711a0964edfdef8"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/NetherGamesMC/BedrockData/zipball/dcc57d21246109bacdc11e0d5edf912788ae8b8b",
-                "reference": "dcc57d21246109bacdc11e0d5edf912788ae8b8b",
+                "url": "https://api.github.com/repos/DavyCraft648/BedrockData/zipball/e19734628c209bf261d26cdcf711a0964edfdef8",
+                "reference": "e19734628c209bf261d26cdcf711a0964edfdef8",
                 "shasum": ""
             },
             "default-branch": true,
@@ -217,9 +217,9 @@
             ],
             "description": "Blobs of data generated from Minecraft: Bedrock Edition, used by PocketMine-MP",
             "support": {
-                "source": "https://github.com/NetherGamesMC/BedrockData/tree/master"
+                "source": "https://github.com/DavyCraft648/BedrockData/tree/master"
             },
-            "time": "2021-11-02T17:10:05+00:00"
+            "time": "2021-11-02T21:44:25+00:00"
         },
         {
             "name": "nethergamesmc/bedrock-protocol",
@@ -3545,5 +3545,5 @@
     "platform-overrides": {
         "php": "8.0.0"
     },
-    "plugin-api-version": "2.1.0"
+    "plugin-api-version": "2.0.0"
 }
