@@ -193,6 +193,7 @@ class Server{
 	private bool $isRunning = true;
 
 	private bool $hasStopped = false;
+	private bool $hasForceShutdown = false;
 
 	private PluginManager $pluginManager;
 
@@ -274,6 +275,10 @@ class Server{
 
 	public function isRunning() : bool{
 		return $this->isRunning;
+	}
+
+	public function hasForceShutdown() : bool{
+		return $this->hasForceShutdown;
 	}
 
 	public function getPocketMineVersion() : string{
@@ -537,9 +542,13 @@ class Server{
 		if(!$ev->isCancelled()){
 			Timings::$syncPlayerDataSave->time(function() use ($name, $ev) : void{
 				$nbt = new BigEndianNbtSerializer();
+				$contents = zlib_encode($nbt->write(new TreeRoot($ev->getSaveData())), ZLIB_ENCODING_GZIP);
+				if($contents === false){
+					throw new AssumptionFailedError("zlib_encode() failed unexpectedly");
+				}
 				try{
-					file_put_contents($this->getPlayerDataPath($name), zlib_encode($nbt->write(new TreeRoot($ev->getSaveData())), ZLIB_ENCODING_GZIP));
-				}catch(\ErrorException $e){
+					Filesystem::safeFilePutContents($this->getPlayerDataPath($name), $contents);
+				}catch(\RuntimeException | \ErrorException $e){
 					$this->logger->critical($this->getLanguage()->translate(KnownTranslationFactory::pocketmine_data_saveError($name, $e->getMessage())));
 					$this->logger->logException($e);
 				}
@@ -1143,7 +1152,9 @@ class Server{
 			)));
 			return false;
 		}
-		$this->logger->info($this->getLanguage()->translate(KnownTranslationFactory::pocketmine_server_networkStart($prettyIp, (string) $port)));
+		if($rakLibRegistered){
+			$this->logger->info($this->getLanguage()->translate(KnownTranslationFactory::pocketmine_server_networkStart($prettyIp, (string) $port)));
+		}
 		if($useQuery){
 			if(!$rakLibRegistered){
 				//RakLib would normally handle the transport for Query packets
@@ -1415,6 +1426,7 @@ class Server{
 
 		if($this->isRunning){
 			$this->logger->emergency("Forcing server shutdown");
+			$this->hasForceShutdown = true;
 		}
 		try{
 			if(!$this->isRunning()){
