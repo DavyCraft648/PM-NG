@@ -1292,9 +1292,11 @@ class World implements ChunkManager{
 			for($z = $minZ; $z <= $maxZ; ++$z){
 				for($x = $minX; $x <= $maxX; ++$x){
 					for($y = $minY; $y <= $maxY; ++$y){
-						$block = $this->getBlockAt($x, $y, $z);
-						if($block->collidesWithBB($bb)){
-							return [$block];
+						foreach([0, 1] as $layer){
+							$block = $this->getBlockAtLayer($x, $y, $z, $layer);
+							if($block->collidesWithBB($bb)){
+								return [$block];
+							}
 						}
 					}
 				}
@@ -1303,9 +1305,11 @@ class World implements ChunkManager{
 			for($z = $minZ; $z <= $maxZ; ++$z){
 				for($x = $minX; $x <= $maxX; ++$x){
 					for($y = $minY; $y <= $maxY; ++$y){
-						$block = $this->getBlockAt($x, $y, $z);
-						if($block->collidesWithBB($bb)){
-							$collides[] = $block;
+						foreach([0, 1] as $layer){
+							$block = $this->getBlockAtLayer($x, $y, $z, $layer);
+							if($block->collidesWithBB($bb)){
+								$collides[] = $block;
+							}
 						}
 					}
 				}
@@ -1331,10 +1335,12 @@ class World implements ChunkManager{
 		for($z = $minZ; $z <= $maxZ; ++$z){
 			for($x = $minX; $x <= $maxX; ++$x){
 				for($y = $minY; $y <= $maxY; ++$y){
-					$block = $this->getBlockAt($x, $y, $z);
-					foreach($block->getCollisionBoxes() as $blockBB){
-						if($blockBB->intersectsWith($bb)){
-							$collides[] = $blockBB;
+					foreach([0, 1] as $layer){
+						$block = $this->getBlockAtLayer($x, $y, $z, $layer);
+						foreach($block->getCollisionBoxes() as $blockBB){
+							if($blockBB->intersectsWith($bb)){
+								$collides[] = $blockBB;
+							}
 						}
 					}
 				}
@@ -1773,7 +1779,7 @@ class World implements ChunkManager{
 	 *
 	 * @param Item    $item reference parameter (if null, can break anything)
 	 */
-	public function useBreakOn(Vector3 $vector, Item &$item = null, ?Player $player = null, bool $createParticles = false) : bool{
+	public function useBreakOn(Vector3 $vector, Item &$item = null, ?Player $player = null, bool $createParticles = false, int $layer = 0) : bool{
 		$vector = $vector->floor();
 
 		$chunkX = $vector->getFloorX() >> Chunk::COORD_BIT_SIZE;
@@ -1782,7 +1788,7 @@ class World implements ChunkManager{
 			return false;
 		}
 
-		$target = $this->getBlock($vector);
+		$target = $this->getBlockLayer($vector, $layer);
 		$affectedBlocks = $target->getAffectedBlocks();
 
 		if($item === null){
