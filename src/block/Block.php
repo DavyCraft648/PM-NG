@@ -60,6 +60,8 @@ class Block{
 	/** @var AxisAlignedBB[]|null */
 	protected ?array $collisionBoxes = null;
 
+	protected int $layer = 0;
+
 	/**
 	 * @param string          $name English name of the block type (TODO: implement translations)
 	 */
@@ -143,7 +145,7 @@ class Block{
 	}
 
 	public function writeStateToWorld() : void{
-		$this->position->getWorld()->getOrLoadChunkAtPosition($this->position)->setFullBlock($this->position->x & Chunk::COORD_MASK, $this->position->y, $this->position->z & Chunk::COORD_MASK, $this->getFullId());
+		$this->position->getWorld()->getOrLoadChunkAtPosition($this->position)->setFullBlock($this->position->x & Chunk::COORD_MASK, $this->position->y, $this->position->z & Chunk::COORD_MASK, $this->getFullId(), $this->layer);
 
 		$tileType = $this->idInfo->getTileClass();
 		$oldTile = $this->position->getWorld()->getTile($this->position);
@@ -223,7 +225,7 @@ class Block{
 		if(($t = $this->position->getWorld()->getTile($this->position)) !== null){
 			$t->onBlockDestroyed();
 		}
-		$this->position->getWorld()->setBlock($this->position, VanillaBlocks::AIR());
+		$this->position->getWorld()->setBlockLayer($this->position, VanillaBlocks::AIR(), $this->layer);
 		return true;
 	}
 
@@ -633,5 +635,13 @@ class Block{
 		}
 
 		return $currentHit;
+	}
+
+	public function getLayer() : int{
+		return $this->layer;
+	}
+
+	public function setLayer(int $layer) : void{
+		$this->layer = $layer;
 	}
 }

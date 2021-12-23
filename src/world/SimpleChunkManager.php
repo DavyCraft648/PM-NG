@@ -45,15 +45,23 @@ class SimpleChunkManager implements ChunkManager{
 	}
 
 	public function getBlockAt(int $x, int $y, int $z) : Block{
+		return $this->getBlockAtLayer($x, $y, $z);
+	}
+
+	public function getBlockAtLayer(int $x, int $y, int $z, int $layer = 0) : Block{
 		if($this->isInWorld($x, $y, $z) && ($chunk = $this->getChunk($x >> Chunk::COORD_BIT_SIZE, $z >> Chunk::COORD_BIT_SIZE)) !== null){
-			return BlockFactory::getInstance()->fromFullBlock($chunk->getFullBlock($x & Chunk::COORD_MASK, $y, $z & Chunk::COORD_MASK));
+			return BlockFactory::getInstance()->fromFullBlock($chunk->getFullBlock($x & Chunk::COORD_MASK, $y, $z & Chunk::COORD_MASK, $layer));
 		}
 		return VanillaBlocks::AIR();
 	}
 
 	public function setBlockAt(int $x, int $y, int $z, Block $block) : void{
+		$this->setBlockAtLayer($x, $y, $z, $block);
+	}
+
+	public function setBlockAtLayer(int $x, int $y, int $z, Block $block, int $layer = 0) : void{
 		if(($chunk = $this->getChunk($x >> Chunk::COORD_BIT_SIZE, $z >> Chunk::COORD_BIT_SIZE)) !== null){
-			$chunk->setFullBlock($x & Chunk::COORD_MASK, $y, $z & Chunk::COORD_MASK, $block->getFullId());
+			$chunk->setFullBlock($x & Chunk::COORD_MASK, $y, $z & Chunk::COORD_MASK, $block->getFullId(), $layer);
 		}else{
 			throw new \InvalidArgumentException("Cannot set block at coordinates x=$x,y=$y,z=$z, terrain is not loaded or out of bounds");
 		}
