@@ -203,6 +203,19 @@ class Block{
 	 * Places the Block, using block space and block target, and side. Returns if the block has been placed.
 	 */
 	public function place(BlockTransaction $tx, Item $item, Block $blockReplace, Block $blockClicked, int $face, Vector3 $clickVector, ?Player $player = null) : bool{
+		if($this->getLayer() === 0){
+			if($this->getWaterloggingLevel() >= 1){
+				$water = clone $this->getBlockLayer(0);
+				$water->setLayer(1);
+				if($water instanceof Water && $this->canWaterlogged($water)){
+					$tx->addBlock($blockReplace->position, $water);
+				}
+			}else{
+				$air = VanillaBlocks::AIR();
+				$air->setLayer(1);
+				$tx->addBlock($blockReplace->position, $air);
+			}
+		}
 		$tx->addBlock($blockReplace->position, $this);
 		return true;
 	}
@@ -485,14 +498,25 @@ class Block{
 
 	}
 
+	public function getBlockLayer(int $layer) : Block{
+		return $this->position->getWorld()->getBlockLayer($this->position, $layer);
+	}
+
 	/**
 	 * Returns the Block on the side $side, works like Vector3::getSide()
 	 *
 	 * @return Block
 	 */
 	public function getSide(int $side, int $step = 1){
+		return $this->getSideLayer($side, 0, $step);
+	}
+
+	/**
+	 * @return Block
+	 */
+	public function getSideLayer(int $side, int $layer = 0, int $step = 1){
 		if($this->position->isValid()){
-			return $this->position->getWorld()->getBlock($this->position->getSide($side, $step));
+			return $this->position->getWorld()->getBlockLayer($this->position->getSide($side, $step), $layer);
 		}
 
 		throw new \LogicException("Block does not have a valid world");
@@ -505,9 +529,17 @@ class Block{
 	 * @phpstan-return \Generator<int, Block, void, void>
 	 */
 	public function getHorizontalSides() : \Generator{
+		yield $this->getHorizontalSidesLayer(0);
+	}
+
+	/**
+	 * @return Block[]|\Generator
+	 * @phpstan-return \Generator<int, Block, void, void>
+	 */
+	public function getHorizontalSidesLayer(int $layer = 0) : \Generator{
 		$world = $this->position->getWorld();
 		foreach($this->position->sidesAroundAxis(Axis::Y) as $vector3){
-			yield $world->getBlock($vector3);
+			yield $world->getBlockLayer($vector3, $layer);
 		}
 	}
 
@@ -518,9 +550,13 @@ class Block{
 	 * @phpstan-return \Generator<int, Block, void, void>
 	 */
 	public function getAllSides() : \Generator{
+		yield $this->getAllSidesLayer(0);
+	}
+
+	public function getAllSidesLayer(int $layer = 0) : \Generator{
 		$world = $this->position->getWorld();
 		foreach($this->position->sides() as $vector3){
-			yield $world->getBlock($vector3);
+			yield $world->getBlockLayer($vector3, $layer);
 		}
 	}
 
@@ -643,5 +679,26 @@ class Block{
 
 	public function setLayer(int $layer) : void{
 		$this->layer = $layer;
+	}
+
+	public function getSupportedLayers() : array{
+		return [0];
+	}
+
+	public function getWaterloggingLevel() : int{
+		return 0;
+	}
+
+	public function mayWaterloggingFlowInto() : bool{
+		return $this->getWaterloggingLevel() > 1;
+	}
+
+	public function canWaterlogged(Liquid $water) : bool{
+		return ($water->getDecay() === 0 && $this->getWaterloggingLevel() >= 1) ||
+			($water->getDecay() > 0 && $this->getWaterloggingLevel() >= 2);
+	}
+
+	public function isWaterlogged(): bool {
+		return $this->getBlockLayer(1) instanceof Water;
 	}
 }

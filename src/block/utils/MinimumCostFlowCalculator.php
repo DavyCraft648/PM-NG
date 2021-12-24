@@ -24,6 +24,7 @@ declare(strict_types=1);
 namespace pocketmine\block\utils;
 
 use pocketmine\block\Block;
+use pocketmine\block\Liquid;
 use pocketmine\math\Facing;
 use pocketmine\world\World;
 use function array_fill_keys;
@@ -71,9 +72,17 @@ final class MinimumCostFlowCalculator{
 			};
 
 			if(!isset($this->flowCostVisited[$hash = World::blockHash($x, $y, $z)])){
-				if(!$this->world->isInWorld($x, $y, $z) || !$this->canFlowInto($this->world->getBlockAt($x, $y, $z))){
+				$block = $this->world->getBlockAtLayer($x, $y, $z);
+				if(!($block instanceof Liquid)){
+					$block = $block->getBlockLayer(0);
+				}
+				$down = $this->world->getBlockAtLayer($x, $y - 1, $z, 1);
+				if(!($down instanceof Liquid)){
+					$down = $down->getBlockLayer(0);
+				}
+				if(!$this->world->isInWorld($x, $y, $z) || !$this->canFlowInto($block)){
 					$this->flowCostVisited[$hash] = self::BLOCKED;
-				}elseif($this->world->getBlockAt($x, $y - 1, $z)->canBeFlowedInto()){
+				}elseif($down->canBeFlowedInto()){
 					$this->flowCostVisited[$hash] = self::CAN_FLOW_DOWN;
 				}else{
 					$this->flowCostVisited[$hash] = self::CAN_FLOW;
@@ -120,9 +129,17 @@ final class MinimumCostFlowCalculator{
 				Facing::SOUTH => ++$z
 			};
 
-			if(!$this->world->isInWorld($x, $y, $z) || !$this->canFlowInto($this->world->getBlockAt($x, $y, $z))){
+			$block = $this->world->getBlockAtLayer($x, $y, $z);
+			if(!($block instanceof Liquid)){
+				$block = $block->getBlockLayer(0);
+			}
+			$down = $this->world->getBlockAtLayer($x, $y - 1, $z, 1);
+			if(!($down instanceof Liquid)){
+				$down = $down->getBlockLayer(0);
+			}
+			if(!$this->world->isInWorld($x, $y, $z) || !$this->canFlowInto($block)){
 				$this->flowCostVisited[World::blockHash($x, $y, $z)] = self::BLOCKED;
-			}elseif($this->world->getBlockAt($x, $y - 1, $z)->canBeFlowedInto()){
+			}elseif($down->canBeFlowedInto()){
 				$this->flowCostVisited[World::blockHash($x, $y, $z)] = self::CAN_FLOW_DOWN;
 				$flowCost[$j] = $maxCost = 0;
 			}elseif($maxCost > 0){

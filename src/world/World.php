@@ -1698,12 +1698,6 @@ class World implements ChunkManager{
 		$block->setLayer($layer);
 		$block->writeStateToWorld();
 		$pos = new Vector3($x, $y, $z);
-		if($layer === 0 and $block->isSolid()){
-			$air = VanillaBlocks::AIR();
-			$air->position($this, $x, $y, $z);
-			$air->setLayer(1);
-			$this->getOrLoadChunkAtPosition($pos)->setFullBlock($x & Chunk::COORD_MASK, $y, $z & Chunk::COORD_MASK, $air->getFullId(), 1);
-		}
 
 		$chunkHash = World::chunkHash($chunkX, $chunkZ);
 		$relativeBlockHash = World::chunkBlockHash($x, $y, $z);
