@@ -54,12 +54,6 @@ abstract class BaseCoral extends Transparent{
 
 	public function onNearbyBlockChange() : void{
 		if(!$this->dead){
-			$this->position->getWorld()->scheduleDelayedBlockUpdate($this->position, 1);
-		}
-	}
-
-	public function onScheduledUpdate() : void{
-		if(!$this->dead){
 			$world = $this->position->getWorld();
 
 			if(!$this->isWaterlogged()){

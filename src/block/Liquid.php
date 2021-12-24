@@ -156,7 +156,7 @@ abstract class Liquid extends Transparent{
 
 	protected function getEffectiveFlowDecay(Block $block) : int{
 		if(!($block instanceof Liquid) or !$block->isSameType($this)){
-			$block = $this->getBlockLayer(1);
+			$block = $block->getBlockLayer(1);
 			if(!($block instanceof Liquid) or !$block->isSameType($this)){
 				return -1;
 			}
@@ -194,9 +194,6 @@ abstract class Liquid extends Transparent{
 			};
 
 			$sideBlock = $world->getBlockAt($x, $y, $z);
-			if($sideBlock->canWaterlogged($this) and in_array(1, $this->getSupportedLayers())){
-				$sideBlock = $sideBlock->getBlockLayer(1);
-			}
 			$blockDecay = $this->getEffectiveFlowDecay($sideBlock);
 
 			if($blockDecay < 0){
@@ -204,11 +201,7 @@ abstract class Liquid extends Transparent{
 					continue;
 				}
 
-				$sideBlock = $world->getBlockAt($x, $y - 1, $z);
-				if($sideBlock->canWaterlogged($this) and in_array(1, $this->getSupportedLayers())){
-					$sideBlock = $sideBlock->getBlockLayer(1);
-				}
-				$blockDecay = $this->getEffectiveFlowDecay($sideBlock);
+				$blockDecay = $this->getEffectiveFlowDecay($world->getBlockAt($x, $y - 1, $z));
 
 				if($blockDecay >= 0){
 					$realDecay = $blockDecay - ($decay - 8);
@@ -291,9 +284,10 @@ abstract class Liquid extends Transparent{
 		if(!$this->isSource()){
 			$smallestFlowDecay = -100;
 			$this->adjacentSources = 0;
-			foreach($this->getHorizontalSidesLayer(1) as $side){
-				$smallestFlowDecay = $this->getSmallestFlowDecay($side instanceof Liquid ? $side : $side->getBlockLayer(0), $smallestFlowDecay);
-			}
+			$smallestFlowDecay = $this->getSmallestFlowDecay($world->getBlockAt($this->position->x, $this->position->y, $this->position->z - 1), $smallestFlowDecay);
+			$smallestFlowDecay = $this->getSmallestFlowDecay($world->getBlockAt($this->position->x, $this->position->y, $this->position->z + 1), $smallestFlowDecay);
+			$smallestFlowDecay = $this->getSmallestFlowDecay($world->getBlockAt($this->position->x - 1, $this->position->y, $this->position->z), $smallestFlowDecay);
+			$smallestFlowDecay = $this->getSmallestFlowDecay($world->getBlockAt($this->position->x + 1, $this->position->y, $this->position->z), $smallestFlowDecay);
 
 			$newDecay = $smallestFlowDecay + $multiplier;
 			$falling = false;
@@ -302,20 +296,13 @@ abstract class Liquid extends Transparent{
 				$newDecay = -1;
 			}
 
-			$up = $world->getBlockAt($this->position->x, $this->position->y + 1, $this->position->z);
-			if($up->canWaterlogged($this) and in_array(1, $this->getSupportedLayers())){
-				$up = $up->getBlockLayer(1);
-			}
-			if($this->getEffectiveFlowDecay($up) >= 0){
+			if($this->getEffectiveFlowDecay($world->getBlockAt($this->position->x, $this->position->y + 1, $this->position->z)) >= 0){
 				$falling = true;
 			}
 
 			$minAdjacentSources = $this->getMinAdjacentSourcesToFormSource();
 			if($minAdjacentSources !== null && $this->adjacentSources >= $minAdjacentSources){
 				$bottomBlock = $world->getBlockAt($this->position->x, $this->position->y - 1, $this->position->z);
-				if($bottomBlock->canWaterlogged($this) and in_array(1, $this->getSupportedLayers())){
-					$bottomBlock = $bottomBlock->getBlockLayer(1);
-				}
 				if($bottomBlock->isSolid() or ($bottomBlock instanceof Liquid and $bottomBlock->isSameType($this) and $bottomBlock->isSource())){
 					$newDecay = 0;
 					$falling = false;
@@ -336,12 +323,9 @@ abstract class Liquid extends Transparent{
 
 		$bottomBlock = $world->getBlockAt($this->position->x, $this->position->y - 1, $this->position->z);
 
-		if($bottomBlock->canWaterlogged($this) and in_array(1, $this->getSupportedLayers())) {
-			$bottomBlock = $bottomBlock->getBlockLayer(1);
-		}
 		$this->flowIntoBlock($bottomBlock, 0, true);
 
-		if($this->isSource() or !($bottomBlock->canBeFlowedInto()/* or ($this instanceof Water and $bottomBlock->layer === 0 and $bottomBlock->canWaterlogged($this))*/)){
+		if($this->isSource() or !$bottomBlock->canBeFlowedInto()){
 			if($this->falling){
 				$adjacentDecay = 1; //falling liquid behaves like source block
 			}else{
@@ -381,8 +365,12 @@ abstract class Liquid extends Transparent{
 
 	/** @phpstan-impure */
 	private function getSmallestFlowDecay(Block $block, int $decay) : int{
+		$block = $block->getBlockLayer(0);
 		if(!($block instanceof Liquid) or !$block->isSameType($this)){
-			return $decay;
+			$block = $block->getBlockLayer(1);
+			if(!($block instanceof Liquid) or !$block->isSameType($this)){
+				return $decay;
+			}
 		}
 
 		$blockDecay = $block->decay;
@@ -411,9 +399,14 @@ abstract class Liquid extends Transparent{
 	}
 
 	protected function canFlowInto(Block $block) : bool{
+		$waterlogging = false;
+		if(in_array(1, $this->getSupportedLayers()) && $block->mayWaterloggingFlowInto()){
+			$layer2 = $block->getBlockLayer(1);
+			$waterlogging = !($layer2 instanceof Liquid and $layer2->isSource());
+		}
 		return
 			$this->position->getWorld()->isInWorld($block->position->x, $block->position->y, $block->position->z) and
-			($block->canBeFlowedInto() or ($this instanceof Water and $block->layer === 0 and $block->canWaterlogged($this))) and
+			($block->canBeFlowedInto() or $waterlogging) and
 			!($block instanceof Liquid and $block->isSource()); //TODO: I think this should only be liquids of the same type
 	}
 }

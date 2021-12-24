@@ -529,7 +529,10 @@ class Block{
 	 * @phpstan-return \Generator<int, Block, void, void>
 	 */
 	public function getHorizontalSides() : \Generator{
-		yield $this->getHorizontalSidesLayer(0);
+		$world = $this->position->getWorld();
+		foreach($this->position->sidesAroundAxis(Axis::Y) as $vector3){
+			yield $world->getBlock($vector3);
+		}
 	}
 
 	/**
