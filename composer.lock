@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "bd7689c21e1b43ecd47f5b80c3fa3bf5",
+    "content-hash": "2c013ee9c4b393a006d6dc7da28591d9",
     "packages": [
         {
             "name": "adhocore/json-comment",
@@ -201,13 +201,13 @@
             "version": "dev-master",
             "source": {
                 "type": "git",
-                "url": "https://github.com/NetherGamesMC/BedrockData.git",
-                "reference": "8f7ca7eb75c3abf19575a750b20558e5eba2362c"
+                "url": "https://github.com/DavyCraft648/BedrockData.git",
+                "reference": "f3abc6810abb1df5ce39c4e6f859d21bae3738ad"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/NetherGamesMC/BedrockData/zipball/8f7ca7eb75c3abf19575a750b20558e5eba2362c",
-                "reference": "8f7ca7eb75c3abf19575a750b20558e5eba2362c",
+                "url": "https://api.github.com/repos/DavyCraft648/BedrockData/zipball/f3abc6810abb1df5ce39c4e6f859d21bae3738ad",
+                "reference": "f3abc6810abb1df5ce39c4e6f859d21bae3738ad",
                 "shasum": ""
             },
             "default-branch": true,
@@ -217,9 +217,9 @@
             ],
             "description": "Blobs of data generated from Minecraft: Bedrock Edition, used by PocketMine-MP",
             "support": {
-                "source": "https://github.com/NetherGamesMC/BedrockData/tree/master"
+                "source": "https://github.com/DavyCraft648/BedrockData/tree/master"
             },
-            "time": "2021-11-30T20:14:30+00:00"
+            "time": "2021-11-30T20:21:04+00:00"
         },
         {
             "name": "nethergamesmc/bedrock-protocol",
@@ -538,16 +538,16 @@
         },
         {
             "name": "pocketmine/locale-data",
-            "version": "2.2.0",
+            "version": "2.2.1",
             "source": {
                 "type": "git",
                 "url": "https://github.com/pmmp/Language.git",
-                "reference": "dc88ad618a482e55b7c9fec162257efa62a67d6f"
+                "reference": "9fdd36f0ac3a2dfe1acacbee8b23eb6615129701"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/pmmp/Language/zipball/dc88ad618a482e55b7c9fec162257efa62a67d6f",
-                "reference": "dc88ad618a482e55b7c9fec162257efa62a67d6f",
+                "url": "https://api.github.com/repos/pmmp/Language/zipball/9fdd36f0ac3a2dfe1acacbee8b23eb6615129701",
+                "reference": "9fdd36f0ac3a2dfe1acacbee8b23eb6615129701",
                 "shasum": ""
             },
             "type": "library",
@@ -555,9 +555,9 @@
             "description": "Language resources used by PocketMine-MP",
             "support": {
                 "issues": "https://github.com/pmmp/Language/issues",
-                "source": "https://github.com/pmmp/Language/tree/2.2.0"
+                "source": "https://github.com/pmmp/Language/tree/2.2.1"
             },
-            "time": "2021-12-15T02:01:24+00:00"
+            "time": "2021-12-17T23:42:12+00:00"
         },
         {
             "name": "pocketmine/log",
@@ -2391,16 +2391,16 @@
         },
         {
             "name": "phpunit/phpunit",
-            "version": "9.5.10",
+            "version": "9.5.11",
             "source": {
                 "type": "git",
                 "url": "https://github.com/sebastianbergmann/phpunit.git",
-                "reference": "c814a05837f2edb0d1471d6e3f4ab3501ca3899a"
+                "reference": "2406855036db1102126125537adb1406f7242fdd"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/sebastianbergmann/phpunit/zipball/c814a05837f2edb0d1471d6e3f4ab3501ca3899a",
-                "reference": "c814a05837f2edb0d1471d6e3f4ab3501ca3899a",
+                "url": "https://api.github.com/repos/sebastianbergmann/phpunit/zipball/2406855036db1102126125537adb1406f7242fdd",
+                "reference": "2406855036db1102126125537adb1406f7242fdd",
                 "shasum": ""
             },
             "require": {
@@ -2478,11 +2478,11 @@
             ],
             "support": {
                 "issues": "https://github.com/sebastianbergmann/phpunit/issues",
-                "source": "https://github.com/sebastianbergmann/phpunit/tree/9.5.10"
+                "source": "https://github.com/sebastianbergmann/phpunit/tree/9.5.11"
             },
             "funding": [
                 {
-                    "url": "https://phpunit.de/donate.html",
+                    "url": "https://phpunit.de/sponsors.html",
                     "type": "custom"
                 },
                 {
@@ -2490,7 +2490,7 @@
                     "type": "github"
                 }
             ],
-            "time": "2021-09-25T07:38:51+00:00"
+            "time": "2021-12-25T07:07:57+00:00"
         },
         {
             "name": "sebastian/cli-parser",
@@ -3547,5 +3547,5 @@
     "platform-overrides": {
         "php": "8.0.0"
     },
-    "plugin-api-version": "2.1.0"
+    "plugin-api-version": "2.0.0"
 }
