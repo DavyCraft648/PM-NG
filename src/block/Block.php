@@ -553,7 +553,10 @@ class Block{
 	 * @phpstan-return \Generator<int, Block, void, void>
 	 */
 	public function getAllSides() : \Generator{
-		yield $this->getAllSidesLayer(0);
+		$world = $this->position->getWorld();
+		foreach($this->position->sides() as $vector3){
+			yield $world->getBlock($vector3);
+		}
 	}
 
 	public function getAllSidesLayer(int $layer = 0) : \Generator{
