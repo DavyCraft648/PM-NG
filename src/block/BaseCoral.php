@@ -75,6 +75,6 @@ abstract class BaseCoral extends Transparent{
 	protected function recalculateCollisionBoxes() : array{ return []; }
 
 	public function getWaterloggingLevel() : int{
-		return 2;
+		return 1;
 	}
 }

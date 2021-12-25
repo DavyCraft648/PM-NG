@@ -79,4 +79,8 @@ class Tripwire extends Flowable{
 		$this->disarmed = $disarmed;
 		return $this;
 	}
+
+	public function getWaterloggingLevel() : int{
+		return 2;
+	}
 }

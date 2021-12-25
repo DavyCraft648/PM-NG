@@ -216,4 +216,8 @@ class Bed extends Transparent{
 
 		return parent::getAffectedBlocks();
 	}
+
+	public function getWaterloggingLevel() : int{
+		return 1;
+	}
 }

@@ -108,5 +108,9 @@ class RedstoneRepeater extends Flowable{
 		}
 	}
 
+	public function getWaterloggingLevel() : int{
+		return 2;
+	}
+
 	//TODO: redstone functionality
 }

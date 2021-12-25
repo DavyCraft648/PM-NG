@@ -28,4 +28,8 @@ class UnderwaterTorch extends Torch{
 	public function canBeFlowedInto() : bool{
 		return false;
 	}
+
+	public function getWaterloggingLevel() : int{
+		return 1;
+	}
 }

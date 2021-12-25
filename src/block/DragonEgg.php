@@ -82,4 +82,8 @@ class DragonEgg extends Transparent implements Fallable{
 			}
 		}
 	}
+
+	public function getWaterloggingLevel() : int{
+		return 1;
+	}
 }

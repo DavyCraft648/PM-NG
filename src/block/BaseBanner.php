@@ -144,4 +144,8 @@ abstract class BaseBanner extends Transparent{
 		}
 		return $result;
 	}
+
+	public function getWaterloggingLevel() : int{
+		return 1;
+	}
 }

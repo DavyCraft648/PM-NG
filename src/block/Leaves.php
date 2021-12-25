@@ -163,4 +163,8 @@ class Leaves extends Transparent{
 	public function getFlammability() : int{
 		return 60;
 	}
+
+	public function getWaterloggingLevel() : int{
+		return 1;
+	}
 }

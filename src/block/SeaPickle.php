@@ -44,7 +44,7 @@ class SeaPickle extends Transparent{
 	}
 
 	public function getStateBitmask() : int{
-		return 0b111;
+		return 0b1111;
 	}
 
 	public function getCount() : int{ return $this->count; }
@@ -87,7 +87,7 @@ class SeaPickle extends Transparent{
 	}
 
 	public function place(BlockTransaction $tx, Item $item, Block $blockReplace, Block $blockClicked, int $face, Vector3 $clickVector, ?Player $player = null) : bool{
-		$this->underwater = false; //TODO: implement this once we have new water logic in place
+		$this->underwater = $blockReplace->isWaterlogged() or ($blockReplace instanceof Water and $blockReplace->isStill());
 		if($blockReplace instanceof SeaPickle and $blockReplace->count < 4){
 			$this->count = $blockReplace->count + 1;
 		}
@@ -102,5 +102,9 @@ class SeaPickle extends Transparent{
 
 	public function getDropsForCompatibleTool(Item $item) : array{
 		return [$this->asItem()->setCount($this->count)];
+	}
+
+	public function getWaterloggingLevel() : int{
+		return 1;
 	}
 }

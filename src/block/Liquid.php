@@ -356,7 +356,7 @@ abstract class Liquid extends Transparent{
 			$ev->call();
 			if(!$ev->isCancelled()){
 				foreach([$block, $block->getBlockLayer($block->getLayer() === 1 ? 0 : 1)] as $b){
-					if($b->canBeFlowedInto() and $b->getId() > 0){
+					if(!$b->canWaterlogged($this) and $b->getId() > 0){
 						$this->position->getWorld()->useBreakOn($block->position, $i, null, false, $b->getLayer());
 					}
 				}
@@ -403,7 +403,7 @@ abstract class Liquid extends Transparent{
 
 	protected function canFlowInto(Block $block) : bool{
 		$waterlogging = false;
-		if(in_array(1, $this->getSupportedLayers()) && $block->mayWaterloggingFlowInto()){
+		if(in_array(1, $this->getSupportedLayers()) && $block->canWaterlogged($this)){
 			$layer2 = $block->getBlockLayer(1);
 			$waterlogging = !($layer2 instanceof Liquid and $layer2->isSource());
 		}

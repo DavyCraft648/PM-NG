@@ -93,4 +93,8 @@ class Fence extends Transparent{
 
 		return $bbs;
 	}
+
+	public function getWaterloggingLevel() : int{
+		return 1;
+	}
 }

@@ -94,4 +94,8 @@ class Anvil extends Transparent implements Fallable{
 	public function tickFalling() : ?Block{
 		return null;
 	}
+
+	public function getWaterloggingLevel() : int{
+		return 1;
+	}
 }

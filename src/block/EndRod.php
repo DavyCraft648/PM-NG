@@ -89,4 +89,8 @@ class EndRod extends Flowable{
 		}
 		return [$bb];
 	}
+
+	public function getWaterloggingLevel() : int{
+		return 2;
+	}
 }

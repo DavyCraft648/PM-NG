@@ -66,4 +66,8 @@ class EnderChest extends Transparent{
 			VanillaBlocks::OBSIDIAN()->asItem()->setCount(8)
 		];
 	}
+
+	public function getWaterloggingLevel() : int{
+		return 1;
+	}
 }

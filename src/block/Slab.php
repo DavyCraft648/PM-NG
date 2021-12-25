@@ -128,4 +128,8 @@ class Slab extends Transparent{
 	public function getDropsForCompatibleTool(Item $item) : array{
 		return [$this->asItem()->setCount($this->slabType->equals(SlabType::DOUBLE()) ? 2 : 1)];
 	}
+
+	public function getWaterloggingLevel() : int{
+		return 1;
+	}
 }

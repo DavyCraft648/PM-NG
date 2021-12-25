@@ -149,4 +149,8 @@ class Skull extends Flowable{
 	protected function writeStateToItemMeta() : int{
 		return $this->skullType->getMagicNumber();
 	}
+
+	public function getWaterloggingLevel() : int{
+		return 1;
+	}
 }

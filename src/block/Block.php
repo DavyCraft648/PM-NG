@@ -676,22 +676,36 @@ class Block{
 		return $currentHit;
 	}
 
+	/**
+	 * Returns layer index where this block was get/set
+	 */
 	public function getLayer() : int{
 		return $this->layer;
 	}
 
-	public function setLayer(int $layer) : void{
+	public function setLayer(int $layer) : static{
 		$this->layer = $layer;
+		return $this;
 	}
 
+	/**
+	 * Returns layers that this block can be set into it.
+	 * @return int[]
+	 */
 	public function getSupportedLayers() : array{
 		return [0];
 	}
 
+	/**
+	 * Returns the waterlogging behavior of this block.
+	 */
 	public function getWaterloggingLevel() : int{
 		return 0;
 	}
 
+	/**
+	 * Returns whether water can flow into this block.
+	 */
 	public function mayWaterloggingFlowInto() : bool{
 		return $this->getWaterloggingLevel() > 1;
 	}
@@ -701,7 +715,10 @@ class Block{
 			($water->getDecay() > 0 && $this->getWaterloggingLevel() >= 2);
 	}
 
-	public function isWaterlogged(): bool {
+	/**
+	 * Returns whether the second layer of this block is water.
+	 */
+	public function isWaterlogged() : bool{
 		return $this->getBlockLayer(1) instanceof Water;
 	}
 }
