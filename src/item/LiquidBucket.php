@@ -60,10 +60,9 @@ class LiquidBucket extends Item{
 		//TODO: move this to generic placement logic
 		$resultBlock = clone $this->liquid;
 
-		$layer2C = $blockClicked->getBlockLayer(1);
-		$layer2R = $blockReplace->getBlockLayer(1);
-		$toReplace = $blockReplace->canBeReplaced() ? $blockReplace : ($layer2R->getId() === 0 ? $layer2R : null);
-		$toReplace = $blockClicked->canWaterlogged($resultBlock) ? ($layer2C->getId() === 0 ? $layer2C : null) : $toReplace;
+		$toReplace = $blockReplace->canWaterlogged($resultBlock) ? $blockReplace->getBlockLayer(1) : null;
+		$toReplace = $blockReplace->canBeReplaced() ? $blockReplace : $toReplace;
+		$toReplace = $blockClicked->canWaterlogged($resultBlock) ? $blockClicked->getBlockLayer(1) : $toReplace;
 		if($toReplace === null){
 			return ItemUseResult::NONE();
 		}

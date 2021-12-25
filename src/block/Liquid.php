@@ -325,6 +325,9 @@ abstract class Liquid extends Transparent{
 
 		$this->flowIntoBlock($bottomBlock, 0, true);
 
+		if($bottomBlock->getBlockLayer(1)->getId() !== 0){
+			$bottomBlock = $bottomBlock->getBlockLayer(1);
+		}
 		if($this->isSource() or !$bottomBlock->canBeFlowedInto()){
 			if($this->falling){
 				$adjacentDecay = 1; //falling liquid behaves like source block
@@ -344,7 +347,7 @@ abstract class Liquid extends Transparent{
 	}
 
 	protected function flowIntoBlock(Block $block, int $newFlowDecay, bool $falling) : void{
-		if($this->canFlowInto($block) and !($block instanceof Liquid)){
+		if($this->canFlowInto($block) and !($block->getBlockLayer(0) instanceof Liquid) and !($block->getBlockLayer(1) instanceof Liquid)){
 			$new = clone $this;
 			$new->falling = $falling;
 			$new->decay = $falling ? 0 : $newFlowDecay;
@@ -358,7 +361,7 @@ abstract class Liquid extends Transparent{
 					}
 				}
 
-				$this->position->getWorld()->setBlockLayer($block->position, $ev->getNewState(), ($this instanceof Water and $block->canWaterlogged($this)) ? 1 : 0);
+				$this->position->getWorld()->setBlockLayer($block->position, $ev->getNewState(), (in_array(1, $this->getSupportedLayers()) and $block->canWaterlogged($this)) ? 1 : 0);
 			}
 		}
 	}

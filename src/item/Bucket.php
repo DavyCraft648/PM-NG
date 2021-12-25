@@ -49,7 +49,7 @@ class Bucket extends Item{
 			$ev->call();
 			if(!$ev->isCancelled()){
 				$player->getWorld()->setBlockLayer($liquid->getPosition(), VanillaBlocks::AIR(), $liquid->getLayer());
-				$player->getWorld()->addSound($blockClicked->getPosition()->add(0.5, 0.5, 0.5), $liquid->getBucketFillSound());
+				$player->getWorld()->addSound($liquid->getPosition()->add(0.5, 0.5, 0.5), $liquid->getBucketFillSound());
 				if($player->hasFiniteResources()){
 					if($stack->getCount() === 0){
 						$player->getInventory()->setItemInHand($ev->getItem());

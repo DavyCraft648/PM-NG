@@ -57,7 +57,6 @@ abstract class BaseCoral extends Transparent{
 			$world = $this->position->getWorld();
 
 			if(!$this->isWaterlogged()){
-				$world->setBlockLayer($this->position, VanillaBlocks::AIR(), 1);
 				$world->setBlockLayer($this->position, $this->setDead(true), 0);
 			}
 		}
