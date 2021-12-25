@@ -55,7 +55,7 @@ class Explosion{
 	/** @var float */
 	public $size;
 
-	/** @var Block[][] */
+	/** @var Block[] */
 	public $affectedBlocks = [];
 	/** @var float */
 	public $stepLen = 0.3;
@@ -127,19 +127,20 @@ class Explosion{
 								continue;
 							}
 
-							$state = $this->subChunkExplorer->currentSubChunk->getFullBlock($vBlockX & SubChunk::COORD_MASK, $vBlockY & SubChunk::COORD_MASK, $vBlockZ & SubChunk::COORD_MASK);
+							$blastResistance = -1;
+							foreach([0, 1] as $layer){
+								$state = $this->subChunkExplorer->currentSubChunk->getFullBlock($vBlockX & SubChunk::COORD_MASK, $vBlockY & SubChunk::COORD_MASK, $vBlockZ & SubChunk::COORD_MASK, $layer);
 
-							$blastResistance = $blockFactory->blastResistance[$state];
+								$blastResistance = max($blastResistance, $blockFactory->blastResistance[$state]);
+							}
 							if($blastResistance >= 0){
 								$blastForce -= ($blastResistance / 5 + 0.3) * $this->stepLen;
 								if($blastForce > 0){
 									if(!isset($this->affectedBlocks[World::blockHash($vBlockX, $vBlockY, $vBlockZ)])){
-										foreach([0, 1] as $layer){
-											$_block = $this->world->getBlockAtLayer($vBlockX, $vBlockY, $vBlockZ, $layer, true, false);
-											foreach($_block->getAffectedBlocks() as $_affectedBlock){
-												$_affectedBlockPos = $_affectedBlock->getPosition();
-												$this->affectedBlocks[World::blockHash($_affectedBlockPos->x, $_affectedBlockPos->y, $_affectedBlockPos->z)][$layer] = $_affectedBlock;
-											}
+										$_block = $this->world->getBlockAt($vBlockX, $vBlockY, $vBlockZ, true, false);
+										foreach($_block->getAffectedBlocks() as $_affectedBlock){
+											$_affectedBlockPos = $_affectedBlock->getPosition();
+											$this->affectedBlocks[World::blockHash($_affectedBlockPos->x, $_affectedBlockPos->y, $_affectedBlockPos->z)] = $_affectedBlock;
 										}
 									}
 								}
@@ -213,22 +214,20 @@ class Explosion{
 		$air = VanillaItems::AIR();
 		$airBlock = VanillaBlocks::AIR();
 
-		foreach($this->affectedBlocks as $layer){
-			foreach($layer as $block){
-				$pos = $block->getPosition();
-				if($block instanceof TNT){
-					$block->ignite(mt_rand(10, 30));
-				}else{
-					if(mt_rand(0, 100) < $yield){
-						foreach($block->getDrops($air) as $drop){
-							$this->world->dropItem($pos->add(0.5, 0.5, 0.5), $drop);
-						}
+		foreach($this->affectedBlocks as $block){
+			$pos = $block->getPosition();
+			if($block instanceof TNT){
+				$block->ignite(mt_rand(10, 30));
+			}else{
+				if(mt_rand(0, 100) < $yield){
+					foreach($block->getDrops($air) as $drop){
+						$this->world->dropItem($pos->add(0.5, 0.5, 0.5), $drop);
 					}
-					if(($t = $this->world->getTileAt($pos->x, $pos->y, $pos->z)) !== null){
-						$t->onBlockDestroyed(); //needed to create drops for inventories
-					}
-					$this->world->setBlockAtLayer($pos->x, $pos->y, $pos->z, $airBlock, $block->getLayer());
 				}
+				if(($t = $this->world->getTileAt($pos->x, $pos->y, $pos->z)) !== null){
+					$t->onBlockDestroyed(); //needed to create drops for inventories
+				}
+				$this->world->setBlockAt($pos->x, $pos->y, $pos->z, $airBlock);
 			}
 		}
 

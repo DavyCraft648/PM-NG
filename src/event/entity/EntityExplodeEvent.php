@@ -40,14 +40,14 @@ class EntityExplodeEvent extends EntityEvent implements Cancellable{
 	/** @var Position */
 	protected $position;
 
-	/** @var Block[][] */
+	/** @var Block[] */
 	protected $blocks;
 
 	/** @var float */
 	protected $yield;
 
 	/**
-	 * @param Block[][]  $blocks
+	 * @param Block[]  $blocks
 	 */
 	public function __construct(Entity $entity, Position $position, array $blocks, float $yield){
 		$this->entity = $entity;
@@ -61,14 +61,14 @@ class EntityExplodeEvent extends EntityEvent implements Cancellable{
 	}
 
 	/**
-	 * @return Block[][]
+	 * @return Block[]
 	 */
 	public function getBlockList() : array{
 		return $this->blocks;
 	}
 
 	/**
-	 * @param Block[][] $blocks
+	 * @param Block[] $blocks
 	 */
 	public function setBlockList(array $blocks) : void{
 		Utils::validateArrayValueType($blocks, function(Block $_) : void{});
