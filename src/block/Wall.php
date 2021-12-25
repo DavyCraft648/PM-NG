@@ -76,4 +76,8 @@ class Wall extends Transparent{
 				->trim(Facing::EAST, $east ? 0 : $inset)
 		];
 	}
+
+	public function getWaterloggingLevel() : int{
+		return 1;
+	}
 }

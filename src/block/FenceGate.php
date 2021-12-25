@@ -128,4 +128,8 @@ class FenceGate extends Transparent{
 	public function getFlammability() : int{
 		return 20;
 	}
+
+	public function getWaterloggingLevel() : int{
+		return 1;
+	}
 }

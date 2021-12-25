@@ -113,5 +113,9 @@ class DaylightSensor extends Transparent{
 		return max(0, (int) round($lightLevel * cos(($sunAngle + ((($sunAngle < 0.5 ? 0 : 1) - $sunAngle) / 5)) * 2 * M_PI)));
 	}
 
+	public function getWaterloggingLevel() : int{
+		return 1;
+	}
+
 	//TODO
 }

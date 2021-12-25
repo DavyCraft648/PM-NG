@@ -33,5 +33,9 @@ abstract class PressurePlate extends Transparent{
 		return [];
 	}
 
+	public function getWaterloggingLevel() : int{
+		return 1;
+	}
+
 	//TODO
 }

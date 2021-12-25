@@ -231,4 +231,8 @@ abstract class BaseRail extends Flowable{
 			}
 		}
 	}
+
+	public function getWaterloggingLevel() : int{
+		return 1;
+	}
 }

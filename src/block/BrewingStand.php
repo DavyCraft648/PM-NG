@@ -111,4 +111,8 @@ class BrewingStand extends Transparent{
 	public function onScheduledUpdate() : void{
 		//TODO
 	}
+
+	public function getWaterloggingLevel() : int{
+		return 1;
+	}
 }

@@ -56,17 +56,8 @@ abstract class BaseCoral extends Transparent{
 		if(!$this->dead){
 			$world = $this->position->getWorld();
 
-			$hasWater = false;
-			foreach($this->position->sides() as $vector3){
-				if($world->getBlock($vector3) instanceof Water){
-					$hasWater = true;
-					break;
-				}
-			}
-
-			//TODO: check water inside the block itself (not supported on the API yet)
-			if(!$hasWater){
-				$world->setBlock($this->position, $this->setDead(true));
+			if(!$this->isWaterlogged()){
+				$world->setBlockLayer($this->position, $this->setDead(true), 0);
 			}
 		}
 	}
@@ -82,4 +73,8 @@ abstract class BaseCoral extends Transparent{
 	public function isSolid() : bool{ return false; }
 
 	protected function recalculateCollisionBoxes() : array{ return []; }
+
+	public function getWaterloggingLevel() : int{
+		return 1;
+	}
 }

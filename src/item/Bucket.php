@@ -38,16 +38,18 @@ class Bucket extends Item{
 
 	public function onInteractBlock(Player $player, Block $blockReplace, Block $blockClicked, int $face, Vector3 $clickVector) : ItemUseResult{
 		//TODO: move this to generic placement logic
-		if($blockClicked instanceof Liquid and $blockClicked->isSource()){
+		$layer2 = $blockClicked->getBlockLayer(1);
+		$liquid = $blockClicked instanceof Liquid ? $blockClicked : ($layer2 instanceof Liquid ? $layer2 : null);
+		if($liquid instanceof Liquid && $liquid->isSource()){
 			$stack = clone $this;
 			$stack->pop();
 
-			$resultItem = ItemFactory::getInstance()->get(ItemIds::BUCKET, $blockClicked->getFlowingForm()->getId());
+			$resultItem = ItemFactory::getInstance()->get(ItemIds::BUCKET, $liquid->getFlowingForm()->getId());
 			$ev = new PlayerBucketFillEvent($player, $blockReplace, $face, $this, $resultItem);
 			$ev->call();
 			if(!$ev->isCancelled()){
-				$player->getWorld()->setBlock($blockClicked->getPosition(), VanillaBlocks::AIR());
-				$player->getWorld()->addSound($blockClicked->getPosition()->add(0.5, 0.5, 0.5), $blockClicked->getBucketFillSound());
+				$player->getWorld()->setBlockLayer($liquid->getPosition(), VanillaBlocks::AIR(), $liquid->getLayer());
+				$player->getWorld()->addSound($liquid->getPosition()->add(0.5, 0.5, 0.5), $liquid->getBucketFillSound());
 				if($player->hasFiniteResources()){
 					if($stack->getCount() === 0){
 						$player->getInventory()->setItemInHand($ev->getItem());

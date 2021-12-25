@@ -157,4 +157,8 @@ final class Bell extends Transparent{
 			$this->position->getWorld()->broadcastPacketToViewers($this->position, $tile->createFakeUpdatePacket($faceHit));
 		}
 	}
+
+	public function getWaterloggingLevel() : int{
+		return 1;
+	}
 }

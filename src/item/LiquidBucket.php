@@ -57,18 +57,25 @@ class LiquidBucket extends Item{
 	}
 
 	public function onInteractBlock(Player $player, Block $blockReplace, Block $blockClicked, int $face, Vector3 $clickVector) : ItemUseResult{
-		if(!$blockReplace->canBeReplaced()){
-			return ItemUseResult::NONE();
-		}
-
 		//TODO: move this to generic placement logic
 		$resultBlock = clone $this->liquid;
 
-		$ev = new PlayerBucketEmptyEvent($player, $blockReplace, $face, $this, VanillaItems::BUCKET());
+		$toReplace = $blockReplace->canWaterlogged($resultBlock) ? $blockReplace->getBlockLayer(1) : null;
+		$toReplace = $blockReplace->canBeReplaced() ? $blockReplace : $toReplace;
+		$toReplace = $blockClicked->canWaterlogged($resultBlock) ? $blockClicked->getBlockLayer(1) : $toReplace;
+		if($toReplace === null){
+			return ItemUseResult::NONE();
+		}
+
+		if(!in_array(1, $resultBlock->getSupportedLayers())){
+			$toReplace = $blockReplace;
+		}
+
+		$ev = new PlayerBucketEmptyEvent($player, $toReplace, $face, $this, VanillaItems::BUCKET());
 		$ev->call();
 		if(!$ev->isCancelled()){
-			$player->getWorld()->setBlock($blockReplace->getPosition(), $resultBlock->getFlowingForm());
-			$player->getWorld()->addSound($blockReplace->getPosition()->add(0.5, 0.5, 0.5), $resultBlock->getBucketEmptySound());
+			$player->getWorld()->setBlockLayer($toReplace->getPosition(), $resultBlock->getFlowingForm(), $toReplace->getLayer());
+			$player->getWorld()->addSound($toReplace->getPosition()->add(0.5, 0.5, 0.5), $resultBlock->getBucketEmptySound());
 
 			if($player->hasFiniteResources()){
 				$player->getInventory()->setItemInHand($ev->getItem());

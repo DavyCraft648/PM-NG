@@ -86,4 +86,8 @@ abstract class Button extends Flowable{
 			$this->position->getWorld()->addSound($this->position->add(0.5, 0.5, 0.5), new RedstonePowerOffSound());
 		}
 	}
+
+	public function getWaterloggingLevel() : int{
+		return 1;
+	}
 }

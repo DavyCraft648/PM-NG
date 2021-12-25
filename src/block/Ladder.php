@@ -78,4 +78,8 @@ class Ladder extends Transparent{
 			$this->position->getWorld()->useBreakOn($this->position);
 		}
 	}
+
+	public function getWaterloggingLevel() : int{
+		return 1;
+	}
 }

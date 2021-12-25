@@ -73,7 +73,7 @@ final class MinimumCostFlowCalculator{
 			if(!isset($this->flowCostVisited[$hash = World::blockHash($x, $y, $z)])){
 				if(!$this->world->isInWorld($x, $y, $z) || !$this->canFlowInto($this->world->getBlockAt($x, $y, $z))){
 					$this->flowCostVisited[$hash] = self::BLOCKED;
-				}elseif($this->world->getBlockAt($x, $y - 1, $z)->canBeFlowedInto()){
+				}elseif(($down = $this->world->getBlockAt($x, $y - 1, $z))->canBeFlowedInto() || $down->mayWaterloggingFlowInto()){
 					$this->flowCostVisited[$hash] = self::CAN_FLOW_DOWN;
 				}else{
 					$this->flowCostVisited[$hash] = self::CAN_FLOW;
@@ -122,7 +122,7 @@ final class MinimumCostFlowCalculator{
 
 			if(!$this->world->isInWorld($x, $y, $z) || !$this->canFlowInto($this->world->getBlockAt($x, $y, $z))){
 				$this->flowCostVisited[World::blockHash($x, $y, $z)] = self::BLOCKED;
-			}elseif($this->world->getBlockAt($x, $y - 1, $z)->canBeFlowedInto()){
+			}elseif(($down = $this->world->getBlockAt($x, $y - 1, $z))->canBeFlowedInto() || $down->mayWaterloggingFlowInto()){
 				$this->flowCostVisited[World::blockHash($x, $y, $z)] = self::CAN_FLOW_DOWN;
 				$flowCost[$j] = $maxCost = 0;
 			}elseif($maxCost > 0){

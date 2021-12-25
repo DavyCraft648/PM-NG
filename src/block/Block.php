@@ -60,6 +60,8 @@ class Block{
 	/** @var AxisAlignedBB[]|null */
 	protected ?array $collisionBoxes = null;
 
+	protected int $layer = 0;
+
 	/**
 	 * @param string          $name English name of the block type (TODO: implement translations)
 	 */
@@ -143,7 +145,7 @@ class Block{
 	}
 
 	public function writeStateToWorld() : void{
-		$this->position->getWorld()->getOrLoadChunkAtPosition($this->position)->setFullBlock($this->position->x & Chunk::COORD_MASK, $this->position->y, $this->position->z & Chunk::COORD_MASK, $this->getFullId());
+		$this->position->getWorld()->getOrLoadChunkAtPosition($this->position)->setFullBlock($this->position->x & Chunk::COORD_MASK, $this->position->y, $this->position->z & Chunk::COORD_MASK, $this->getFullId(), $this->layer);
 
 		$tileType = $this->idInfo->getTileClass();
 		$oldTile = $this->position->getWorld()->getTile($this->position);
@@ -201,6 +203,19 @@ class Block{
 	 * Places the Block, using block space and block target, and side. Returns if the block has been placed.
 	 */
 	public function place(BlockTransaction $tx, Item $item, Block $blockReplace, Block $blockClicked, int $face, Vector3 $clickVector, ?Player $player = null) : bool{
+		if($this->getLayer() === 0){
+			if($this->getWaterloggingLevel() >= 1){
+				$water = clone $this->getBlockLayer(0);
+				$water->setLayer(1);
+				if($water instanceof Water && $this->canWaterlogged($water)){
+					$tx->addBlock($blockReplace->position, $water);
+				}
+			}else{
+				$air = VanillaBlocks::AIR();
+				$air->setLayer(1);
+				$tx->addBlock($blockReplace->position, $air);
+			}
+		}
 		$tx->addBlock($blockReplace->position, $this);
 		return true;
 	}
@@ -223,7 +238,7 @@ class Block{
 		if(($t = $this->position->getWorld()->getTile($this->position)) !== null){
 			$t->onBlockDestroyed();
 		}
-		$this->position->getWorld()->setBlock($this->position, VanillaBlocks::AIR());
+		$this->position->getWorld()->setBlockLayer($this->position, VanillaBlocks::AIR(), $this->layer);
 		return true;
 	}
 
@@ -483,14 +498,25 @@ class Block{
 
 	}
 
+	public function getBlockLayer(int $layer) : Block{
+		return $this->position->getWorld()->getBlockLayer($this->position, $layer);
+	}
+
 	/**
 	 * Returns the Block on the side $side, works like Vector3::getSide()
 	 *
 	 * @return Block
 	 */
 	public function getSide(int $side, int $step = 1){
+		return $this->getSideLayer($side, 0, $step);
+	}
+
+	/**
+	 * @return Block
+	 */
+	public function getSideLayer(int $side, int $layer = 0, int $step = 1){
 		if($this->position->isValid()){
-			return $this->position->getWorld()->getBlock($this->position->getSide($side, $step));
+			return $this->position->getWorld()->getBlockLayer($this->position->getSide($side, $step), $layer);
 		}
 
 		throw new \LogicException("Block does not have a valid world");
@@ -510,6 +536,17 @@ class Block{
 	}
 
 	/**
+	 * @return Block[]|\Generator
+	 * @phpstan-return \Generator<int, Block, void, void>
+	 */
+	public function getHorizontalSidesLayer(int $layer = 0) : \Generator{
+		$world = $this->position->getWorld();
+		foreach($this->position->sidesAroundAxis(Axis::Y) as $vector3){
+			yield $world->getBlockLayer($vector3, $layer);
+		}
+	}
+
+	/**
 	 * Returns the six blocks around this block.
 	 *
 	 * @return Block[]|\Generator
@@ -519,6 +556,13 @@ class Block{
 		$world = $this->position->getWorld();
 		foreach($this->position->sides() as $vector3){
 			yield $world->getBlock($vector3);
+		}
+	}
+
+	public function getAllSidesLayer(int $layer = 0) : \Generator{
+		$world = $this->position->getWorld();
+		foreach($this->position->sides() as $vector3){
+			yield $world->getBlockLayer($vector3, $layer);
 		}
 	}
 
@@ -633,5 +677,51 @@ class Block{
 		}
 
 		return $currentHit;
+	}
+
+	/**
+	 * Returns layer index where this block was get/set
+	 */
+	public function getLayer() : int{
+		return $this->layer;
+	}
+
+	public function setLayer(int $layer) : static{
+		$this->layer = $layer;
+		return $this;
+	}
+
+	/**
+	 * Returns layers that this block can be set into it.
+	 * @return int[]
+	 */
+	public function getSupportedLayers() : array{
+		return [0];
+	}
+
+	/**
+	 * Returns the waterlogging behavior of this block.
+	 */
+	public function getWaterloggingLevel() : int{
+		return 0;
+	}
+
+	/**
+	 * Returns whether water can flow into this block.
+	 */
+	public function mayWaterloggingFlowInto() : bool{
+		return $this->getWaterloggingLevel() > 1;
+	}
+
+	public function canWaterlogged(Liquid $water) : bool{
+		return ($water->getDecay() === 0 && $this->getWaterloggingLevel() >= 1) ||
+			($water->getDecay() > 0 && $this->getWaterloggingLevel() >= 2);
+	}
+
+	/**
+	 * Returns whether the second layer of this block is water.
+	 */
+	public function isWaterlogged() : bool{
+		return $this->getBlockLayer(1) instanceof Water;
 	}
 }

@@ -134,4 +134,8 @@ class Cake extends Transparent implements FoodSource{
 	public function onConsume(Living $consumer) : void{
 		$this->position->getWorld()->setBlock($this->position, $this->getResidue());
 	}
+
+	public function getWaterloggingLevel() : int{
+		return 1;
+	}
 }
