@@ -83,14 +83,14 @@ class SubChunk{
 		if(!isset($this->blockLayers[$layer])){
 			return $this->emptyBlockId;
 		}
-		return $this->blockLayers[$layer]->get($x, $y, $z);
+		return $this->blockLayers[$layer]->get($x & SubChunk::COORD_MASK, $y & SubChunk::COORD_MASK, $z & SubChunk::COORD_MASK);
 	}
 
 	public function setFullBlock(int $x, int $y, int $z, int $block, int $layer = 0) : void{
 		if(!isset($this->blockLayers[$layer])){
 			$this->blockLayers[$layer] = new PalettedBlockArray($this->emptyBlockId);
 		}
-		$this->blockLayers[$layer]->set($x, $y, $z, $block);
+		$this->blockLayers[$layer]->set($x & SubChunk::COORD_MASK, $y & SubChunk::COORD_MASK, $z & SubChunk::COORD_MASK, $block);
 	}
 
 	/**
@@ -105,7 +105,7 @@ class SubChunk{
 			return null;
 		}
 		for($y = self::EDGE_LENGTH - 1; $y >= 0; --$y){
-			if($this->blockLayers[0]->get($x, $y, $z) !== $this->emptyBlockId){
+			if($this->blockLayers[0]->get($x & SubChunk::COORD_MASK, $y & SubChunk::COORD_MASK, $z & SubChunk::COORD_MASK) !== $this->emptyBlockId){
 				return $y;
 			}
 		}
