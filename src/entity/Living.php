@@ -764,25 +764,23 @@ abstract class Living extends Entity{
 		$nextIndex = 0;
 
 		foreach(VoxelRayTrace::inDirection($this->location->add(0, $this->size->getEyeHeight(), 0), $this->getDirectionVector(), $maxDistance) as $vector3){
-			foreach([0, 1] as $layer){
-				$block = $this->getWorld()->getBlockAtLayer($vector3->x, $vector3->y, $vector3->z, $layer);
-				$blocks[$nextIndex++] = $block;
+			$block = $this->getWorld()->getBlockAt($vector3->x, $vector3->y, $vector3->z);
+			$blocks[$nextIndex++] = $block;
 
-				if($maxLength !== 0 and count($blocks) > $maxLength){
-					array_shift($blocks);
-					--$nextIndex;
+			if($maxLength !== 0 and count($blocks) > $maxLength){
+				array_shift($blocks);
+				--$nextIndex;
+			}
+
+			$id = $block->getId();
+
+			if($transparent === null){
+				if($id !== 0){
+					break;
 				}
-
-				$id = $block->getId();
-
-				if($transparent === null){
-					if($id !== 0){
-						break;
-					}
-				}else{
-					if(!isset($transparent[$id])){
-						break;
-					}
+			}else{
+				if(!isset($transparent[$id])){
+					break;
 				}
 			}
 		}
