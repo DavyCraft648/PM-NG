@@ -35,6 +35,7 @@ use pocketmine\world\format\Chunk;
 use pocketmine\world\World;
 use function count;
 use function spl_object_id;
+use function str_starts_with;
 use function strlen;
 
 /**
@@ -140,7 +141,8 @@ class ChunkCache implements ChunkListener{
 						$this->world->getLogger()->error("Failed preparing chunk $chunkX $chunkZ, retrying");
 
 						$this->restartPendingRequest($chunkX, $chunkZ, $mappingProtocol);
-					}
+					},
+					!str_starts_with($this->world->getFolderName(), "nether") && !str_starts_with($this->world->getFolderName(), "end")
 				)
 			);
 
