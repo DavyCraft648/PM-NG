@@ -1240,33 +1240,46 @@ abstract class Entity{
 	}
 
 	/**
+	 * Yields all the blocks whose full-cube areas are intersected by the entity's AABB.
+	 *
+	 * @phpstan-return \Generator<int, Block, void, void>
+	 */
+	protected function getBlocksIntersected(float $inset) : \Generator{
+		$minX = (int) floor($this->boundingBox->minX + $inset);
+		$minY = (int) floor($this->boundingBox->minY + $inset);
+		$minZ = (int) floor($this->boundingBox->minZ + $inset);
+		$maxX = (int) floor($this->boundingBox->maxX - $inset);
+		$maxY = (int) floor($this->boundingBox->maxY - $inset);
+		$maxZ = (int) floor($this->boundingBox->maxZ - $inset);
+
+		$world = $this->getWorld();
+
+		for($z = $minZ; $z <= $maxZ; ++$z){
+			for($x = $minX; $x <= $maxX; ++$x){
+				for($y = $minY; $y <= $maxY; ++$y){
+					foreach([0, 1] as $layer){
+						$block = $world->getBlockAtLayer($x, $y, $z, $layer);
+						if($layer === 1 && $block->getId() === 0){
+							continue;
+						}
+						yield $block;
+					}
+				}
+			}
+		}
+	}
+
+	/**
 	 * @return Block[]
 	 */
 	protected function getBlocksAroundWithEntityInsideActions() : array{
 		if($this->blocksAround === null){
-			$inset = 0.001; //Offset against floating-point errors
-
-			$minX = (int) floor($this->boundingBox->minX + $inset);
-			$minY = (int) floor($this->boundingBox->minY + $inset);
-			$minZ = (int) floor($this->boundingBox->minZ + $inset);
-			$maxX = (int) floor($this->boundingBox->maxX - $inset);
-			$maxY = (int) floor($this->boundingBox->maxY - $inset);
-			$maxZ = (int) floor($this->boundingBox->maxZ - $inset);
-
 			$this->blocksAround = [];
 
-			$world = $this->getWorld();
-
-			for($z = $minZ; $z <= $maxZ; ++$z){
-				for($x = $minX; $x <= $maxX; ++$x){
-					for($y = $minY; $y <= $maxY; ++$y){
-						foreach([0, 1] as $layer){
-							$block = $world->getBlockAtLayer($x, $y, $z, $layer);
-							if($block->hasEntityCollision()){
-								$this->blocksAround[] = $block;
-							}
-						}
-					}
+			$inset = 0.001; //Offset against floating-point errors
+			foreach($this->getBlocksIntersected($inset) as $block){
+				if($block->hasEntityCollision()){
+					$this->blocksAround[] = $block;
 				}
 			}
 		}
@@ -1609,24 +1622,24 @@ abstract class Entity{
 	 * @return MetadataProperty[]
 	 * @phpstan-return array<int, MetadataProperty>
 	 */
-	final protected function getDirtyNetworkData(int $protocolId) : array{
+	final protected function getDirtyNetworkData(int $metadataProtocol) : array{
 		if($this->networkPropertiesDirty){
 			$this->syncNetworkData($this->networkProperties);
 			$this->networkPropertiesDirty = false;
 		}
-		return $this->networkProperties->getDirty($protocolId);
+		return $this->networkProperties->getDirty($metadataProtocol);
 	}
 
 	/**
 	 * @return MetadataProperty[]
 	 * @phpstan-return array<int, MetadataProperty>
 	 */
-	final protected function getAllNetworkData(int $protocolId) : array{
+	final protected function getAllNetworkData(int $metadataProtocol) : array{
 		if($this->networkPropertiesDirty){
 			$this->syncNetworkData($this->networkProperties);
 			$this->networkPropertiesDirty = false;
 		}
-		return $this->networkProperties->getAll($protocolId);
+		return $this->networkProperties->getAll($metadataProtocol);
 	}
 
 	protected function syncNetworkData(EntityMetadataCollection $properties) : void{
@@ -1641,7 +1654,7 @@ abstract class Entity{
 		$properties->setString(EntityMetadataProperties::SCORE_TAG, $this->scoreTag);
 		$properties->setByte(EntityMetadataProperties::COLOR, 0);
 
-		$properties->setGenericFlag(EntityMetadataFlags::AFFECTED_BY_GRAVITY, true);
+		$properties->setGenericFlag(EntityMetadataFlags::AFFECTED_BY_GRAVITY, $this->gravityEnabled);
 		$properties->setGenericFlag(EntityMetadataFlags::CAN_CLIMB, $this->canClimb);
 		$properties->setGenericFlag(EntityMetadataFlags::CAN_SHOW_NAMETAG, $this->nameTagVisible);
 		$properties->setGenericFlag(EntityMetadataFlags::HAS_COLLISION, true);

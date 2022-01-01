@@ -162,6 +162,12 @@ class Player extends Human implements CommandSender, ChunkListener, IPlayer{
 
 	/** Max length of a chat message (UTF-8 codepoints, not bytes) */
 	private const MAX_CHAT_CHAR_LENGTH = 512;
+	/**
+	 * Max length of a chat message in bytes. This is a theoretical maximum (if every character was 4 bytes).
+	 * Since mb_strlen() is O(n), it gets very slow with large messages. Checking byte length with strlen() is O(1) and
+	 * is a useful heuristic to filter out oversized messages.
+	 */
+	private const MAX_CHAT_BYTE_LENGTH = self::MAX_CHAT_CHAR_LENGTH * 4;
 	private const MAX_REACH_DISTANCE_CREATIVE = 13;
 	private const MAX_REACH_DISTANCE_SURVIVAL = 7;
 	private const MAX_REACH_DISTANCE_ENTITY_INTERACTION = 8;
@@ -396,8 +402,10 @@ class Player extends Human implements CommandSender, ChunkListener, IPlayer{
 	}
 
 	public function setAllowFlight(bool $value) : void{
-		$this->allowFlight = $value;
-		$this->getNetworkSession()->syncAdventureSettings($this);
+		if($this->allowFlight !== $value){
+			$this->allowFlight = $value;
+			$this->getNetworkSession()->syncAdventureSettings($this);
+		}
 	}
 
 	public function getAllowFlight() : bool{
@@ -405,8 +413,10 @@ class Player extends Human implements CommandSender, ChunkListener, IPlayer{
 	}
 
 	public function setHasBlockCollision(bool $value) : void{
-		$this->blockCollision = $value;
-		$this->getNetworkSession()->syncAdventureSettings($this);
+		if($this->blockCollision !== $value){
+			$this->blockCollision = $value;
+			$this->getNetworkSession()->syncAdventureSettings($this);
+		}
 	}
 
 	public function hasBlockCollision() : bool{
@@ -426,8 +436,10 @@ class Player extends Human implements CommandSender, ChunkListener, IPlayer{
 	}
 
 	public function setAutoJump(bool $value) : void{
-		$this->autoJump = $value;
-		$this->getNetworkSession()->syncAdventureSettings($this);
+		if($this->autoJump !== $value){
+			$this->autoJump = $value;
+			$this->getNetworkSession()->syncAdventureSettings($this);
+		}
 	}
 
 	public function hasAutoJump() : bool{
@@ -1101,6 +1113,10 @@ class Player extends Human implements CommandSender, ChunkListener, IPlayer{
 			$bb->minY = $this->location->y - 0.2;
 			$bb->maxY = $this->location->y + 0.2;
 
+			//we're already at the new position at this point; check if there are blocks we might have landed on between
+			//the old and new positions (running down stairs necessitates this)
+			$bb = $bb->addCoord(-$dx, -$dy, -$dz);
+
 			$this->onGround = $this->isCollided = count($this->getWorld()->getCollisionBlocks($bb, true)) > 0;
 		}
 	}
@@ -1341,7 +1357,7 @@ class Player extends Human implements CommandSender, ChunkListener, IPlayer{
 
 		$message = TextFormat::clean($message, false);
 		foreach(explode("\n", $message) as $messagePart){
-			if(trim($messagePart) !== "" and mb_strlen($messagePart, 'UTF-8') <= self::MAX_CHAT_CHAR_LENGTH and $this->messageCounter-- > 0){
+			if(trim($messagePart) !== "" and strlen($messagePart) <= self::MAX_CHAT_BYTE_LENGTH and mb_strlen($messagePart, 'UTF-8') <= self::MAX_CHAT_CHAR_LENGTH and $this->messageCounter-- > 0){
 				if(strpos($messagePart, './') === 0){
 					$messagePart = substr($messagePart, 1);
 				}
@@ -1576,7 +1592,6 @@ class Player extends Human implements CommandSender, ChunkListener, IPlayer{
 
 	public function continueBreakBlock(Vector3 $pos, int $face) : void{
 		if($this->blockBreakHandler !== null and $this->blockBreakHandler->getBlockPos()->distanceSquared($pos) < 0.0001){
-			//TODO: check the targeted block matches the one we're told to target
 			$this->blockBreakHandler->setTargetedFace($face);
 		}
 	}
@@ -1745,6 +1760,9 @@ class Player extends Human implements CommandSender, ChunkListener, IPlayer{
 	}
 
 	public function toggleSprint(bool $sprint) : bool{
+		if($sprint === $this->sprinting){
+			return true;
+		}
 		$ev = new PlayerToggleSprintEvent($this, $sprint);
 		$ev->call();
 		if($ev->isCancelled()){
@@ -1755,6 +1773,9 @@ class Player extends Human implements CommandSender, ChunkListener, IPlayer{
 	}
 
 	public function toggleSneak(bool $sneak) : bool{
+		if($sneak === $this->sneaking){
+			return true;
+		}
 		$ev = new PlayerToggleSneakEvent($this, $sneak);
 		$ev->call();
 		if($ev->isCancelled()){
@@ -1765,6 +1786,9 @@ class Player extends Human implements CommandSender, ChunkListener, IPlayer{
 	}
 
 	public function toggleFlight(bool $fly) : bool{
+		if($fly === $this->flying){
+			return true;
+		}
 		$ev = new PlayerToggleFlightEvent($this, $fly);
 		if(!$this->allowFlight){
 			$ev->cancel();
@@ -1773,13 +1797,14 @@ class Player extends Human implements CommandSender, ChunkListener, IPlayer{
 		if($ev->isCancelled()){
 			return false;
 		}
-		//don't use setFlying() here, to avoid feedback loops - TODO: get rid of this hack
-		$this->flying = $fly;
-		$this->resetFallDistance();
+		$this->setFlying($fly);
 		return true;
 	}
 
 	public function toggleGlide(bool $glide) : bool{
+		if($glide === $this->gliding){
+			return true;
+		}
 		$ev = new PlayerToggleGlideEvent($this, $glide);
 		$ev->call();
 		if($ev->isCancelled()){
@@ -1790,6 +1815,9 @@ class Player extends Human implements CommandSender, ChunkListener, IPlayer{
 	}
 
 	public function toggleSwim(bool $swimming) : bool{
+		if($swimming === $this->swimming){
+			return true;
+		}
 		$ev = new PlayerToggleSwimEvent($this, $swimming);
 		$ev->call();
 		if($ev->isCancelled()){
