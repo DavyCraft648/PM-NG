@@ -83,12 +83,12 @@ class SeaPickle extends Transparent{
 
 	public function canBePlacedAt(Block $blockReplace, Vector3 $clickVector, int $face, bool $isClickedBlock) : bool{
 		//TODO: proper placement logic (needs a supporting face below)
-		return ($blockReplace instanceof SeaPickle and $blockReplace->count < 4) or parent::canBePlacedAt($blockReplace, $clickVector, $face, $isClickedBlock);
+		return ($blockReplace instanceof SeaPickle && $blockReplace->count < 4) || parent::canBePlacedAt($blockReplace, $clickVector, $face, $isClickedBlock);
 	}
 
 	public function place(BlockTransaction $tx, Item $item, Block $blockReplace, Block $blockClicked, int $face, Vector3 $clickVector, ?Player $player = null) : bool{
-		$this->underwater = $blockReplace->isWaterlogged() or ($blockReplace instanceof Water and $blockReplace->isStill());
-		if($blockReplace instanceof SeaPickle and $blockReplace->count < 4){
+		$this->underwater = $blockReplace->isWaterlogged() || ($blockReplace instanceof Water && $blockReplace->isStill());
+		if($blockReplace instanceof SeaPickle && $blockReplace->count < 4){
 			$this->count = $blockReplace->count + 1;
 		}
 
