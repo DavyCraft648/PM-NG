@@ -147,6 +147,9 @@ class Block{
 	public function writeStateToWorld() : void{
 		$this->position->getWorld()->getOrLoadChunkAtPosition($this->position)->setFullBlock($this->position->x & Chunk::COORD_MASK, $this->position->y, $this->position->z & Chunk::COORD_MASK, $this->getFullId(), $this->layer);
 
+		if($this->layer !== 0){
+			return;
+		}
 		$tileType = $this->idInfo->getTileClass();
 		$oldTile = $this->position->getWorld()->getTile($this->position);
 		if($oldTile !== null){
