@@ -89,7 +89,7 @@ class Chunk{
 
 		// TODO: Hack! There's no way to cleanly do this without diverging from pmmp too much, so this is the best workaround for that
 		$this->dimensionId = match($biomeIds->get(0, 0)) {
-			BiomeIds::HELL => DimensionIds::NETHER,
+			BiomeIds::HELL, BiomeIds::CRIMSON_FOREST, BiomeIds::WARPED_FOREST, BiomeIds::SOULSAND_VALLEY, BiomeIds::BASALT_DELTAS => DimensionIds::NETHER,
 			BiomeIds::THE_END => DimensionIds::THE_END,
 			default => DimensionIds::OVERWORLD
 		};
