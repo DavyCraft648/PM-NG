@@ -497,7 +497,7 @@ class World implements ChunkManager{
 
 		foreach(BlockFactory::getInstance()->getAllKnownStates() as $state){
 			$dontTickName = $dontTickBlocks[$state->getTypeId()] ?? null;
-			if($dontTickName === null && !$state->ticksRandomly()){
+			if($dontTickName === null && $state->ticksRandomly()){
 				$this->randomTickBlocks[$state->getFullId()] = true;
 			}
 		}
@@ -840,8 +840,6 @@ class World implements ChunkManager{
 
 	/**
 	 * @internal
-	 *
-	 * @param Player ...$targets If empty, will send to all players in the world.
 	 */
 	public function sendTime(Player ...$targets) : void{
 		if(count($targets) === 0){

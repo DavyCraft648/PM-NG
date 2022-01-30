@@ -125,7 +125,25 @@ class BrewingStand extends Transparent{
 	}
 
 	public function onScheduledUpdate() : void{
-		//TODO
+		$brewing = $this->position->getWorld()->getTile($this->position);
+		if($brewing instanceof TileBrewingStand){
+			if($brewing->onUpdate()){
+				$this->position->getWorld()->scheduleDelayedBlockUpdate($this->position, 1);
+			}
+
+			$changed = false;
+			foreach(BrewingStandSlot::getAll() as $slot){
+				$occupied = !$brewing->getInventory()->isSlotEmpty($slot->getSlotNumber());
+				if($occupied !== $this->hasSlot($slot)){
+					$this->setSlot($slot, $occupied);
+					$changed = true;
+				}
+			}
+
+			if($changed){
+				$this->position->getWorld()->setBlock($this->position, $this);
+			}
+		}
 	}
 
 	public function getWaterloggingLevel() : int{

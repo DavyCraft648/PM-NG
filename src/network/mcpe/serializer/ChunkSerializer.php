@@ -32,6 +32,7 @@ use pocketmine\network\mcpe\protocol\ProtocolInfo;
 use pocketmine\network\mcpe\protocol\serializer\NetworkNbtSerializer;
 use pocketmine\network\mcpe\protocol\serializer\PacketSerializer;
 use pocketmine\network\mcpe\protocol\serializer\PacketSerializerContext;
+use pocketmine\network\mcpe\protocol\types\DimensionIds;
 use pocketmine\utils\Binary;
 use pocketmine\utils\BinaryStream;
 use pocketmine\world\format\Chunk;
@@ -63,10 +64,10 @@ final class ChunkSerializer{
 		return 0;
 	}
 
-	public static function serializeFullChunk(Chunk $chunk, RuntimeBlockMapping $blockMapper, PacketSerializerContext $encoderContext, int $mappingProtocol, ?string $tiles = null, bool $overworld = true) : string{
+	public static function serializeFullChunk(Chunk $chunk, RuntimeBlockMapping $blockMapper, PacketSerializerContext $encoderContext, int $mappingProtocol, ?string $tiles = null) : string{
 		$stream = PacketSerializer::encoder($encoderContext);
 
-		if($mappingProtocol >= ProtocolInfo::PROTOCOL_1_18_0 && $overworld){
+		if($mappingProtocol >= ProtocolInfo::PROTOCOL_1_18_0 && $chunk->getDimensionId() === DimensionIds::OVERWORLD){
 			//TODO: HACK! fill in fake subchunks to make up for the new negative space client-side
 			for($y = 0; $y < self::LOWER_PADDING_SIZE; $y++){
 				$stream->putByte(8); //subchunk version 8
@@ -77,14 +78,6 @@ final class ChunkSerializer{
 		$subChunkCount = self::getSubChunkCount($chunk);
 		for($y = Chunk::MIN_SUBCHUNK_INDEX, $writtenCount = 0; $writtenCount < $subChunkCount; ++$y, ++$writtenCount){
 			self::serializeSubChunk($chunk->getSubChunk($y), $blockMapper, $stream, $mappingProtocol, false);
-		}
-
-		if($mappingProtocol >= ProtocolInfo::PROTOCOL_1_18_0 && !$overworld){
-			//TODO: HACK! fill in fake subchunks to make up for the new negative space client-side
-			for($y = 0; $y < self::LOWER_PADDING_SIZE; $y++){
-				$stream->putByte(8); //subchunk version 8
-				$stream->putByte(0); //0 layers - client will treat this as all-air
-			}
 		}
 
 		if($mappingProtocol >= ProtocolInfo::PROTOCOL_1_18_0){

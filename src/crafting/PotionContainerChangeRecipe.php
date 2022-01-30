@@ -21,28 +21,34 @@
 
 declare(strict_types=1);
 
-namespace pocketmine\block;
+namespace pocketmine\crafting;
 
 use pocketmine\item\Item;
-use pocketmine\item\VanillaItems;
-use function mt_rand;
+use pocketmine\item\ItemFactory;
 
-class Wheat extends Crops{
+class PotionContainerChangeRecipe implements BrewingRecipe{
 
-	public function getDropsForCompatibleTool(Item $item) : array{
-		if($this->age >= self::MAX_AGE){
-			return [
-				VanillaItems::WHEAT(),
-				VanillaItems::WHEAT_SEEDS()->setCount(mt_rand(0, 3))
-			];
-		}else{
-			return [
-				VanillaItems::WHEAT_SEEDS()
-			];
-		}
+	public function __construct(
+		private int $inputItemId,
+		private Item $ingredient,
+		private int $outputItemId
+	){
+		$this->ingredient = clone $ingredient;
 	}
 
-	public function getPickedItem(bool $addUserData = false) : Item{
-		return VanillaItems::WHEAT_SEEDS();
+	public function getInputItemId() : int{
+		return $this->inputItemId;
+	}
+
+	public function getIngredient() : Item{
+		return clone $this->ingredient;
+	}
+
+	public function getOutputItemId() : int{
+		return $this->outputItemId;
+	}
+
+	public function getResultFor(Item $input) : ?Item{
+		return $input->getId() === $this->getInputItemId() ? ItemFactory::getInstance()->get($this->getOutputItemId(), $input->getMeta()) : null;
 	}
 }

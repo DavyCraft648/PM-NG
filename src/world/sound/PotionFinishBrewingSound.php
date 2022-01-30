@@ -21,28 +21,15 @@
 
 declare(strict_types=1);
 
-namespace pocketmine\block;
+namespace pocketmine\world\sound;
 
-use pocketmine\item\Item;
-use pocketmine\item\VanillaItems;
-use function mt_rand;
+use pocketmine\math\Vector3;
+use pocketmine\network\mcpe\protocol\LevelSoundEventPacket;
+use pocketmine\network\mcpe\protocol\types\LevelSoundEvent;
 
-class Wheat extends Crops{
+final class PotionFinishBrewingSound implements Sound{
 
-	public function getDropsForCompatibleTool(Item $item) : array{
-		if($this->age >= self::MAX_AGE){
-			return [
-				VanillaItems::WHEAT(),
-				VanillaItems::WHEAT_SEEDS()->setCount(mt_rand(0, 3))
-			];
-		}else{
-			return [
-				VanillaItems::WHEAT_SEEDS()
-			];
-		}
-	}
-
-	public function getPickedItem(bool $addUserData = false) : Item{
-		return VanillaItems::WHEAT_SEEDS();
+	public function encode(Vector3 $pos) : array{
+		return [LevelSoundEventPacket::nonActorSound(LevelSoundEvent::POTION_BREWED, $pos, false)];
 	}
 }
