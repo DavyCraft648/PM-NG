@@ -637,7 +637,7 @@ abstract class Entity{
 
 		$changedProperties = $this->getDirtyNetworkData();
 		if(count($changedProperties) > 0){
-			$this->sendData(null, $changedProperties);
+			$this->sendData(null/*, $changedProperties*/);
 			$this->networkProperties->clearDirtyProperties();
 		}
 
