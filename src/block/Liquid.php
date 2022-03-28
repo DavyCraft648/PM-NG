@@ -313,7 +313,7 @@ abstract class Liquid extends Transparent{
 				}
 			}
 
-			if($falling !== $this->falling || (!$falling and $newDecay !== $this->decay)){
+			if($falling !== $this->falling || (!$falling && $newDecay !== $this->decay)){
 				if(!$falling && $newDecay < 0){
 					$world->setBlockLayer($this->position, VanillaBlocks::AIR(), $this->layer);
 					return;
@@ -360,12 +360,12 @@ abstract class Liquid extends Transparent{
 			$ev->call();
 			if(!$ev->isCancelled()){
 				foreach([$block, $block->getBlockLayer($block->getLayer() === 1 ? 0 : 1)] as $b){
-					if(!$b->canWaterlogged($this) and $b->getId() > 0){
+					if(!$b->canWaterlogged($this) && $b->getId() > 0){
 						$this->position->getWorld()->useBreakOn($block->position, $i, null, false, $b->getLayer());
 					}
 				}
 
-				$this->position->getWorld()->setBlockLayer($block->position, $ev->getNewState(), (in_array(1, $this->getSupportedLayers()) and $block->canWaterlogged($this)) ? 1 : 0);
+				$this->position->getWorld()->setBlockLayer($block->position, $ev->getNewState(), (in_array(1, $this->getSupportedLayers(), true) && $block->canWaterlogged($this)) ? 1 : 0);
 			}
 		}
 	}
@@ -407,7 +407,7 @@ abstract class Liquid extends Transparent{
 
 	protected function canFlowInto(Block $block) : bool{
 		$waterlogging = false;
-		if(in_array(1, $this->getSupportedLayers()) && $block->canWaterlogged($this)){
+		if(in_array(1, $this->getSupportedLayers(), true) && $block->canWaterlogged($this)){
 			$layer2 = $block->getBlockLayer(1);
 			$waterlogging = !($layer2 instanceof Liquid && $layer2->isSource());
 		}

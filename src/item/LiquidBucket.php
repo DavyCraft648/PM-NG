@@ -29,6 +29,7 @@ use pocketmine\block\Liquid;
 use pocketmine\event\player\PlayerBucketEmptyEvent;
 use pocketmine\math\Vector3;
 use pocketmine\player\Player;
+use function in_array;
 
 class LiquidBucket extends Item{
 
@@ -67,7 +68,7 @@ class LiquidBucket extends Item{
 			return ItemUseResult::NONE();
 		}
 
-		if(!in_array(1, $resultBlock->getSupportedLayers())){
+		if(!in_array(1, $resultBlock->getSupportedLayers(), true)){
 			$toReplace = $blockReplace;
 		}
 

@@ -42,6 +42,7 @@ use pocketmine\world\utils\SubChunkExplorer;
 use pocketmine\world\utils\SubChunkExplorerStatus;
 use function ceil;
 use function floor;
+use function max;
 use function mt_rand;
 use function sqrt;
 

@@ -570,6 +570,10 @@ class Block{
 		}
 	}
 
+	/**
+	 * @return Block[]|\Generator
+	 * @phpstan-return \Generator<int, Block, void, void>
+	 */
 	public function getAllSidesLayer(int $layer = 0) : \Generator{
 		$world = $this->position->getWorld();
 		foreach($this->position->sides() as $vector3){

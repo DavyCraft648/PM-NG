@@ -127,7 +127,7 @@ class FallingBlock extends Entity{
 					if(!$ev->isCancelled()){
 						$to = $ev->getTo();
 						$world->setBlock($pos, $to);
-						if($block instanceof Water and $to->canWaterlogged($block)){
+						if($block instanceof Water && $to->canWaterlogged($block)){
 							$world->setBlockLayer($pos, $block, 1);
 						}
 					}
