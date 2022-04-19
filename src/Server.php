@@ -36,6 +36,7 @@ use pocketmine\crafting\CraftingManager;
 use pocketmine\crafting\CraftingManagerFromDataHelper;
 use pocketmine\crash\CrashDump;
 use pocketmine\crash\CrashDumpRenderer;
+use pocketmine\data\SavedDataLoadingException;
 use pocketmine\entity\EntityDataHelper;
 use pocketmine\entity\Location;
 use pocketmine\event\HandlerListManager;
@@ -567,9 +568,15 @@ class Server{
 		$class = $ev->getPlayerClass();
 
 		if($offlinePlayerData !== null && ($world = $this->worldManager->getWorldByName($offlinePlayerData->getString("Level", ""))) !== null){
-			$playerPos = EntityDataHelper::parseLocation($offlinePlayerData, $world);
-			$spawn = $playerPos->asVector3();
-		}else{
+			try{
+				$playerPos = EntityDataHelper::parseLocation($offlinePlayerData, $world);
+				$spawn = $playerPos->asVector3();
+			}catch(SavedDataLoadingException){
+				$playerPos = null;
+				$spawn = null;
+			}
+		}
+		if(!isset($world) || !isset($spawn) || !isset($playerPos)){
 			$world = $this->worldManager->getDefaultWorld();
 			if($world === null){
 				throw new AssumptionFailedError("Default world should always be loaded");
