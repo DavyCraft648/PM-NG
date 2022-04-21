@@ -53,11 +53,15 @@ final class RuntimeBlockMapping{
 	/** @var CompoundTag[][] */
 	private $bedrockKnownStates = [];
 
-	private function __construct(){
+	private static function make() : self{
 		$protocolPaths = [
 			ProtocolInfo::CURRENT_PROTOCOL => [
 				self::CANONICAL_BLOCK_STATES_PATH => '',
 				self::R12_TO_CURRENT_BLOCK_MAP_PATH => '',
+			],
+			ProtocolInfo::PROTOCOL_1_18_10 => [
+				self::CANONICAL_BLOCK_STATES_PATH => '-1.18.10',
+				self::R12_TO_CURRENT_BLOCK_MAP_PATH => '-1.18.10',
 			],
 			ProtocolInfo::PROTOCOL_1_18_0 => [
 				self::CANONICAL_BLOCK_STATES_PATH => '-1.18.0',
@@ -81,9 +85,28 @@ final class RuntimeBlockMapping{
 			]
 		];
 
-		foreach($protocolPaths as $mappingProtocol => $paths){
+		$canonicalBlockStatesFiles = [];
+		$r12ToCurrentBlockMapFiles = [];
+
+		foreach($protocolPaths as $protocol => $paths){
+			$canonicalBlockStatesFiles[$protocol] = Path::join(\pocketmine\BEDROCK_DATA_PATH, "canonical_block_states" . $paths[self::CANONICAL_BLOCK_STATES_PATH] . ".nbt");
+			$r12ToCurrentBlockMapFiles[$protocol] = Path::join(\pocketmine\BEDROCK_DATA_PATH, "r12_to_current_block_map" . $paths[self::R12_TO_CURRENT_BLOCK_MAP_PATH] . ".bin");
+		}
+
+		return new self(
+			$canonicalBlockStatesFiles,
+			$r12ToCurrentBlockMapFiles
+		);
+	}
+
+	/**
+	 * @param string[] $canonicalBlockStatesFiles
+	 * @param string[] $r12ToCurrentBlockMapFiles
+	 */
+	private function __construct(array $canonicalBlockStatesFiles, array $r12ToCurrentBlockMapFiles){
+		foreach($canonicalBlockStatesFiles as $mappingProtocol => $canonicalBlockStatesFile){
 			$stream = PacketSerializer::decoder(
-				Utils::assumeNotFalse(file_get_contents(Path::join(\pocketmine\BEDROCK_DATA_PATH, "canonical_block_states" . $paths[self::CANONICAL_BLOCK_STATES_PATH] . ".nbt")), "Missing required resource file"),
+				Utils::assumeNotFalse(file_get_contents($canonicalBlockStatesFile), "Missing required resource file"),
 				0,
 				new PacketSerializerContext(GlobalItemTypeDictionary::getInstance()->getDictionary(GlobalItemTypeDictionary::getDictionaryProtocol($mappingProtocol)))
 			);
@@ -92,8 +115,9 @@ final class RuntimeBlockMapping{
 				$list[] = $stream->getNbtCompoundRoot();
 			}
 			$this->bedrockKnownStates[$mappingProtocol] = $list;
-
-			$this->setupLegacyMappings($mappingProtocol, $paths[self::R12_TO_CURRENT_BLOCK_MAP_PATH]);
+		}
+		foreach($r12ToCurrentBlockMapFiles as $mappingProtocol => $r12ToCurrentBlockMapFile){
+			$this->setupLegacyMappings($mappingProtocol, $r12ToCurrentBlockMapFile);
 		}
 	}
 
@@ -122,12 +146,12 @@ final class RuntimeBlockMapping{
 		return $sortPlayers;
 	}
 
-	private function setupLegacyMappings(int $mappingProtocol, string $path) : void{
+	private function setupLegacyMappings(int $mappingProtocol, string $r12ToCurrentBlockMapFile) : void{
 		$legacyIdMap = LegacyBlockIdToStringIdMap::getInstance();
 		/** @var R12ToCurrentBlockMapEntry[] $legacyStateMap */
 		$legacyStateMap = [];
 		$legacyStateMapReader = PacketSerializer::decoder(
-			Utils::assumeNotFalse(file_get_contents(Path::join(\pocketmine\BEDROCK_DATA_PATH, "r12_to_current_block_map" . $path . ".bin")), "Missing required resource file"),
+			Utils::assumeNotFalse(file_get_contents($r12ToCurrentBlockMapFile), "Missing required resource file"),
 			0,
 			new PacketSerializerContext(GlobalItemTypeDictionary::getInstance()->getDictionary(GlobalItemTypeDictionary::getDictionaryProtocol($mappingProtocol)))
 		);
