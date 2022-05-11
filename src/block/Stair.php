@@ -128,4 +128,8 @@ class Stair extends Transparent{
 
 		return parent::place($tx, $item, $blockReplace, $blockClicked, $face, $clickVector, $player);
 	}
+
+	public function getWaterloggingLevel() : int{
+		return 1;
+	}
 }
