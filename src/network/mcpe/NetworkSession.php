@@ -62,6 +62,7 @@ use pocketmine\network\mcpe\protocol\AdventureSettingsPacket;
 use pocketmine\network\mcpe\protocol\AvailableCommandsPacket;
 use pocketmine\network\mcpe\protocol\ChunkRadiusUpdatedPacket;
 use pocketmine\network\mcpe\protocol\ClientboundPacket;
+use pocketmine\network\mcpe\protocol\ClientCacheMissResponsePacket;
 use pocketmine\network\mcpe\protocol\DisconnectPacket;
 use pocketmine\network\mcpe\protocol\EmotePacket;
 use pocketmine\network\mcpe\protocol\MobArmorEquipmentPacket;
@@ -92,6 +93,7 @@ use pocketmine\network\mcpe\protocol\TakeItemActorPacket;
 use pocketmine\network\mcpe\protocol\TextPacket;
 use pocketmine\network\mcpe\protocol\TransferPacket;
 use pocketmine\network\mcpe\protocol\types\BlockPosition;
+use pocketmine\network\mcpe\protocol\types\ChunkCacheBlob;
 use pocketmine\network\mcpe\protocol\types\command\CommandData;
 use pocketmine\network\mcpe\protocol\types\command\CommandEnum;
 use pocketmine\network\mcpe\protocol\types\command\CommandParameter;
@@ -119,7 +121,9 @@ use pocketmine\utils\ObjectSet;
 use pocketmine\utils\TextFormat;
 use pocketmine\utils\Utils;
 use pocketmine\world\Position;
+use function array_keys;
 use function array_map;
+use function array_replace;
 use function array_values;
 use function base64_encode;
 use function bin2hex;
@@ -161,6 +165,9 @@ class NetworkSession{
 
 	/** @var Packet[] */
 	private array $sendBuffer = [];
+	/** @var string[] */
+	private array $chunkCacheBlobs = [];
+	private bool $chunkCacheEnabled = false;
 
 	/**
 	 * @var \SplQueue|CompressBatchPromise[]
@@ -237,6 +244,26 @@ class NetworkSession{
 			\Closure::fromCallable([$this, 'onPlayerCreated']),
 			fn() => $this->disconnect("Player creation failed") //TODO: this should never actually occur... right?
 		);
+	}
+
+	public function setCacheEnabled(bool $isEnabled) : void{
+		$this->chunkCacheEnabled = $isEnabled;
+	}
+
+	public function isCacheEnabled() : bool{
+		return $this->chunkCacheEnabled;
+	}
+
+	public function removeChunkCache(int $hash) : void{
+		unset($this->chunkCacheBlobs[$hash]);
+	}
+
+	public function getChunkCache(int $hash) : ?ChunkCacheBlob{
+		if(isset($this->chunkCacheBlobs[$hash])){
+			return new ChunkCacheBlob($hash, $this->chunkCacheBlobs[$hash]);
+		}
+
+		return null;
 	}
 
 	private function onPlayerCreated(Player $player) : void{
@@ -566,6 +593,7 @@ class NetworkSession{
 	 * Instructs the remote client to connect to a different server.
 	 */
 	public function transfer(string $ip, int $port, string $reason = "transfer") : void{
+		$this->flushChunkCache();
 		$this->tryDisconnect(function() use ($ip, $port, $reason) : void{
 			$this->sendDataPacket(TransferPacket::create($ip, $port), true);
 			if($this->player !== null){
@@ -728,7 +756,7 @@ class NetworkSession{
 		$this->sendDataPacket(PlayStatusPacket::create(PlayStatusPacket::PLAYER_SPAWN));
 		$this->setHandler(new SpawnResponsePacketHandler(function() : void{
 			$this->onClientSpawnResponse();
-		}));
+		}, $this));
 	}
 
 	private function onClientSpawnResponse() : void{
@@ -944,7 +972,8 @@ class NetworkSession{
 		ChunkCache::getInstance($world, $this->compressor)->request($chunkX, $chunkZ, $this->getProtocolId())->onResolve(
 
 			//this callback may be called synchronously or asynchronously, depending on whether the promise is resolved yet
-			function(CompressBatchPromise $promise) use ($world, $onCompletion, $chunkX, $chunkZ) : void{
+			function(CachedChunkPromise $promise) use ($world, $onCompletion, $chunkX, $chunkZ) : void{
+
 				if(!$this->isConnected()){
 					return;
 				}
@@ -960,9 +989,25 @@ class NetworkSession{
 					//to NEEDED if they want to be resent.
 					return;
 				}
+
+				$compressBatchPromise = new CompressBatchPromise();
+				$result = $promise->getResult();
+
+				if($this->isCacheEnabled()){
+					$compressBatchPromise->resolve($result->getCacheablePacket());
+
+					$this->chunkCacheBlobs = array_replace($this->chunkCacheBlobs, $result->getHashMap());
+					if(count($this->chunkCacheBlobs) > 4096) {
+						$this->disconnect("Too many pending blobs");
+						return;
+					}
+				}else{
+					$compressBatchPromise->resolve($result->getPacket());
+				}
+
 				$world->timings->syncChunkSend->startTiming();
 				try{
-					$this->queueCompressed($promise);
+					$this->queueCompressed($compressBatchPromise);
 					$onCompletion();
 				}finally{
 					$world->timings->syncChunkSend->stopTiming();
@@ -1097,5 +1142,16 @@ class NetworkSession{
 		}
 
 		$this->flushSendBuffer();
+	}
+
+	private function flushChunkCache() : void{
+		$blobs = array_map(static function(int $hash, string $blob) : ChunkCacheBlob{
+			return new ChunkCacheBlob($hash, $blob);
+		}, array_keys($this->chunkCacheBlobs), $this->chunkCacheBlobs);
+
+		if(count($blobs) > 0){
+			$this->sendDataPacket(ClientCacheMissResponsePacket::create($blobs));
+			unset($this->chunkCacheBlobs);
+		}
 	}
 }
