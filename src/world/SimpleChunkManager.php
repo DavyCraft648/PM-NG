@@ -34,15 +34,10 @@ class SimpleChunkManager implements ChunkManager{
 	/** @var Chunk[] */
 	protected $chunks = [];
 
-	/** @var int */
-	private $minY;
-	/** @var int */
-	private $maxY;
-
-	public function __construct(int $minY, int $maxY){
-		$this->minY = $minY;
-		$this->maxY = $maxY;
-	}
+	public function __construct(
+		private int $minY,
+		private int $maxY
+	){}
 
 	public function getBlockAt(int $x, int $y, int $z) : Block{
 		return $this->getBlockAtLayer($x, $y, $z);

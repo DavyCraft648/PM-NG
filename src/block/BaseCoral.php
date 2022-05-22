@@ -25,6 +25,7 @@ namespace pocketmine\block;
 
 use pocketmine\block\utils\CoralType;
 use pocketmine\block\utils\CoralTypeTrait;
+use pocketmine\block\utils\SupportType;
 use pocketmine\item\Item;
 
 abstract class BaseCoral extends Transparent{
@@ -59,5 +60,9 @@ abstract class BaseCoral extends Transparent{
 
 	public function getWaterloggingLevel() : int{
 		return 1;
+	}
+
+	public function getSupportType(int $facing) : SupportType{
+		return SupportType::NONE();
 	}
 }

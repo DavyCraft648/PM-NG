@@ -23,6 +23,7 @@ declare(strict_types=1);
 
 namespace pocketmine\block;
 
+use pocketmine\block\utils\SupportType;
 use pocketmine\block\utils\TreeType;
 use pocketmine\event\block\LeavesDecayEvent;
 use pocketmine\item\Item;
@@ -148,6 +149,9 @@ class Leaves extends Transparent{
 		if(($this->treeType->equals(TreeType::OAK()) || $this->treeType->equals(TreeType::DARK_OAK())) && mt_rand(1, 200) === 1){ //Apples
 			$drops[] = VanillaItems::APPLE();
 		}
+		if(mt_rand(1, 50) === 1){
+			$drops[] = VanillaItems::STICK()->setCount(mt_rand(1, 2));
+		}
 
 		return $drops;
 	}
@@ -166,5 +170,9 @@ class Leaves extends Transparent{
 
 	public function getWaterloggingLevel() : int{
 		return 1;
+	}
+
+	public function getSupportType(int $facing) : SupportType{
+		return SupportType::NONE();
 	}
 }

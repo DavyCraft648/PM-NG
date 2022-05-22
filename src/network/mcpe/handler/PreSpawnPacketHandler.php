@@ -46,20 +46,13 @@ use pocketmine\Server;
  * Handler used for the pre-spawn phase of the session.
  */
 class PreSpawnPacketHandler extends ChunkRequestPacketHandler{
-
-	/** @var Server */
-	private $server;
-	/** @var Player */
-	private $player;
-
-	private InventoryManager $inventoryManager;
-
-	public function __construct(Server $server, Player $player, NetworkSession $session, InventoryManager $inventoryManager){
+	public function __construct(
+		private Server $server,
+		private Player $player,
+		NetworkSession $session,
+		private InventoryManager $inventoryManager
+	){
 		parent::__construct($session);
-
-		$this->player = $player;
-		$this->server = $server;
-		$this->inventoryManager = $inventoryManager;
 	}
 
 	public function setUp() : void{
@@ -100,7 +93,7 @@ class PreSpawnPacketHandler extends ChunkRequestPacketHandler{
 			0,
 			"",
 			false,
-			 "NetherGames v4.0",
+			"NetherGames v4.0",
 			[],
 			0,
 			GlobalItemTypeDictionary::getInstance()->getDictionary($dictionaryProtocol)->getEntries()

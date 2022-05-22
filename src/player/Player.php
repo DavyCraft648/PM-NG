@@ -33,6 +33,7 @@ use pocketmine\data\java\GameModeIdMap;
 use pocketmine\entity\animation\Animation;
 use pocketmine\entity\animation\ArmSwingAnimation;
 use pocketmine\entity\animation\CriticalHitAnimation;
+use pocketmine\entity\Attribute;
 use pocketmine\entity\effect\VanillaEffects;
 use pocketmine\entity\Entity;
 use pocketmine\entity\Human;
@@ -65,6 +66,7 @@ use pocketmine\event\player\PlayerJoinEvent;
 use pocketmine\event\player\PlayerJumpEvent;
 use pocketmine\event\player\PlayerKickEvent;
 use pocketmine\event\player\PlayerMoveEvent;
+use pocketmine\event\player\PlayerPostChunkSendEvent;
 use pocketmine\event\player\PlayerQuitEvent;
 use pocketmine\event\player\PlayerRespawnEvent;
 use pocketmine\event\player\PlayerToggleFlightEvent;
@@ -785,6 +787,7 @@ class Player extends Human implements CommandSender, ChunkListener, IPlayer{
 
 							$this->getNetworkSession()->notifyTerrainReady();
 						}
+						(new PlayerPostChunkSendEvent($this, $X, $Z))->call();
 					});
 				},
 				static function() : void{
@@ -1251,11 +1254,11 @@ class Player extends Human implements CommandSender, ChunkListener, IPlayer{
 
 			$horizontalDistanceTravelled = sqrt((($from->x - $to->x) ** 2) + (($from->z - $to->z) ** 2));
 			if($horizontalDistanceTravelled > 0){
-				//TODO: check swimming (adds 0.015 exhaustion in MCPE)
+				//TODO: check for swimming
 				if($this->isSprinting()){
-					$this->hungerManager->exhaust(0.1 * $horizontalDistanceTravelled, PlayerExhaustEvent::CAUSE_SPRINTING);
+					$this->hungerManager->exhaust(0.01 * $horizontalDistanceTravelled, PlayerExhaustEvent::CAUSE_SPRINTING);
 				}else{
-					$this->hungerManager->exhaust(0.01 * $horizontalDistanceTravelled, PlayerExhaustEvent::CAUSE_WALKING);
+					$this->hungerManager->exhaust(0.0, PlayerExhaustEvent::CAUSE_WALKING);
 				}
 
 				if($this->nextChunkOrderRun > 20){
@@ -1650,7 +1653,7 @@ class Player extends Human implements CommandSender, ChunkListener, IPlayer{
 					}
 					$this->inventory->setItemInHand($item);
 				}
-				$this->hungerManager->exhaust(0.025, PlayerExhaustEvent::CAUSE_MINING);
+				$this->hungerManager->exhaust(0.005, PlayerExhaustEvent::CAUSE_MINING);
 				return true;
 			}
 		}else{
@@ -1762,7 +1765,7 @@ class Player extends Human implements CommandSender, ChunkListener, IPlayer{
 				$this->inventory->setItemInHand($heldItem);
 			}
 
-			$this->hungerManager->exhaust(0.3, PlayerExhaustEvent::CAUSE_ATTACK);
+			$this->hungerManager->exhaust(0.1, PlayerExhaustEvent::CAUSE_ATTACK);
 		}
 
 		return true;
@@ -1863,9 +1866,7 @@ class Player extends Human implements CommandSender, ChunkListener, IPlayer{
 			$event->call();
 			if(!$event->isCancelled()){
 				$emoteId = $event->getEmoteId();
-				foreach($this->getViewers() as $player){
-					$player->getNetworkSession()->onEmote($this, $emoteId);
-				}
+				parent::emote($emoteId);
 			}
 		}
 	}
@@ -2229,8 +2230,10 @@ class Player extends Human implements CommandSender, ChunkListener, IPlayer{
 			}
 		}
 
-		$this->getWorld()->dropExperience($this->location, $ev->getXpDropAmount());
-		$this->xpManager->setXpAndProgress(0, 0.0);
+		if(!$ev->getKeepXp()){
+			$this->getWorld()->dropExperience($this->location, $ev->getXpDropAmount());
+			$this->xpManager->setXpAndProgress(0, 0.0);
+		}
 
 		if($ev->getDeathMessage() != ""){
 			$this->server->broadcastMessage($ev->getDeathMessage());
@@ -2291,6 +2294,9 @@ class Player extends Human implements CommandSender, ChunkListener, IPlayer{
 				$this->setHealth($this->getMaxHealth());
 
 				foreach($this->attributeMap->getAll() as $attr){
+					if($attr->getId() === Attribute::EXPERIENCE || $attr->getId() === Attribute::EXPERIENCE_LEVEL){ //we have already reset both of those if needed when the player died
+						continue;
+					}
 					$attr->resetToDefault();
 				}
 
@@ -2311,7 +2317,7 @@ class Player extends Human implements CommandSender, ChunkListener, IPlayer{
 	protected function applyPostDamageEffects(EntityDamageEvent $source) : void{
 		parent::applyPostDamageEffects($source);
 
-		$this->hungerManager->exhaust(0.3, PlayerExhaustEvent::CAUSE_DAMAGE);
+		$this->hungerManager->exhaust(0.1, PlayerExhaustEvent::CAUSE_DAMAGE);
 	}
 
 	public function attack(EntityDamageEvent $source) : void{
@@ -2487,7 +2493,6 @@ class Player extends Human implements CommandSender, ChunkListener, IPlayer{
 			return false;
 		}
 
-		//TODO: client side race condition here makes the opening work incorrectly
 		$this->removeCurrentWindow();
 
 		if(($inventoryManager = $this->getNetworkSession()->getInvManager()) === null){
@@ -2503,14 +2508,14 @@ class Player extends Human implements CommandSender, ChunkListener, IPlayer{
 	public function removeCurrentWindow() : void{
 		$this->doCloseInventory();
 		if($this->currentWindow !== null){
-			(new InventoryCloseEvent($this->currentWindow, $this))->call();
-
+			$currentWindow = $this->currentWindow;
 			$this->logger->debug("Closing inventory " . get_class($this->currentWindow) . "#" . spl_object_id($this->currentWindow));
 			$this->currentWindow->onClose($this);
 			if(($inventoryManager = $this->getNetworkSession()->getInvManager()) !== null){
 				$inventoryManager->onCurrentWindowRemove();
 			}
 			$this->currentWindow = null;
+			(new InventoryCloseEvent($currentWindow, $this))->call();
 		}
 	}
 

@@ -25,6 +25,7 @@ namespace pocketmine\block;
 
 use pocketmine\block\utils\Fallable;
 use pocketmine\block\utils\FallableTrait;
+use pocketmine\block\utils\SupportType;
 use pocketmine\event\block\BlockTeleportEvent;
 use pocketmine\item\Item;
 use pocketmine\math\Vector3;
@@ -85,5 +86,9 @@ class DragonEgg extends Transparent implements Fallable{
 
 	public function getWaterloggingLevel() : int{
 		return 1;
+	}
+
+	public function getSupportType(int $facing) : SupportType{
+		return SupportType::NONE();
 	}
 }

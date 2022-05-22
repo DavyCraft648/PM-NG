@@ -32,9 +32,7 @@ use pocketmine\player\Player;
 use function in_array;
 
 class LiquidBucket extends Item{
-
-	/** @var Liquid */
-	private $liquid;
+	private Liquid $liquid;
 
 	public function __construct(ItemIdentifier $identifier, string $name, Liquid $liquid){
 		parent::__construct($identifier, $name);
