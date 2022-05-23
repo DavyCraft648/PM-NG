@@ -246,14 +246,14 @@ class InventoryManager{
 		});
 	}
 
-	public function onCurrentWindowRemove() : void{
+	public function onCurrentWindowRemove(bool $pendingClose = true) : void{
 		if(isset($this->windowMap[$this->lastInventoryNetworkId])){
 			$this->remove($this->lastInventoryNetworkId);
 			$this->session->sendDataPacket(ContainerClosePacket::create($this->lastInventoryNetworkId, true));
 			if($this->pendingCloseWindowId !== null){
 				throw new AssumptionFailedError("We should not have opened a new window while a window was waiting to be closed");
 			}
-			$this->pendingCloseWindowId = $this->lastInventoryNetworkId;
+			$this->pendingCloseWindowId = $pendingClose ? $this->lastInventoryNetworkId : null;
 		}
 	}
 
