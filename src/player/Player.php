@@ -1380,6 +1380,11 @@ class Player extends Human implements CommandSender, ChunkListener, IPlayer{
 	public function chat(string $message) : bool{
 		$this->removeCurrentWindow();
 
+		if($this->messageCounter <= 0){
+			//the check below would take care of this (0 * (maxlen + 1) = 0), but it's better be explicit
+			return false;
+		}
+
 		//Fast length check, to make sure we don't get hung trying to explode MBs of string ...
 		$maxTotalLength = $this->messageCounter * (self::MAX_CHAT_BYTE_LENGTH + 1);
 		if(strlen($message) > $maxTotalLength){
@@ -2385,6 +2390,7 @@ class Player extends Human implements CommandSender, ChunkListener, IPlayer{
 		if(parent::teleport($pos, $yaw, $pitch)){
 
 			$this->removeCurrentWindow();
+			$this->stopSleep();
 
 			$this->sendPosition($this->location, $this->location->yaw, $this->location->pitch, MovePlayerPacket::MODE_TELEPORT);
 			$this->broadcastMovement(true);
@@ -2396,7 +2402,6 @@ class Player extends Human implements CommandSender, ChunkListener, IPlayer{
 			if($this->spawnChunkLoadCount !== -1){
 				$this->spawnChunkLoadCount = 0;
 			}
-			$this->stopSleep();
 			$this->blockBreakHandler = null;
 
 			//TODO: workaround for player last pos not getting updated

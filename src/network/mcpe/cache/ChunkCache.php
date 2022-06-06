@@ -84,7 +84,7 @@ class ChunkCache implements ChunkListener{
 	}
 
 	/** @var CachedChunkPromise[][] */
-	private $caches = [];
+	private array $caches = [];
 
 	private int $hits = 0;
 	private int $misses = 0;

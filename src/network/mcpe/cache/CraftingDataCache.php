@@ -78,7 +78,6 @@ final class CraftingDataCache{
 	 */
 	private function buildCraftingDataCache(CraftingManager $manager) : array{
 		Timings::$craftingDataCacheRebuild->startTiming();
-
 		$packets = [];
 
 		foreach(GlobalItemTypeDictionary::getInstance()->getDictionaries() as $dictionaryProtocol => $unused){

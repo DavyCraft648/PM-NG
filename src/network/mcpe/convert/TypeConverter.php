@@ -37,6 +37,7 @@ use pocketmine\item\Durable;
 use pocketmine\item\Item;
 use pocketmine\item\ItemFactory;
 use pocketmine\item\ItemIds;
+use pocketmine\item\VanillaItems;
 use pocketmine\nbt\NbtException;
 use pocketmine\nbt\tag\CompoundTag;
 use pocketmine\nbt\tag\IntTag;
@@ -61,7 +62,7 @@ class TypeConverter{
 	private const PM_META_TAG = "___Meta___";
 
 	/** @var int[] */
-	private array $shieldRuntimeIds;
+	private array $shieldRuntimeIds = [];
 
 	public function __construct(){
 		//TODO: inject stuff via constructor
@@ -129,7 +130,7 @@ class TypeConverter{
 
 	public function recipeIngredientToCoreItemStack(int $dictionaryProtocol, RecipeIngredient $ingredient) : Item{
 		if($ingredient->getId() === 0){
-			return ItemFactory::getInstance()->get(ItemIds::AIR, 0, 0);
+			return VanillaItems::AIR();
 		}
 		[$id, $meta] = ItemTranslator::getInstance()->fromNetworkIdWithWildcardHandling($dictionaryProtocol, $ingredient->getId(), $ingredient->getMeta());
 		return ItemFactory::getInstance()->get($id, $meta, $ingredient->getCount());
@@ -205,7 +206,7 @@ class TypeConverter{
 	 */
 	public function netItemStackToCore(int $protocolId, ItemStack $itemStack) : Item{
 		if($itemStack->getId() === 0){
-			return ItemFactory::getInstance()->get(ItemIds::AIR, 0, 0);
+			return VanillaItems::AIR();
 		}
 		$compound = $itemStack->getNbt();
 

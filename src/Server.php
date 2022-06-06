@@ -1130,6 +1130,7 @@ class Server{
 				$creationOptions->setGeneratorClass($generatorClass);
 				$creationOptions->setGeneratorOptions($generatorOptions);
 
+				$creationOptions->setDifficulty($this->getDifficulty());
 				if(isset($options["difficulty"]) && is_string($options["difficulty"])){
 					$creationOptions->setDifficulty(World::getDifficultyFromString($options["difficulty"]));
 				}
@@ -1173,6 +1174,7 @@ class Server{
 				if($convertedSeed !== null){
 					$creationOptions->setSeed($convertedSeed);
 				}
+				$creationOptions->setDifficulty($this->getDifficulty());
 				$this->worldManager->generateWorld($default, $creationOptions);
 			}
 

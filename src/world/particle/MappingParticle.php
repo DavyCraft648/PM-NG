@@ -29,7 +29,8 @@ abstract class MappingParticle implements Particle{
 
 	protected int $mappingProtocol;
 
-	public function __construct(protected Block $block){}
+	//TODO: rename this parameter when we can break BC
+	public function __construct(protected Block $b){}
 
 	public function setMappingProtocol(int $mappingProtocol) : void{
 		$this->mappingProtocol = $mappingProtocol;
