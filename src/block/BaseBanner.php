@@ -146,6 +146,10 @@ abstract class BaseBanner extends Transparent{
 		return $result;
 	}
 
+	public function getWaterloggingLevel() : int{
+		return 1;
+	}
+
 	public function asItem() : Item{
 		return VanillaItems::BANNER()->setColor($this->color);
 	}

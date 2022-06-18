@@ -1056,11 +1056,13 @@ abstract class Entity{
 	}
 
 	public function isUnderwater() : bool{
-		$block = $this->getWorld()->getBlockAt((int) floor($this->location->x), $blockY = (int) floor($y = ($this->location->y + $this->getEyeHeight())), (int) floor($this->location->z));
+		foreach([0, 1] as $layer){
+			$block = $this->getWorld()->getBlockAtLayer((int) floor($this->location->x), $blockY = (int) floor($y = ($this->location->y + $this->getEyeHeight())), (int) floor($this->location->z), $layer);
 
-		if($block instanceof Water){
-			$f = ($blockY + 1) - ($block->getFluidHeightPercent() - 0.1111111);
-			return $y < $f;
+			if($block instanceof Water){
+				$f = ($blockY + 1) - ($block->getFluidHeightPercent() - 0.1111111);
+				return $y < $f;
+			}
 		}
 
 		return false;
@@ -1211,7 +1213,13 @@ abstract class Entity{
 		for($z = $minZ; $z <= $maxZ; ++$z){
 			for($x = $minX; $x <= $maxX; ++$x){
 				for($y = $minY; $y <= $maxY; ++$y){
-					yield $world->getBlockAt($x, $y, $z);
+					foreach([0, 1] as $layer){
+						$block = $world->getBlockAtLayer($x, $y, $z, $layer);
+						if($layer !== 0 && $block->getId() === 0){
+							continue;
+						}
+						yield $block;
+					}
 				}
 			}
 		}

@@ -54,4 +54,8 @@ class Cobweb extends Flowable{
 	public function blocksDirectSkyLight() : bool{
 		return true;
 	}
+
+	public function getWaterloggingLevel() : int{
+		return 1;
+	}
 }

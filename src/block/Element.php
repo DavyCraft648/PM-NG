@@ -46,4 +46,8 @@ class Element extends Opaque{
 	public function getSymbol() : string{
 		return $this->symbol;
 	}
+
+	public function getWaterloggingLevel() : int{
+		return 1;
+	}
 }

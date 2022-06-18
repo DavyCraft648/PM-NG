@@ -66,4 +66,8 @@ class EndPortalFrame extends Opaque{
 	protected function recalculateCollisionBoxes() : array{
 		return [AxisAlignedBB::one()->trim(Facing::UP, 3 / 16)];
 	}
+
+	public function getWaterloggingLevel() : int{
+		return 1;
+	}
 }

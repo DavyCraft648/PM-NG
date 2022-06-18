@@ -175,6 +175,10 @@ class Leaves extends Transparent{
 		return 60;
 	}
 
+	public function getWaterloggingLevel() : int{
+		return 1;
+	}
+
 	public function getSupportType(int $facing) : SupportType{
 		return SupportType::NONE();
 	}

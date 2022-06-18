@@ -75,4 +75,8 @@ class EnderChest extends Transparent{
 	public function isAffectedBySilkTouch() : bool{
 		return true;
 	}
+
+	public function getWaterloggingLevel() : int{
+		return 1;
+	}
 }

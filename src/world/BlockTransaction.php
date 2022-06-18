@@ -28,7 +28,7 @@ use pocketmine\math\Vector3;
 use pocketmine\utils\Utils;
 
 class BlockTransaction{
-	/** @var Block[][][] */
+	/** @var Block[][][][] */
 	private array $blocks = [];
 
 	/**
@@ -58,7 +58,7 @@ class BlockTransaction{
 	 * @return $this
 	 */
 	public function addBlockAt(int $x, int $y, int $z, Block $state) : self{
-		$this->blocks[$x][$y][$z] = $state;
+		$this->blocks[$x][$y][$z][$state->getLayer()] = $state;
 		return $this;
 	}
 
@@ -66,15 +66,15 @@ class BlockTransaction{
 	 * Reads a block from the given world, masked by the blocks in this transaction. This can be useful if you want to
 	 * add blocks to the transaction that depend on previous blocks should they exist.
 	 */
-	public function fetchBlock(Vector3 $pos) : Block{
-		return $this->fetchBlockAt($pos->getFloorX(), $pos->getFloorY(), $pos->getFloorZ());
+	public function fetchBlock(Vector3 $pos, int $layer = 0) : Block{
+		return $this->fetchBlockAt($pos->getFloorX(), $pos->getFloorY(), $pos->getFloorZ(), $layer);
 	}
 
 	/**
 	 * @see BlockTransaction::fetchBlock()
 	 */
-	public function fetchBlockAt(int $x, int $y, int $z) : Block{
-		return $this->blocks[$x][$y][$z] ?? $this->world->getBlockAt($x, $y, $z);
+	public function fetchBlockAt(int $x, int $y, int $z, int $layer = 0) : Block{
+		return $this->blocks[$x][$y][$z][$layer] ?? $this->world->getBlockAtLayer($x, $y, $z, $layer);
 	}
 
 	/**
@@ -93,9 +93,9 @@ class BlockTransaction{
 		}
 		$changedBlocks = 0;
 		foreach($this->getBlocks() as [$x, $y, $z, $block]){
-			$oldBlock = $this->world->getBlockAt($x, $y, $z);
+			$oldBlock = $this->world->getBlockAtLayer($x, $y, $z, $block->getLayer());
 			if(!$oldBlock->isSameState($block)){
-				$this->world->setBlockAt($x, $y, $z, $block);
+				$this->world->setBlockAtLayer($x, $y, $z, $block, $block->getLayer());
 				$changedBlocks++;
 			}
 		}
@@ -109,8 +109,10 @@ class BlockTransaction{
 	public function getBlocks() : \Generator{
 		foreach($this->blocks as $x => $yLine){
 			foreach($yLine as $y => $zLine){
-				foreach($zLine as $z => $block){
-					yield [$x, $y, $z, $block];
+				foreach($zLine as $z => $layerLine){
+					foreach($layerLine as $block){
+						yield [$x, $y, $z, $block];
+					}
 				}
 			}
 		}

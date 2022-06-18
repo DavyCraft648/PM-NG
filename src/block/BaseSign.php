@@ -147,6 +147,10 @@ abstract class BaseSign extends Transparent{
 		return false;
 	}
 
+	public function getWaterloggingLevel() : int{
+		return 1;
+	}
+
 	public function asItem() : Item{
 		return ($this->asItemCallback)();
 	}

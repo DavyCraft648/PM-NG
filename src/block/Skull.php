@@ -152,4 +152,8 @@ class Skull extends Flowable{
 		}
 		return parent::place($tx, $item, $blockReplace, $blockClicked, $face, $clickVector, $player);
 	}
+
+	public function getWaterloggingLevel() : int{
+		return 1;
+	}
 }

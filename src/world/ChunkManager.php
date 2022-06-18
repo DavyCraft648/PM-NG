@@ -33,12 +33,16 @@ interface ChunkManager{
 	 */
 	public function getBlockAt(int $x, int $y, int $z) : Block;
 
+	public function getBlockAtLayer(int $x, int $y, int $z, int $layer = 0) : Block;
+
 	/**
 	 * Sets the block at the given coordinates to the block state specified.
 	 *
 	 * @throws \InvalidArgumentException
 	 */
 	public function setBlockAt(int $x, int $y, int $z, Block $block) : void;
+
+	public function setBlockAtLayer(int $x, int $y, int $z, Block $block, int $layer = 0) : void;
 
 	public function getChunk(int $chunkX, int $chunkZ) : ?Chunk;
 

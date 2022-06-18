@@ -115,6 +115,10 @@ class RedstoneComparator extends Flowable{
 		}
 	}
 
+	public function getWaterloggingLevel() : int{
+		return 2;
+	}
+
 	private function canBeSupportedBy(Block $block) : bool{
 		return !$block->getSupportType(Facing::UP)->equals(SupportType::NONE());
 	}

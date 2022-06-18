@@ -159,6 +159,10 @@ class Wall extends Transparent{
 		];
 	}
 
+	public function getWaterloggingLevel() : int{
+		return 1;
+	}
+
 	public function getSupportType(int $facing) : SupportType{
 		return Facing::axis($facing) === Axis::Y ? SupportType::CENTER() : SupportType::NONE();
 	}

@@ -26,6 +26,7 @@ namespace pocketmine\entity\object;
 use pocketmine\block\Block;
 use pocketmine\block\BlockFactory;
 use pocketmine\block\utils\Fallable;
+use pocketmine\block\Water;
 use pocketmine\data\bedrock\block\BlockStateDeserializeException;
 use pocketmine\data\SavedDataLoadingException;
 use pocketmine\entity\Entity;
@@ -136,7 +137,11 @@ class FallingBlock extends Entity{
 					$ev = new EntityBlockChangeEvent($this, $block, $blockTarget ?? $this->block);
 					$ev->call();
 					if(!$ev->isCancelled()){
-						$world->setBlock($pos, $ev->getTo());
+						$to = $ev->getTo();
+						$world->setBlock($pos, $to);
+						if($block instanceof Water && $to->canWaterlogged($block)){
+							$world->setBlockLayer($pos, $block, 1);
+						}
 					}
 				}
 				$hasUpdate = true;

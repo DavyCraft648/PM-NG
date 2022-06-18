@@ -97,4 +97,8 @@ class Chest extends Transparent{
 	public function getFuelTime() : int{
 		return 300;
 	}
+
+	public function getWaterloggingLevel() : int{
+		return 1;
+	}
 }

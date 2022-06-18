@@ -115,4 +115,8 @@ class ShulkerBox extends Opaque{
 
 		return true;
 	}
+
+	public function getWaterloggingLevel() : int{
+		return 1;
+	}
 }

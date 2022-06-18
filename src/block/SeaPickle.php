@@ -95,7 +95,7 @@ class SeaPickle extends Transparent{
 	}
 
 	public function place(BlockTransaction $tx, Item $item, Block $blockReplace, Block $blockClicked, int $face, Vector3 $clickVector, ?Player $player = null) : bool{
-		$this->underwater = false; //TODO: implement this once we have new water logic in place
+		$this->underwater = $blockReplace->isWaterlogged() || ($blockReplace instanceof Water && $blockReplace->getDecay() === 0);
 		if($blockReplace instanceof SeaPickle && $blockReplace->count < self::MAX_COUNT){
 			$this->count = $blockReplace->count + 1;
 		}
@@ -110,5 +110,9 @@ class SeaPickle extends Transparent{
 
 	public function getDropsForCompatibleTool(Item $item) : array{
 		return [$this->asItem()->setCount($this->count)];
+	}
+
+	public function getWaterloggingLevel() : int{
+		return 1;
 	}
 }

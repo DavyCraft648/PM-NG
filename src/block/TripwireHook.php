@@ -78,5 +78,9 @@ class TripwireHook extends Flowable{
 		return false;
 	}
 
+	public function getWaterloggingLevel() : int{
+		return 2;
+	}
+
 	//TODO
 }

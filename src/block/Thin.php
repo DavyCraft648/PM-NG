@@ -84,6 +84,10 @@ class Thin extends Transparent{
 		return $bbs;
 	}
 
+	public function getWaterloggingLevel() : int{
+		return 1;
+	}
+
 	public function getSupportType(int $facing) : SupportType{
 		return SupportType::NONE();
 	}

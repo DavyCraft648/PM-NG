@@ -36,6 +36,7 @@ use pocketmine\math\Facing;
 use pocketmine\math\Vector3;
 use pocketmine\world\sound\FizzSound;
 use pocketmine\world\sound\Sound;
+use function in_array;
 use function lcg_value;
 
 abstract class Liquid extends Transparent{
@@ -154,7 +155,10 @@ abstract class Liquid extends Transparent{
 
 	protected function getEffectiveFlowDecay(Block $block) : int{
 		if(!($block instanceof Liquid) || !$block->isSameType($this)){
-			return -1;
+			$block = $block->getBlockLayer(1);
+			if(!($block instanceof Liquid) || !$block->isSameType($this)){
+				return -1;
+			}
 		}
 
 		return $block->falling ? 0 : $block->decay;
@@ -257,8 +261,17 @@ abstract class Liquid extends Transparent{
 	}
 
 	public function onNearbyBlockChange() : void{
+		$world = $this->position->getWorld();
+		if($this->layer > 0){
+			$layer1 = $world->getBlockLayer($this->position);
+			if($layer1->getId() === 0){
+				$world->setBlockLayer($this->position, $this, 0, false);
+				$world->setBlockLayer($this->position, VanillaBlocks::AIR(), 1);
+				return;
+			}
+		}
 		if(!$this->checkForHarden()){
-			$this->position->getWorld()->scheduleDelayedBlockUpdate($this->position, $this->tickRate());
+			$world->scheduleDelayedBlockUpdate($this->position, $this->tickRate());
 		}
 	}
 
@@ -297,13 +310,13 @@ abstract class Liquid extends Transparent{
 
 			if($falling !== $this->falling || (!$falling && $newDecay !== $this->decay)){
 				if(!$falling && $newDecay < 0){
-					$world->setBlock($this->position, VanillaBlocks::AIR());
+					$world->setBlockLayer($this->position, VanillaBlocks::AIR(), $this->layer);
 					return;
 				}
 
 				$this->falling = $falling;
 				$this->decay = $falling ? 0 : $newDecay;
-				$world->setBlock($this->position, $this); //local block update will cause an update to be scheduled
+				$world->setBlockLayer($this->position, $this, $this->layer); //local block update will cause an update to be scheduled
 			}
 		}
 
@@ -311,6 +324,9 @@ abstract class Liquid extends Transparent{
 
 		$this->flowIntoBlock($bottomBlock, 0, true);
 
+		if($bottomBlock->getBlockLayer(1)->getId() !== 0){
+			$bottomBlock = $bottomBlock->getBlockLayer(1);
+		}
 		if($this->isSource() || !$bottomBlock->canBeFlowedInto()){
 			if($this->falling){
 				$adjacentDecay = 1; //falling liquid behaves like source block
@@ -330,7 +346,7 @@ abstract class Liquid extends Transparent{
 	}
 
 	protected function flowIntoBlock(Block $block, int $newFlowDecay, bool $falling) : void{
-		if($this->canFlowInto($block) && !($block instanceof Liquid)){
+		if($this->canFlowInto($block) && !($block->getBlockLayer(0) instanceof Liquid) && !($block->getBlockLayer(1) instanceof Liquid)){
 			$new = clone $this;
 			$new->falling = $falling;
 			$new->decay = $falling ? 0 : $newFlowDecay;
@@ -338,19 +354,25 @@ abstract class Liquid extends Transparent{
 			$ev = new BlockSpreadEvent($block, $this, $new);
 			$ev->call();
 			if(!$ev->isCancelled()){
-				if($block->getTypeId() !== BlockTypeIds::AIR){
-					$this->position->getWorld()->useBreakOn($block->position);
+				foreach([$block, $block->getBlockLayer($block->getLayer() === 1 ? 0 : 1)] as $b){
+					if(!$b->canWaterlogged($this) && $b->getTypeId() !== BlockTypeIds::AIR){
+						$this->position->getWorld()->useBreakOn($block->position, $i, null, false, $b->getLayer());
+					}
 				}
 
-				$this->position->getWorld()->setBlock($block->position, $ev->getNewState());
+				$this->position->getWorld()->setBlockLayer($block->position, $ev->getNewState(), (in_array(1, $this->getSupportedLayers(), true) && $block->canWaterlogged($this)) ? 1 : 0);
 			}
 		}
 	}
 
 	/** @phpstan-impure */
 	private function getSmallestFlowDecay(Block $block, int $decay) : int{
+		$block = $block->getBlockLayer(0);
 		if(!($block instanceof Liquid) || !$block->isSameType($this)){
-			return $decay;
+			$block = $block->getBlockLayer(1);
+			if(!($block instanceof Liquid) || !$block->isSameType($this)){
+				return $decay;
+			}
 		}
 
 		$blockDecay = $block->decay;
@@ -379,9 +401,14 @@ abstract class Liquid extends Transparent{
 	}
 
 	protected function canFlowInto(Block $block) : bool{
+		$waterlogging = false;
+		if(in_array(1, $this->getSupportedLayers(), true) && $block->canWaterlogged($this)){
+			$layer2 = $block->getBlockLayer(1);
+			$waterlogging = !($layer2 instanceof Liquid && $layer2->isSource());
+		}
 		return
 			$this->position->getWorld()->isInWorld($block->position->x, $block->position->y, $block->position->z) &&
-			$block->canBeFlowedInto() &&
+			($block->canBeFlowedInto() || $waterlogging) &&
 			!($block instanceof Liquid && $block->isSource()); //TODO: I think this should only be liquids of the same type
 	}
 }

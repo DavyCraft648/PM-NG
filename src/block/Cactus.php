@@ -146,4 +146,8 @@ class Cactus extends Transparent{
 
 		return false;
 	}
+
+	public function getWaterloggingLevel() : int{
+		return 1;
+	}
 }

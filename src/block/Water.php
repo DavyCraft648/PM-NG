@@ -27,6 +27,7 @@ use pocketmine\entity\Entity;
 use pocketmine\world\sound\BucketEmptyWaterSound;
 use pocketmine\world\sound\BucketFillWaterSound;
 use pocketmine\world\sound\Sound;
+use function array_merge;
 
 class Water extends Liquid{
 
@@ -56,5 +57,9 @@ class Water extends Liquid{
 			$entity->extinguish();
 		}
 		return true;
+	}
+
+	public function getSupportedLayers() : array{
+		return array_merge(parent::getSupportedLayers(), [1]);
 	}
 }

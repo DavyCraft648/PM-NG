@@ -37,4 +37,8 @@ final class ChemistryTable extends Opaque{
 		//TODO
 		return false;
 	}
+
+	public function getWaterloggingLevel() : int{
+		return 2;
+	}
 }

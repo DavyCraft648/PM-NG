@@ -84,6 +84,10 @@ class DragonEgg extends Transparent implements Fallable{
 		}
 	}
 
+	public function getWaterloggingLevel() : int{
+		return 1;
+	}
+
 	public function getSupportType(int $facing) : SupportType{
 		return SupportType::NONE();
 	}

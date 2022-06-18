@@ -53,4 +53,8 @@ class EnchantingTable extends Transparent{
 
 		return true;
 	}
+
+	public function getWaterloggingLevel() : int{
+		return 1;
+	}
 }

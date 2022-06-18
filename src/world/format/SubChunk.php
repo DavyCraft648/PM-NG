@@ -73,18 +73,24 @@ class SubChunk{
 	 */
 	public function getEmptyBlockId() : int{ return $this->emptyBlockId; }
 
-	public function getFullBlock(int $x, int $y, int $z) : int{
-		if(count($this->blockLayers) === 0){
+	public function getFullBlock(int $x, int $y, int $z, int $layer = 0) : int{
+		if(!isset($this->blockLayers[$layer])){
 			return $this->emptyBlockId;
 		}
-		return $this->blockLayers[0]->get($x, $y, $z);
+		if($x > SubChunk::COORD_MASK || $z > SubChunk::COORD_MASK){
+			throw new \InvalidArgumentException("Coordinates x=$x,y=$y,z=$z is out of bounds");
+		}
+		return $this->blockLayers[$layer]->get($x, $y, $z);
 	}
 
-	public function setFullBlock(int $x, int $y, int $z, int $block) : void{
-		if(count($this->blockLayers) === 0){
-			$this->blockLayers[] = new PalettedBlockArray($this->emptyBlockId);
+	public function setFullBlock(int $x, int $y, int $z, int $block, int $layer = 0) : void{
+		if(!isset($this->blockLayers[$layer])){
+			$this->blockLayers[$layer] = new PalettedBlockArray($this->emptyBlockId);
 		}
-		$this->blockLayers[0]->set($x, $y, $z, $block);
+		if($x > SubChunk::COORD_MASK || $z > SubChunk::COORD_MASK){
+			throw new \InvalidArgumentException("Coordinates x=$x,y=$y,z=$z is out of bounds");
+		}
+		$this->blockLayers[$layer]->set($x, $y, $z, $block);
 	}
 
 	/**
@@ -97,6 +103,9 @@ class SubChunk{
 	public function getHighestBlockAt(int $x, int $z) : ?int{
 		if(count($this->blockLayers) === 0){
 			return null;
+		}
+		if($x > SubChunk::COORD_MASK || $z > SubChunk::COORD_MASK){
+			throw new \InvalidArgumentException("Coordinates x=$x,z=$z is out of bounds");
 		}
 		for($y = self::EDGE_LENGTH - 1; $y >= 0; --$y){
 			if($this->blockLayers[0]->get($x, $y, $z) !== $this->emptyBlockId){

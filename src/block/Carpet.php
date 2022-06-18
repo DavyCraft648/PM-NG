@@ -73,4 +73,8 @@ class Carpet extends Flowable{
 	public function getFlammability() : int{
 		return 20;
 	}
+
+	public function getWaterloggingLevel() : int{
+		return 1;
+	}
 }

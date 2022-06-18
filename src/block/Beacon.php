@@ -29,5 +29,9 @@ final class Beacon extends Transparent{
 		return 15;
 	}
 
+	public function getWaterloggingLevel() : int{
+		return 1;
+	}
+
 	//TODO
 }

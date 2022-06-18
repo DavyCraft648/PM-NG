@@ -172,7 +172,7 @@ class World implements ChunkManager{
 
 	/** @var Entity[] */
 	public array $updateEntities = [];
-	/** @var Block[][] */
+	/** @var Block[][][] */
 	private array $blockCache = [];
 
 	private int $sendTimeTicker = 0;
@@ -810,8 +810,10 @@ class World implements ChunkManager{
 			if(!$this->isInLoadedTerrain($vec)){
 				continue;
 			}
-			$block = $this->getBlock($vec);
-			$block->onScheduledUpdate();
+			foreach([0, 1] as $layer){
+				$block = $this->getBlockLayer($vec, $layer);
+				$block->onScheduledUpdate();
+			}
 		}
 
 		//Normal updates
@@ -823,16 +825,18 @@ class World implements ChunkManager{
 				continue;
 			}
 
-			$block = $this->getBlockAt($x, $y, $z);
-			$block->readStateFromWorld(); //for blocks like fences, force recalculation of connected AABBs
+			foreach([0, 1] as $layer){
+				$block = $this->getBlockAtLayer($x, $y, $z, $layer);
+				$block->readStateFromWorld(); //for blocks like fences, force recalculation of connected AABBs
 
-			$ev = new BlockUpdateEvent($block);
-			$ev->call();
-			if(!$ev->isCancelled()){
-				foreach($this->getNearbyEntities(AxisAlignedBB::one()->offset($x, $y, $z)) as $entity){
-					$entity->onNearbyBlockChange();
+				$ev = new BlockUpdateEvent($block);
+				$ev->call();
+				if(!$ev->isCancelled()){
+					foreach($this->getNearbyEntities(AxisAlignedBB::one()->offset($x, $y, $z)) as $entity){
+						$entity->onNearbyBlockChange();
+					}
+					$block->onNearbyBlockChange();
 				}
-				$block->onNearbyBlockChange();
 			}
 		}
 
@@ -942,14 +946,16 @@ class World implements ChunkManager{
 				throw new \TypeError("Expected Vector3 in blocks array, got " . (is_object($b) ? get_class($b) : gettype($b)));
 			}
 
-			$fullBlock = $this->getBlockAt($b->x, $b->y, $b->z);
 			$blockPosition = BlockPosition::fromVector3($b);
-			$packets[] = UpdateBlockPacket::create(
-				$blockPosition,
-				$blockMapping->toRuntimeId($fullBlock->getStateId()),
-				UpdateBlockPacket::FLAG_NETWORK,
-				UpdateBlockPacket::DATA_LAYER_NORMAL
-			);
+			foreach([UpdateBlockPacket::DATA_LAYER_NORMAL, UpdateBlockPacket::DATA_LAYER_LIQUID] as $layer){
+				$fullBlock = $this->getBlockAtLayer($b->x, $b->y, $b->z, $layer);
+				$packets[] = UpdateBlockPacket::create(
+					$blockPosition,
+					$blockMapping->toRuntimeId($fullBlock->getStateId()),
+					UpdateBlockPacket::FLAG_NETWORK,
+					$layer
+				);
+			}
 
 			$tile = $this->getTileAt($b->x, $b->y, $b->z);
 			if($tile instanceof Spawnable){
@@ -1213,9 +1219,11 @@ class World implements ChunkManager{
 			for($z = $minZ; $z <= $maxZ; ++$z){
 				for($x = $minX; $x <= $maxX; ++$x){
 					for($y = $minY; $y <= $maxY; ++$y){
-						$block = $this->getBlockAt($x, $y, $z);
-						if($block->collidesWithBB($bb)){
-							return [$block];
+						foreach([0, 1] as $layer){
+							$block = $this->getBlockAtLayer($x, $y, $z, $layer);
+							if($block->collidesWithBB($bb)){
+								return [$block];
+							}
 						}
 					}
 				}
@@ -1224,9 +1232,11 @@ class World implements ChunkManager{
 			for($z = $minZ; $z <= $maxZ; ++$z){
 				for($x = $minX; $x <= $maxX; ++$x){
 					for($y = $minY; $y <= $maxY; ++$y){
-						$block = $this->getBlockAt($x, $y, $z);
-						if($block->collidesWithBB($bb)){
-							$collides[] = $block;
+						foreach([0, 1] as $layer){
+							$block = $this->getBlockAtLayer($x, $y, $z, $layer);
+							if($block->collidesWithBB($bb)){
+								$collides[] = $block;
+							}
 						}
 					}
 				}
@@ -1252,10 +1262,12 @@ class World implements ChunkManager{
 		for($z = $minZ; $z <= $maxZ; ++$z){
 			for($x = $minX; $x <= $maxX; ++$x){
 				for($y = $minY; $y <= $maxY; ++$y){
-					$block = $this->getBlockAt($x, $y, $z);
-					foreach($block->getCollisionBoxes() as $blockBB){
-						if($blockBB->intersectsWith($bb)){
-							$collides[] = $blockBB;
+					foreach([0, 1] as $layer){
+						$block = $this->getBlockAtLayer($x, $y, $z, $layer);
+						foreach($block->getCollisionBoxes() as $blockBB){
+							if($blockBB->intersectsWith($bb)){
+								$collides[] = $blockBB;
+							}
 						}
 					}
 				}
@@ -1516,19 +1528,27 @@ class World implements ChunkManager{
 	 * @param bool $addToCache Whether to cache the block object created by this method call.
 	 */
 	public function getBlockAt(int $x, int $y, int $z, bool $cached = true, bool $addToCache = true) : Block{
+		return $this->getBlockAtLayer($x, $y, $z, 0, $cached, $addToCache);
+	}
+
+	public function getBlockLayer(Vector3 $pos, int $layer = 0, bool $cached = true, bool $addToCache = true) : Block{
+		return $this->getBlockAtLayer((int) floor($pos->x), (int) floor($pos->y), (int) floor($pos->z), $layer, $cached, $addToCache);
+	}
+
+	public function getBlockAtLayer(int $x, int $y, int $z, int $layer = 0, bool $cached = true, bool $addToCache = true) : Block{
 		$relativeBlockHash = null;
 		$chunkHash = World::chunkHash($x >> Chunk::COORD_BIT_SIZE, $z >> Chunk::COORD_BIT_SIZE);
 
 		if($this->isInWorld($x, $y, $z)){
 			$relativeBlockHash = World::chunkBlockHash($x, $y, $z);
 
-			if($cached && isset($this->blockCache[$chunkHash][$relativeBlockHash])){
-				return $this->blockCache[$chunkHash][$relativeBlockHash];
+			if($cached && isset($this->blockCache[$chunkHash][$relativeBlockHash][$layer])){
+				return $this->blockCache[$chunkHash][$relativeBlockHash][$layer];
 			}
 
 			$chunk = $this->chunks[$chunkHash] ?? null;
 			if($chunk !== null){
-				$block = BlockFactory::getInstance()->fromFullBlock($chunk->getFullBlock($x & Chunk::COORD_MASK, $y, $z & Chunk::COORD_MASK));
+				$block = BlockFactory::getInstance()->fromFullBlock($chunk->getFullBlock($x & Chunk::COORD_MASK, $y, $z & Chunk::COORD_MASK, $layer));
 			}else{
 				$addToCache = false;
 				$block = VanillaBlocks::AIR();
@@ -1538,6 +1558,7 @@ class World implements ChunkManager{
 		}
 
 		$block->position($this, $x, $y, $z);
+		$block->setLayer($layer);
 
 		static $dynamicStateRead = false;
 
@@ -1553,7 +1574,7 @@ class World implements ChunkManager{
 		}
 
 		if($addToCache && $relativeBlockHash !== null){
-			$this->blockCache[$chunkHash][$relativeBlockHash] = $block;
+			$this->blockCache[$chunkHash][$relativeBlockHash][$layer] = $block;
 		}
 
 		return $block;
@@ -1577,6 +1598,14 @@ class World implements ChunkManager{
 	 * @throws \InvalidArgumentException if the position is out of the world bounds
 	 */
 	public function setBlockAt(int $x, int $y, int $z, Block $block, bool $update = true) : void{
+		$this->setBlockAtLayer($x, $y, $z, $block, 0, $update);
+	}
+
+	public function setBlockLayer(Vector3 $pos, Block $block, int $layer = 0, bool $update = true) : void{
+		$this->setBlockAtLayer((int) floor($pos->x), (int) floor($pos->y), (int) floor($pos->z), $block, $layer, $update);
+	}
+
+	public function setBlockAtLayer(int $x, int $y, int $z, Block $block, int $layer = 0, bool $update = true) : void{
 		if(!$this->isInWorld($x, $y, $z)){
 			throw new \InvalidArgumentException("Pos x=$x,y=$y,z=$z is outside of the world bounds");
 		}
@@ -1593,6 +1622,7 @@ class World implements ChunkManager{
 		$block = clone $block;
 
 		$block->position($this, $x, $y, $z);
+		$block->setLayer($layer);
 		$block->writeStateToWorld();
 		$pos = new Vector3($x, $y, $z);
 
@@ -1662,7 +1692,7 @@ class World implements ChunkManager{
 	 *
 	 * @param Item    $item reference parameter (if null, can break anything)
 	 */
-	public function useBreakOn(Vector3 $vector, Item &$item = null, ?Player $player = null, bool $createParticles = false) : bool{
+	public function useBreakOn(Vector3 $vector, Item &$item = null, ?Player $player = null, bool $createParticles = false, int $layer = 0) : bool{
 		$vector = $vector->floor();
 
 		$chunkX = $vector->getFloorX() >> Chunk::COORD_BIT_SIZE;
@@ -1671,7 +1701,7 @@ class World implements ChunkManager{
 			return false;
 		}
 
-		$target = $this->getBlock($vector);
+		$target = $this->getBlockLayer($vector, $layer);
 		$affectedBlocks = $target->getAffectedBlocks();
 
 		if($item === null){

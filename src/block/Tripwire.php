@@ -82,6 +82,10 @@ class Tripwire extends Flowable{
 		return $this;
 	}
 
+	public function getWaterloggingLevel() : int{
+		return 2;
+	}
+
 	public function asItem() : Item{
 		return VanillaItems::STRING();
 	}
