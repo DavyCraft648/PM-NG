@@ -26,6 +26,7 @@ declare(strict_types=1);
  */
 namespace pocketmine\entity;
 
+use pocketmine\block\Air;
 use pocketmine\block\Block;
 use pocketmine\block\Water;
 use pocketmine\entity\animation\Animation;
@@ -1215,7 +1216,7 @@ abstract class Entity{
 				for($y = $minY; $y <= $maxY; ++$y){
 					foreach([0, 1] as $layer){
 						$block = $world->getBlockAtLayer($x, $y, $z, $layer);
-						if($layer !== 0 && $block->getId() === 0){
+						if($layer !== 0 && $block instanceof Air){
 							continue;
 						}
 						yield $block;

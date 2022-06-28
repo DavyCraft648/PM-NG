@@ -264,7 +264,7 @@ abstract class Liquid extends Transparent{
 		$world = $this->position->getWorld();
 		if($this->layer > 0){
 			$layer1 = $world->getBlockLayer($this->position);
-			if($layer1->getId() === 0){
+			if($layer1 instanceof Air){
 				$world->setBlockLayer($this->position, $this, 0, false);
 				$world->setBlockLayer($this->position, VanillaBlocks::AIR(), 1);
 				return;
@@ -324,7 +324,7 @@ abstract class Liquid extends Transparent{
 
 		$this->flowIntoBlock($bottomBlock, 0, true);
 
-		if($bottomBlock->getBlockLayer(1)->getId() !== 0){
+		if(!($bottomBlock->getBlockLayer(1) instanceof Air)){
 			$bottomBlock = $bottomBlock->getBlockLayer(1);
 		}
 		if($this->isSource() || !$bottomBlock->canBeFlowedInto()){
