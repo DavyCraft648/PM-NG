@@ -602,6 +602,9 @@ abstract class Entity{
 
 		$changedProperties = $this->getDirtyNetworkData();
 		if(count($changedProperties) > 0){
+			if(isset($changedProperties[EntityMetadataProperties::FLAGS2]) && !isset($changedProperties[EntityMetadataProperties::FLAGS])){
+				$changedProperties[EntityMetadataProperties::FLAGS] = $this->networkProperties->getAll()[EntityMetadataProperties::FLAGS];
+			}
 			$this->sendData(null, $changedProperties);
 			$this->networkProperties->clearDirtyProperties();
 		}
@@ -1063,6 +1066,8 @@ abstract class Entity{
 			if($block instanceof Water){
 				$f = ($blockY + 1) - ($block->getFluidHeightPercent() - 0.1111111);
 				return $y < $f;
+			}elseif($layer === 0 && $block instanceof Air){
+				return false;
 			}
 		}
 
@@ -1217,7 +1222,7 @@ abstract class Entity{
 					foreach([0, 1] as $layer){
 						$block = $world->getBlockAtLayer($x, $y, $z, $layer);
 						if($layer !== 0 && $block instanceof Air){
-							continue;
+							continue 2;
 						}
 						yield $block;
 					}

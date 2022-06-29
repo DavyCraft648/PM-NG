@@ -350,6 +350,9 @@ abstract class Liquid extends Transparent{
 			$new = clone $this;
 			$new->falling = $falling;
 			$new->decay = $falling ? 0 : $newFlowDecay;
+			if(!$block->canBeFlowedInto() && !$block->canWaterlogged($new)){
+				return;
+			}
 
 			$ev = new BlockSpreadEvent($block, $this, $new);
 			$ev->call();
