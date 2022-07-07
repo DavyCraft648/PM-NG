@@ -162,7 +162,7 @@ class TypeConverter{
 		return new ExactRecipeIngredient($result);
 	}
 
-	public function coreItemStackToNet(Item $itemStack, int $dictionaryProtocol) : ItemStack{
+	public function coreItemStackToNet(Item $itemStack, int $protocolId) : ItemStack{
 		if($itemStack->isNull()){
 			return ItemStack::null();
 		}
@@ -171,11 +171,11 @@ class TypeConverter{
 			$nbt = clone $itemStack->getNamedTag();
 		}
 
-		$idMeta = ItemTranslator::getInstance()->toNetworkIdQuiet($itemStack, $dictionaryProtocol);
+		$idMeta = ItemTranslator::getInstance()->toNetworkIdQuiet($itemStack, $protocolId);
 		if($idMeta === null){
 			//Display unmapped items as INFO_UPDATE, but stick something in their NBT to make sure they don't stack with
 			//other unmapped items.
-			[$id, $meta, $blockRuntimeId] = ItemTranslator::getInstance()->toNetworkId(VanillaBlocks::INFO_UPDATE()->asItem(), $dictionaryProtocol);
+			[$id, $meta, $blockRuntimeId] = ItemTranslator::getInstance()->toNetworkId(VanillaBlocks::INFO_UPDATE()->asItem(), $protocolId);
 			if($nbt === null){
 				$nbt = new CompoundTag();
 			}
@@ -192,7 +192,7 @@ class TypeConverter{
 			$nbt,
 			[],
 			[],
-			$id === $this->shieldRuntimeIds[$dictionaryProtocol] ? 0 : null
+			$id === $this->shieldRuntimeIds[$protocolId] ? 0 : null
 		);
 	}
 

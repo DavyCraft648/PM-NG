@@ -33,6 +33,7 @@ use pocketmine\network\mcpe\convert\TypeConverter;
 use pocketmine\network\mcpe\protocol\CraftingDataPacket;
 use pocketmine\network\mcpe\protocol\types\inventory\ItemStack;
 use pocketmine\network\mcpe\protocol\types\recipe\CraftingRecipeBlockName;
+use pocketmine\network\mcpe\protocol\types\recipe\FurnaceRecipe as ProtocolFurnaceRecipe;
 use pocketmine\network\mcpe\protocol\types\recipe\FurnaceRecipeBlockName;
 use pocketmine\network\mcpe\protocol\types\recipe\PotionContainerChangeRecipe as ProtocolPotionContainerChangeRecipe;
 use pocketmine\network\mcpe\protocol\types\recipe\PotionTypeRecipe as ProtocolPotionTypeRecipe;
@@ -94,7 +95,7 @@ final class CraftingDataCache{
 					$recipesWithTypeIds[] = new ProtocolShapelessRecipe(
 						CraftingDataPacket::ENTRY_SHAPELESS,
 						Binary::writeInt(++$counter),
-						array_map(function(Item $item) use ($dictionaryProtocol, $converter) : ProtocolRecipeIngredient{
+						array_map(function(RecipeIngredient $item) use ($dictionaryProtocol, $converter) : ProtocolRecipeIngredient{
 							return $converter->coreRecipeIngredientToNet($item, $dictionaryProtocol);
 						}, $recipe->getIngredientList()),
 						array_map(function(Item $item) use ($dictionaryProtocol, $converter) : ItemStack{
@@ -138,20 +139,16 @@ final class CraftingDataCache{
 					FurnaceType::SMOKER()->id() => FurnaceRecipeBlockName::SMOKER,
 					default => throw new AssumptionFailedError("Unreachable"),
 				};
-				$recipesWithTypeIds[] = new ProtocolShapelessRecipe(
-					CraftingDataPacket::ENTRY_SHAPELESS,
-					Binary::writeInt(++$counter),
-					array_map(function(RecipeIngredient $item) use ($converter, $dictionaryProtocol) : ProtocolRecipeIngredient{
-						return $converter->coreRecipeIngredientToNet($item, $dictionaryProtocol);
-					}, $recipe->getIngredientList()),
-					array_map(function(Item $item) use ($converter, $dictionaryProtocol) : ItemStack{
-						return $converter->coreItemStackToNet($item, $dictionaryProtocol);
-					}, $recipe->getResults()),
-					$nullUUID,
-					$typeTag,
-					50,
-					$counter
-				);
+				foreach($manager->getFurnaceRecipeManager($furnaceType)->getAll() as $recipe){
+					$input = $converter->coreRecipeIngredientToNet($recipe->getInput(), $dictionaryProtocol);
+					$recipesWithTypeIds[] = new ProtocolFurnaceRecipe(
+						CraftingDataPacket::ENTRY_FURNACE_DATA,
+						$input->getId(),
+						$input->getMeta(),
+						$converter->coreItemStackToNet($recipe->getResult(), $dictionaryProtocol),
+						$typeTag
+					);
+				}
 			}
 
 			$potionTypeRecipes = [];

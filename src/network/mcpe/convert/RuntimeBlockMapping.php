@@ -28,9 +28,9 @@ use pocketmine\data\bedrock\block\BlockStateSerializeException;
 use pocketmine\data\bedrock\block\BlockStateSerializer;
 use pocketmine\data\bedrock\block\BlockTypeNames;
 use pocketmine\nbt\tag\CompoundTag;
-use pocketmine\utils\AssumptionFailedError;
 use pocketmine\network\mcpe\protocol\ProtocolInfo;
 use pocketmine\player\Player;
+use pocketmine\utils\AssumptionFailedError;
 use pocketmine\utils\SingletonTrait;
 use pocketmine\utils\Utils;
 use pocketmine\world\format\io\GlobalBlockStateHandlers;
@@ -45,7 +45,7 @@ final class RuntimeBlockMapping{
 
 	/**
 	 * @var int[]
-	 * @phpstan-var array<int, int>
+	 * @phpstan-var array<int, array<int, int>>
 	 */
 	private array $networkIdCache = [];
 
@@ -96,10 +96,10 @@ final class RuntimeBlockMapping{
 		$blockStateDictionaries = [];
 
 		foreach($protocolPaths as $mappingProtocol => $paths){
-			$canonicalBlockStatesFile = Path::join(\pocketmine\BEDROCK_DATA_PATH, "canonical_block_states-" . $paths[self::BLOCK_PALETTE_PATH] . ".nbt");
+			$canonicalBlockStatesFile = Path::join(\pocketmine\BEDROCK_DATA_PATH, "canonical_block_states" . $paths[self::BLOCK_PALETTE_PATH] . ".nbt");
 			$canonicalBlockStatesRaw = Utils::assumeNotFalse(file_get_contents($canonicalBlockStatesFile), "Missing required resource file");
 
-			$metaMappingFile = Path::join(\pocketmine\BEDROCK_DATA_PATH, 'block_state_meta_map-' . $paths[self::META_MAP_PATH] . '.json');
+			$metaMappingFile = Path::join(\pocketmine\BEDROCK_DATA_PATH, 'block_state_meta_map' . $paths[self::META_MAP_PATH] . '.json');
 			$metaMappingRaw = Utils::assumeNotFalse(file_get_contents($metaMappingFile), "Missing required resource file");
 
 			$blockStateDictionaries[$mappingProtocol] = BlockStateDictionary::loadFromString($canonicalBlockStatesRaw, $metaMappingRaw);
@@ -115,7 +115,7 @@ final class RuntimeBlockMapping{
 	 * @param BlockStateDictionary[] $blockStateDictionaries
 	 */
 	public function __construct(
-		private BlockStateDictionary $blockStateDictionaries,
+		private array $blockStateDictionaries,
 		private BlockStateSerializer $blockStateSerializer
 	){
 		$this->fallbackStateData = new BlockStateData(BlockTypeNames::INFO_UPDATE, CompoundTag::create(), BlockStateData::CURRENT_VERSION);

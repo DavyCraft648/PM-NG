@@ -75,20 +75,20 @@ final class ItemTranslator{
 	 * @return int[]|null
 	 * @phpstan-return array{int, int, int}|null
 	 */
-	public function toNetworkIdQuiet(Item $item, int $dictionaryProtocol) : ?array{
+	public function toNetworkIdQuiet(Item $item, int $protocolId) : ?array{
 		try{
-			return $this->toNetworkId($item, $dictionaryProtocol);
+			return $this->toNetworkId($item, $protocolId);
 		}catch(ItemTypeSerializeException){
 			return null;
 		}
 	}
 
-	private function getItemTypeDictionary(int $dictionaryProtocol) : ItemTypeDictionary{
-		return $this->itemTypeDictionary[$dictionaryProtocol] ?? throw new AssumptionFailedError("No item type dictionary for protocol $dictionaryProtocol");
+	private function getItemTypeDictionary(int $protocolId) : ItemTypeDictionary{
+		return $this->itemTypeDictionary[$protocolId] ?? throw new AssumptionFailedError("No item type dictionary for protocol $protocolId");
 	}
 
-	private function getBlockStateDictionary(int $dictionaryProtocol) : BlockStateDictionary{
-		return $this->blockStateDictionary[$dictionaryProtocol] ?? throw new AssumptionFailedError("No block state dictionary for protocol $dictionaryProtocol");
+	private function getBlockStateDictionary(int $protocolId) : BlockStateDictionary{
+		return $this->blockStateDictionary[$protocolId] ?? throw new AssumptionFailedError("No block state dictionary for protocol $protocolId");
 	}
 
 	/**
@@ -97,16 +97,16 @@ final class ItemTranslator{
 	 *
 	 * @throws ItemTypeSerializeException
 	 */
-	public function toNetworkId(Item $item, int $dictionaryProtocol) : array{
+	public function toNetworkId(Item $item, int $protocolId) : array{
 		//TODO: we should probably come up with a cache for this
 
 		$itemData = $this->itemSerializer->serializeType($item);
 
-		$numericId = $this->getItemTypeDictionary($dictionaryProtocol)->fromStringId($itemData->getName());
+		$numericId = $this->getItemTypeDictionary($protocolId)->fromStringId($itemData->getName());
 		$blockStateData = $itemData->getBlock();
 
 		if($blockStateData !== null){
-			$blockRuntimeId = $this->getBlockStateDictionary($dictionaryProtocol)->lookupStateIdFromData($blockStateData);
+			$blockRuntimeId = $this->getBlockStateDictionary($protocolId)->lookupStateIdFromData($blockStateData);
 			if($blockRuntimeId === null){
 				throw new AssumptionFailedError("Unmapped blockstate returned by blockstate serializer: " . $blockStateData->toNbt());
 			}
@@ -120,9 +120,9 @@ final class ItemTranslator{
 	/**
 	 * @throws TypeConversionException
 	 */
-	public function fromNetworkId(int $networkId, int $networkMeta, int $networkBlockRuntimeId, int $dictionaryProtocol) : Item{
+	public function fromNetworkId(int $networkId, int $networkMeta, int $networkBlockRuntimeId, int $protocolId) : Item{
 		try{
-			$stringId = $this->getItemTypeDictionary($dictionaryProtocol)->fromIntId($networkId);
+			$stringId = $this->getItemTypeDictionary($protocolId)->fromIntId($networkId);
 		}catch(\InvalidArgumentException $e){
 			//TODO: a quiet version of fromIntId() would be better than catching InvalidArgumentException
 			throw TypeConversionException::wrap($e, "Invalid network itemstack ID $networkId");
@@ -130,7 +130,7 @@ final class ItemTranslator{
 
 		$blockStateData = null;
 		if($networkBlockRuntimeId !== self::NO_BLOCK_RUNTIME_ID){
-			$blockStateData = $this->getBlockStateDictionary($dictionaryProtocol)->getDataFromStateId($networkBlockRuntimeId);
+			$blockStateData = $this->getBlockStateDictionary($protocolId)->getDataFromStateId($networkBlockRuntimeId);
 			if($blockStateData === null){
 				throw new TypeConversionException("Blockstate runtimeID $networkBlockRuntimeId does not correspond to any known blockstate");
 			}

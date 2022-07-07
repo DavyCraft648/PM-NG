@@ -39,10 +39,9 @@ use pocketmine\nbt\tag\CompoundTag;
 use pocketmine\nbt\tag\IntTag;
 use pocketmine\network\mcpe\convert\RuntimeBlockMapping;
 use pocketmine\network\mcpe\protocol\types\entity\EntityIds;
-use pocketmine\network\mcpe\protocol\types\entity\EntityMetadataCollection;
 use pocketmine\network\mcpe\protocol\types\entity\EntityMetadataProperties;
-use pocketmine\world\format\io\GlobalBlockStateHandlers;
 use pocketmine\player\Player;
+use pocketmine\world\format\io\GlobalBlockStateHandlers;
 use function abs;
 
 class FallingBlock extends Entity{

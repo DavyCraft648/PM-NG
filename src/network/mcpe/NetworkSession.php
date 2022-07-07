@@ -198,7 +198,7 @@ class NetworkSession{
 		$this->compressedQueue = new \SplQueue();
 
 		//TODO: allow this to be injected
-		$this->packetSerializerContext = new PacketSerializerContext(GlobalItemTypeDictionary::getInstance()->getDictionary());
+		$this->packetSerializerContext = new PacketSerializerContext(GlobalItemTypeDictionary::getInstance()->getDictionary(ProtocolInfo::CURRENT_PROTOCOL));
 
 		$this->disposeHooks = new ObjectSet();
 
@@ -1039,12 +1039,12 @@ class NetworkSession{
 	public function onMobMainHandItemChange(Human $mob) : void{
 		//TODO: we could send zero for slot here because remote players don't need to know which slot was selected
 		$inv = $mob->getInventory();
-		$this->sendDataPacket(MobEquipmentPacket::create($mob->getId(), ItemStackWrapper::legacy(TypeConverter::getInstance()->coreItemStackToNet($this->getProtocolId(), $inv->getItemInHand())), $inv->getHeldItemIndex(), $inv->getHeldItemIndex(), ContainerIds::INVENTORY));
+		$this->sendDataPacket(MobEquipmentPacket::create($mob->getId(), ItemStackWrapper::legacy(TypeConverter::getInstance()->coreItemStackToNet($inv->getItemInHand(), $this->getProtocolId())), $inv->getHeldItemIndex(), $inv->getHeldItemIndex(), ContainerIds::INVENTORY));
 	}
 
 	public function onMobOffHandItemChange(Human $mob) : void{
 		$inv = $mob->getOffHandInventory();
-		$this->sendDataPacket(MobEquipmentPacket::create($mob->getId(), ItemStackWrapper::legacy(TypeConverter::getInstance()->coreItemStackToNet($this->getProtocolId(), $inv->getItem(0))), 0, 0, ContainerIds::OFFHAND));
+		$this->sendDataPacket(MobEquipmentPacket::create($mob->getId(), ItemStackWrapper::legacy(TypeConverter::getInstance()->coreItemStackToNet($inv->getItem(0), $this->getProtocolId())), 0, 0, ContainerIds::OFFHAND));
 	}
 
 	public function onMobArmorChange(Living $mob) : void{
@@ -1053,10 +1053,10 @@ class NetworkSession{
 		$protocolId = $this->getProtocolId();
 		$this->sendDataPacket(MobArmorEquipmentPacket::create(
 			$mob->getId(),
-			ItemStackWrapper::legacy($converter->coreItemStackToNet($protocolId, $inv->getHelmet())),
-			ItemStackWrapper::legacy($converter->coreItemStackToNet($protocolId, $inv->getChestplate())),
-			ItemStackWrapper::legacy($converter->coreItemStackToNet($protocolId, $inv->getLeggings())),
-			ItemStackWrapper::legacy($converter->coreItemStackToNet($protocolId, $inv->getBoots()))
+			ItemStackWrapper::legacy($converter->coreItemStackToNet($inv->getHelmet(), $protocolId)),
+			ItemStackWrapper::legacy($converter->coreItemStackToNet($inv->getChestplate(), $protocolId)),
+			ItemStackWrapper::legacy($converter->coreItemStackToNet($inv->getLeggings(), $protocolId)),
+			ItemStackWrapper::legacy($converter->coreItemStackToNet($inv->getBoots(), $protocolId))
 		));
 	}
 

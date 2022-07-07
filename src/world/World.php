@@ -1884,7 +1884,7 @@ class World implements ChunkManager{
 		$hand = $item->getBlock($face);
 		$hand->position($this, $blockReplace->getPosition()->x, $blockReplace->getPosition()->y, $blockReplace->getPosition()->z);
 
-		if($blockClicked->getId() !== BlockLegacyIds::AIR && $hand->canBePlacedAt($blockClicked, $clickVector, $face, true)){
+		if($blockClicked->getStateId() !== BlockTypeIds::AIR && $hand->canBePlacedAt($blockClicked, $clickVector, $face, true)){
 			$blockReplace = $blockClicked;
 			$hand->position($this, $blockReplace->getPosition()->x, $blockReplace->getPosition()->y, $blockReplace->getPosition()->z);
 		}elseif(!$hand->canBePlacedAt($blockReplace, $clickVector, $face, false)){

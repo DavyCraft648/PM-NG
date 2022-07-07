@@ -71,6 +71,7 @@ final class ChunkSerializer{
 		$stream->setProtocolId($mappingProtocol);
 
 		$subChunkCount = self::getSubChunkCount($chunk);
+		$subChunks = [];
 		for($y = Chunk::MIN_SUBCHUNK_INDEX, $writtenCount = 0; $writtenCount < $subChunkCount; ++$y, ++$writtenCount){
 			if($y < 0 && ($mappingProtocol < ProtocolInfo::PROTOCOL_1_18_0 || $chunk->getDimensionId() !== DimensionIds::OVERWORLD)){
 				continue;
@@ -129,7 +130,7 @@ final class ChunkSerializer{
 
 		$stream->putByte(count($layers));
 
-		$blockStateDictionary = $blockMapper->getBlockStateDictionary();
+		$blockStateDictionary = $blockMapper->getBlockStateDictionary($stream->getProtocolId());
 
 		foreach($layers as $blocks){
 			$bitsPerBlock = $blocks->getBitsPerBlock();

@@ -41,6 +41,7 @@ use pocketmine\item\Item;
 use pocketmine\nbt\LittleEndianNbtSerializer;
 use pocketmine\nbt\tag\CompoundTag;
 use pocketmine\network\mcpe\convert\RuntimeBlockMapping;
+use pocketmine\network\mcpe\protocol\ProtocolInfo;
 use pocketmine\utils\AssumptionFailedError;
 use pocketmine\utils\Utils;
 use pocketmine\world\format\io\GlobalItemDataHandlers;
@@ -57,7 +58,7 @@ final class CraftingManagerFromDataHelper{
 	private static function deserializeItemStackFromNameMeta(string $name, int $meta) : ?Item{
 		$blockName = BlockItemIdMap::getInstance()->lookupBlockId($name);
 		if($blockName !== null){
-			$blockStateDictionary = RuntimeBlockMapping::getInstance()->getBlockStateDictionary();
+			$blockStateDictionary = RuntimeBlockMapping::getInstance()->getBlockStateDictionary(ProtocolInfo::CURRENT_PROTOCOL);
 			$blockRuntimeId = $blockStateDictionary->lookupStateIdFromIdMeta($name, $meta === RecipeIngredientData::WILDCARD_META_VALUE ? 0 : $meta);
 			if($blockRuntimeId === null){
 				throw new SavedDataLoadingException("$blockName with meta $meta doesn't map to any known blockstate");
