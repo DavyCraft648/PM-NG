@@ -21,15 +21,26 @@
 
 declare(strict_types=1);
 
-namespace pocketmine\world\particle;
+namespace pocketmine\event\entity;
 
-use pocketmine\math\Vector3;
-use pocketmine\network\mcpe\protocol\LevelEventPacket;
-use pocketmine\network\mcpe\protocol\types\ParticleIds;
+use pocketmine\entity\object\ItemEntity;
+use pocketmine\event\Cancellable;
+use pocketmine\event\CancellableTrait;
 
-class ExplodeParticle extends ProtocolParticle{
+/**
+ * @phpstan-extends EntityEvent<ItemEntity>
+ */
+class ItemEntityDropEvent extends EntityEvent implements Cancellable{
+	use CancellableTrait;
 
-	public function encode(Vector3 $pos) : array{
-		return [LevelEventPacket::standardParticle(ParticleIds::EXPLODE, 0, $pos, $this->particleProtocol)];
+	public function __construct(ItemEntity $item){
+		$this->entity = $item;
+	}
+
+	/**
+	 * @return ItemEntity
+	 */
+	public function getEntity(){
+		return $this->entity;
 	}
 }

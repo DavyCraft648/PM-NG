@@ -45,6 +45,7 @@ use pocketmine\entity\object\ItemEntity;
 use pocketmine\event\block\BlockBreakEvent;
 use pocketmine\event\block\BlockPlaceEvent;
 use pocketmine\event\block\BlockUpdateEvent;
+use pocketmine\event\entity\ItemEntityDropEvent;
 use pocketmine\event\player\PlayerInteractEvent;
 use pocketmine\event\world\ChunkLoadEvent;
 use pocketmine\event\world\ChunkPopulateEvent;
@@ -93,8 +94,11 @@ use pocketmine\world\light\BlockLightUpdate;
 use pocketmine\world\light\LightPopulationTask;
 use pocketmine\world\light\SkyLightUpdate;
 use pocketmine\world\particle\BlockBreakParticle;
+use pocketmine\world\particle\MappingParticle;
 use pocketmine\world\particle\Particle;
+use pocketmine\world\particle\ProtocolParticle;
 use pocketmine\world\sound\BlockPlaceSound;
+use pocketmine\world\sound\MappingSound;
 use pocketmine\world\sound\Sound;
 use pocketmine\world\utils\SubChunkExplorer;
 use function abs;
@@ -561,14 +565,34 @@ class World implements ChunkManager{
 	 * @param Player[]|null $players
 	 */
 	public function addSound(Vector3 $pos, Sound $sound, ?array $players = null) : void{
-		$pk = $sound->encode($pos);
-		if(count($pk) > 0){
+		if($sound instanceof MappingSound){
 			if($players === null){
-				foreach($pk as $e){
-					$this->broadcastPacketToViewers($pos, $e);
+				$chunkX = $pos->getFloorX() >> 4;
+				$chunkZ = $pos->getFloorZ() >> 4;
+
+				$players = $this->getChunkPlayers($chunkX, $chunkZ);
+			}
+
+			foreach(RuntimeBlockMapping::sortByProtocol($players) as $mappingProtocol => $pl){
+				$sound->setMappingProtocol($mappingProtocol);
+
+				$pk = $sound->encode($pos);
+
+				if(count($pk) > 0){
+					$this->server->broadcastPackets($pl, $pk);
 				}
-			}else{
-				$this->server->broadcastPackets($players, $pk);
+			}
+		}else{
+			$pk = $sound->encode($pos);
+
+			if(count($pk) > 0){
+				if($players === null){
+					foreach($pk as $e){
+						$this->broadcastPacketToViewers($pos, $e);
+					}
+				}else{
+					$this->server->broadcastPackets($players, $pk);
+				}
 			}
 		}
 	}
@@ -577,14 +601,51 @@ class World implements ChunkManager{
 	 * @param Player[]|null $players
 	 */
 	public function addParticle(Vector3 $pos, Particle $particle, ?array $players = null) : void{
-		$pk = $particle->encode($pos);
-		if(count($pk) > 0){
+		if($particle instanceof MappingParticle){
 			if($players === null){
-				foreach($pk as $e){
-					$this->broadcastPacketToViewers($pos, $e);
+				$chunkX = $pos->getFloorX() >> 4;
+				$chunkZ = $pos->getFloorZ() >> 4;
+
+				$players = $this->getChunkPlayers($chunkX, $chunkZ);
+			}
+
+			foreach(RuntimeBlockMapping::sortByProtocol($players) as $mappingProtocol => $pl){
+				$particle->setMappingProtocol($mappingProtocol);
+
+				$pk = $particle->encode($pos);
+
+				if(count($pk) > 0){
+					$this->server->broadcastPackets($pl, $pk);
 				}
-			}else{
-				$this->server->broadcastPackets($players, $pk);
+			}
+		}elseif($particle instanceof ProtocolParticle){
+			if($players === null){
+				$chunkX = $pos->getFloorX() >> 4;
+				$chunkZ = $pos->getFloorZ() >> 4;
+
+				$players = $this->getChunkPlayers($chunkX, $chunkZ);
+			}
+
+			foreach(ProtocolParticle::sortByProtocol($players) as $particleProtocol => $pl){
+				$particle->setParticleProtocol($particleProtocol);
+
+				$pk = $particle->encode($pos);
+
+				if(count($pk) > 0){
+					$this->server->broadcastPackets($pl, $pk);
+				}
+			}
+		}else{
+			$pk = $particle->encode($pos);
+
+			if(count($pk) > 0){
+				if($players === null){
+					foreach($pk as $e){
+						$this->broadcastPacketToViewers($pos, $e);
+					}
+				}else{
+					$this->server->broadcastPackets($players, $pk);
+				}
 			}
 		}
 	}
@@ -871,8 +932,8 @@ class World implements ChunkManager{
 							$p->onChunkChanged($chunkX, $chunkZ, $chunk);
 						}
 					}else{
-						foreach($this->createBlockUpdatePackets($blocks) as $packet){
-							$this->broadcastPacketToPlayersUsingChunk($chunkX, $chunkZ, $packet);
+						foreach(RuntimeBlockMapping::sortByProtocol($this->getChunkPlayers($chunkX, $chunkZ)) as $mappingProtocol => $players){
+							$this->server->broadcastPackets($players, $this->createBlockUpdatePackets($mappingProtocol, $blocks));
 						}
 					}
 				}
@@ -932,7 +993,7 @@ class World implements ChunkManager{
 	 *
 	 * @return ClientboundPacket[]
 	 */
-	public function createBlockUpdatePackets(array $blocks) : array{
+	public function createBlockUpdatePackets(int $mappingProtocol, array $blocks) : array{
 		$packets = [];
 
 		$blockMapping = RuntimeBlockMapping::getInstance();
@@ -946,7 +1007,7 @@ class World implements ChunkManager{
 			$blockPosition = BlockPosition::fromVector3($b);
 			$packets[] = UpdateBlockPacket::create(
 				$blockPosition,
-				$blockMapping->toRuntimeId($fullBlock->getStateId()),
+				$blockMapping->toRuntimeId($fullBlock->getStateId(), $mappingProtocol),
 				UpdateBlockPacket::FLAG_NETWORK,
 				UpdateBlockPacket::DATA_LAYER_NORMAL
 			);
@@ -1627,9 +1688,17 @@ class World implements ChunkManager{
 		}
 
 		$itemEntity = new ItemEntity(Location::fromObject($source, $this, lcg_value() * 360, 0), $item);
-
 		$itemEntity->setPickupDelay($delay);
 		$itemEntity->setMotion($motion ?? new Vector3(lcg_value() * 0.2 - 0.1, 0.2, lcg_value() * 0.2 - 0.1));
+
+		$ev = new ItemEntityDropEvent($itemEntity);
+		$ev->call();
+
+		if($ev->isCancelled()){
+			$itemEntity->flagForDespawn();
+			return null;
+		}
+
 		$itemEntity->spawnToAll();
 
 		return $itemEntity;
@@ -1782,9 +1851,9 @@ class World implements ChunkManager{
 			return false;
 		}
 
-		if($blockClicked->getTypeId() === BlockTypeIds::AIR){
-			return false;
-		}
+		//if($blockClicked->getTypeId() === BlockTypeIds::AIR){
+		//	return false;
+		//}
 
 		if($player !== null){
 			$ev = new PlayerInteractEvent($player, $item, $blockClicked, $clickVector, $face, PlayerInteractEvent::RIGHT_CLICK_BLOCK);
@@ -1815,7 +1884,7 @@ class World implements ChunkManager{
 		$hand = $item->getBlock($face);
 		$hand->position($this, $blockReplace->getPosition()->x, $blockReplace->getPosition()->y, $blockReplace->getPosition()->z);
 
-		if($hand->canBePlacedAt($blockClicked, $clickVector, $face, true)){
+		if($blockClicked->getId() !== BlockLegacyIds::AIR && $hand->canBePlacedAt($blockClicked, $clickVector, $face, true)){
 			$blockReplace = $blockClicked;
 			$hand->position($this, $blockReplace->getPosition()->x, $blockReplace->getPosition()->y, $blockReplace->getPosition()->z);
 		}elseif(!$hand->canBePlacedAt($blockReplace, $clickVector, $face, false)){

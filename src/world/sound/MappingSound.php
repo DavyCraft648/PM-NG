@@ -21,15 +21,13 @@
 
 declare(strict_types=1);
 
-namespace pocketmine\world\particle;
+namespace pocketmine\world\sound;
 
-use pocketmine\math\Vector3;
-use pocketmine\network\mcpe\protocol\LevelEventPacket;
-use pocketmine\network\mcpe\protocol\types\ParticleIds;
+abstract class MappingSound implements Sound{
 
-class ExplodeParticle extends ProtocolParticle{
+	protected int $mappingProtocol;
 
-	public function encode(Vector3 $pos) : array{
-		return [LevelEventPacket::standardParticle(ParticleIds::EXPLODE, 0, $pos, $this->particleProtocol)];
+	public function setMappingProtocol(int $mappingProtocol) : void{
+		$this->mappingProtocol = $mappingProtocol;
 	}
 }

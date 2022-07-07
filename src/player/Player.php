@@ -1744,7 +1744,9 @@ class Player extends Human implements CommandSender, ChunkListener, IPlayer{
 
 		$soundPos = $entity->getPosition()->add(0, $entity->size->getHeight() / 2, 0);
 		if($ev->isCancelled()){
-			$this->getWorld()->addSound($soundPos, new EntityAttackNoDamageSound());
+			if(!$this->isSilent() && !$this->isAdventure()){
+				$this->getWorld()->addSound($soundPos, new EntityAttackNoDamageSound());
+			}
 			return false;
 		}
 		$this->getWorld()->addSound($soundPos, new EntityAttackSound());
@@ -1943,6 +1945,10 @@ class Player extends Human implements CommandSender, ChunkListener, IPlayer{
 	 * Sends a direct chat message to a player
 	 */
 	public function sendMessage(Translatable|string $message) : void{
+		if(!$this->isConnected()){
+			return;
+		}
+
 		if($message instanceof Translatable){
 			$this->sendTranslation($message->getText(), $message->getParameters());
 			return;

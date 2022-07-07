@@ -21,15 +21,14 @@
 
 declare(strict_types=1);
 
-namespace pocketmine\world\particle;
+namespace pocketmine\entity\animation;
 
-use pocketmine\math\Vector3;
-use pocketmine\network\mcpe\protocol\LevelEventPacket;
-use pocketmine\network\mcpe\protocol\types\ParticleIds;
+abstract class DictionaryAnimation implements Animation{
 
-class ExplodeParticle extends ProtocolParticle{
+	/** @var int */
+	protected $dictionaryProtocol;
 
-	public function encode(Vector3 $pos) : array{
-		return [LevelEventPacket::standardParticle(ParticleIds::EXPLODE, 0, $pos, $this->particleProtocol)];
+	public function setDictionaryProtocol(int $dictionaryProtocol) : void{
+		$this->dictionaryProtocol = $dictionaryProtocol;
 	}
 }

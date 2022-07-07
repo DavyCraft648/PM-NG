@@ -28,9 +28,11 @@ use pocketmine\data\bedrock\BiomeIds;
 use pocketmine\data\bedrock\LegacyBiomeIdToStringIdMap;
 use pocketmine\nbt\TreeRoot;
 use pocketmine\network\mcpe\convert\RuntimeBlockMapping;
+use pocketmine\network\mcpe\protocol\ProtocolInfo;
 use pocketmine\network\mcpe\protocol\serializer\NetworkNbtSerializer;
 use pocketmine\network\mcpe\protocol\serializer\PacketSerializer;
 use pocketmine\network\mcpe\protocol\serializer\PacketSerializerContext;
+use pocketmine\network\mcpe\protocol\types\DimensionIds;
 use pocketmine\utils\Binary;
 use pocketmine\utils\BinaryStream;
 use pocketmine\world\format\Chunk;
@@ -60,27 +62,65 @@ final class ChunkSerializer{
 		return 0;
 	}
 
-	public static function serializeFullChunk(Chunk $chunk, RuntimeBlockMapping $blockMapper, PacketSerializerContext $encoderContext, ?string $tiles = null) : string{
+	/**
+	 * @return string[]
+	 */
+	public static function serializeSubChunks(Chunk $chunk, RuntimeBlockMapping $blockMapper, PacketSerializerContext $encoderContext, int $mappingProtocol) : array
+	{
 		$stream = PacketSerializer::encoder($encoderContext);
+		$stream->setProtocolId($mappingProtocol);
 
 		$subChunkCount = self::getSubChunkCount($chunk);
 		for($y = Chunk::MIN_SUBCHUNK_INDEX, $writtenCount = 0; $writtenCount < $subChunkCount; ++$y, ++$writtenCount){
-			self::serializeSubChunk($chunk->getSubChunk($y), $blockMapper, $stream, false);
+			if($y < 0 && ($mappingProtocol < ProtocolInfo::PROTOCOL_1_18_0 || $chunk->getDimensionId() !== DimensionIds::OVERWORLD)){
+				continue;
+			}
+
+			$subChunkStream = clone $stream;
+			self::serializeSubChunk($chunk->getSubChunk($y), $blockMapper, $subChunkStream, false);
+			$subChunks[] = $subChunkStream->getBuffer();
 		}
 
-		//TODO: right now we don't support 3D natively, so we just 3Dify our 2D biomes so they fill the column
-		$encodedBiomePalette = self::serializeBiomesAsPalette($chunk);
-		$stream->put(str_repeat($encodedBiomePalette, 24));
+		return $subChunks;
+	}
 
+	public static function serializeFullChunk(Chunk $chunk, RuntimeBlockMapping $blockMapper, PacketSerializerContext $encoderContext, int $mappingProtocol, ?string $tiles = null) : string{
+		$stream = PacketSerializer::encoder($encoderContext);
+		$stream->setProtocolId($mappingProtocol);
+
+		foreach(self::serializeSubChunks($chunk, $blockMapper, $encoderContext, $mappingProtocol) as $subChunk){
+			$stream->put($subChunk);
+		}
+
+		self::serializeBiomes($chunk, $stream);
+		self::serializeChunkData($chunk, $stream, $tiles);
+
+		return $stream->getBuffer();
+	}
+
+	public static function serializeBiomes(Chunk $chunk, PacketSerializer $stream) : void{
+		if($stream->getProtocolId() >= ProtocolInfo::PROTOCOL_1_18_0){
+			//TODO: right now we don't support 3D natively, so we just 3Dify our 2D biomes so they fill the column
+			$encodedBiomePalette = self::serializeBiomesAsPalette($chunk);
+			$stream->put(str_repeat($encodedBiomePalette, $stream->getProtocolId() >= ProtocolInfo::PROTOCOL_1_18_30 ? 24 : 25));
+		}else{
+			$stream->put($chunk->getBiomeIdArray());
+		}
+	}
+
+	public static function serializeBorderBlocks(PacketSerializer $stream) : void {
 		$stream->putByte(0); //border block array count
 		//Border block entry format: 1 byte (4 bits X, 4 bits Z). These are however useless since they crash the regular client.
+	}
+
+	public static function serializeChunkData(Chunk $chunk, PacketSerializer $stream, ?string $tiles = null) : void{
+		self::serializeBorderBlocks($stream);
 
 		if($tiles !== null){
 			$stream->put($tiles);
 		}else{
 			$stream->put(self::serializeTiles($chunk));
 		}
-		return $stream->getBuffer();
 	}
 
 	public static function serializeSubChunk(SubChunk $subChunk, RuntimeBlockMapping $blockMapper, PacketSerializer $stream, bool $persistentBlockStates) : void{
@@ -93,7 +133,14 @@ final class ChunkSerializer{
 
 		foreach($layers as $blocks){
 			$bitsPerBlock = $blocks->getBitsPerBlock();
-			$words = $blocks->getWordArray();
+			if($stream->getProtocolId() <= ProtocolInfo::PROTOCOL_1_17_0 && $bitsPerBlock === 0){
+				//TODO: we use these in memory, but the game doesn't support them yet
+				//polyfill them with 1-bpb instead
+				$bitsPerBlock = 1;
+				$words = str_repeat("\x00", PalettedBlockArray::getExpectedWordArraySize(1));
+			}else{
+				$words = $blocks->getWordArray();
+			}
 			$stream->putByte(($bitsPerBlock << 1) | ($persistentBlockStates ? 0 : 1));
 			$stream->put($words);
 			$palette = $blocks->getPalette();
@@ -108,7 +155,7 @@ final class ChunkSerializer{
 				$nbtSerializer = new NetworkNbtSerializer();
 				foreach($palette as $p){
 					//TODO: introduce a binary cache for this
-					$state = $blockStateDictionary->getDataFromStateId($blockMapper->toRuntimeId($p));
+					$state = $blockStateDictionary->getDataFromStateId($blockMapper->toRuntimeId($p, $stream->getProtocolId()));
 					if($state === null){
 						$state = $blockMapper->getFallbackStateData();
 					}
@@ -117,7 +164,7 @@ final class ChunkSerializer{
 				}
 			}else{
 				foreach($palette as $p){
-					$stream->put(Binary::writeUnsignedVarInt($blockMapper->toRuntimeId($p) << 1));
+					$stream->put(Binary::writeUnsignedVarInt($blockMapper->toRuntimeId($p, $stream->getProtocolId()) << 1));
 				}
 			}
 		}

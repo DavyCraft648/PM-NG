@@ -29,7 +29,7 @@ use pocketmine\network\mcpe\convert\ItemTranslator;
 use pocketmine\network\mcpe\protocol\ActorEventPacket;
 use pocketmine\network\mcpe\protocol\types\ActorEvent;
 
-final class ConsumingItemAnimation implements Animation{
+final class ConsumingItemAnimation extends DictionaryAnimation{
 
 	public function __construct(
 		private Human $human, //TODO: maybe this can be expanded to more than just player entities?
@@ -37,7 +37,7 @@ final class ConsumingItemAnimation implements Animation{
 	){}
 
 	public function encode() : array{
-		[$netId, $netData] = ItemTranslator::getInstance()->toNetworkId($this->item);
+		[$netId, $netData] = ItemTranslator::getInstance()->toNetworkId($this->item, $this->dictionaryProtocol);
 		return [
 			//TODO: need to check the data values
 			ActorEventPacket::create($this->human->getId(), ActorEvent::EATING_ITEM, ($netId << 16) | $netData)

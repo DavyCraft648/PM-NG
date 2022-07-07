@@ -199,6 +199,7 @@ class Server{
 	private bool $isRunning = true;
 
 	private bool $hasStopped = false;
+	private bool $hasForceShutdown = false;
 
 	private PluginManager $pluginManager;
 
@@ -277,6 +278,10 @@ class Server{
 
 	public function isRunning() : bool{
 		return $this->isRunning;
+	}
+
+	public function hasForceShutdown() : bool{
+		return $this->hasForceShutdown;
 	}
 
 	public function getPocketMineVersion() : string{
@@ -1472,6 +1477,7 @@ class Server{
 
 		if($this->isRunning){
 			$this->logger->emergency($this->language->translate(KnownTranslationFactory::pocketmine_server_forcingShutdown()));
+			$this->hasForceShutdown = true;
 		}
 		try{
 			if(!$this->isRunning()){

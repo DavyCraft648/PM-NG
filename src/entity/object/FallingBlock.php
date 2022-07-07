@@ -42,6 +42,7 @@ use pocketmine\network\mcpe\protocol\types\entity\EntityIds;
 use pocketmine\network\mcpe\protocol\types\entity\EntityMetadataCollection;
 use pocketmine\network\mcpe\protocol\types\entity\EntityMetadataProperties;
 use pocketmine\world\format\io\GlobalBlockStateHandlers;
+use pocketmine\player\Player;
 use function abs;
 
 class FallingBlock extends Entity{
@@ -157,11 +158,18 @@ class FallingBlock extends Entity{
 		return $nbt;
 	}
 
-	protected function syncNetworkData(EntityMetadataCollection $properties) : void{
-		parent::syncNetworkData($properties);
+	protected function sendSpawnPacket(Player $player) : void{
+		$this->getNetworkProperties()->setInt(EntityMetadataProperties::VARIANT, RuntimeBlockMapping::getInstance()->toRuntimeId($this->block->getStateId(), RuntimeBlockMapping::getMappingProtocol($player->getNetworkSession()->getProtocolId())));
+		$this->getNetworkProperties()->clearDirtyProperties(); //needed for multi protocol
 
-		$properties->setInt(EntityMetadataProperties::VARIANT, RuntimeBlockMapping::getInstance()->toRuntimeId($this->block->getStateId()));
+		self::sendSpawnPacket($player);
 	}
+
+	//protected function syncNetworkData(EntityMetadataCollection $properties) : void{ No need due to multi protocol
+	//	parent::syncNetworkData($properties);
+	//
+	//	$properties->setInt(EntityMetadataProperties::VARIANT, RuntimeBlockMapping::getInstance()->toRuntimeId($this->block->getStateId(), RuntimeBlockMapping::getMappingProtocol($player->getNetworkSession()->getProtocolId())));
+	//}
 
 	public function getOffsetPosition(Vector3 $vector3) : Vector3{
 		return $vector3->add(0, 0.49, 0); //TODO: check if height affects this

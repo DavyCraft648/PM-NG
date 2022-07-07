@@ -21,15 +21,16 @@
 
 declare(strict_types=1);
 
-namespace pocketmine\world\particle;
+namespace pocketmine\event\player;
 
-use pocketmine\math\Vector3;
-use pocketmine\network\mcpe\protocol\LevelEventPacket;
-use pocketmine\network\mcpe\protocol\types\ParticleIds;
+use pocketmine\event\Event;
+use pocketmine\network\mcpe\NetworkSession;
 
-class ExplodeParticle extends ProtocolParticle{
+class SessionDisconnectEvent extends Event{
 
-	public function encode(Vector3 $pos) : array{
-		return [LevelEventPacket::standardParticle(ParticleIds::EXPLODE, 0, $pos, $this->particleProtocol)];
+	public function __construct(private NetworkSession $session){}
+
+	public function getSession() : NetworkSession{
+		return $this->session;
 	}
 }
