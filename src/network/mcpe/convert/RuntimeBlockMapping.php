@@ -44,7 +44,7 @@ final class RuntimeBlockMapping{
 	use SingletonTrait;
 
 	/**
-	 * @var int[]
+	 * @var int[][]
 	 * @phpstan-var array<int, array<int, int>>
 	 */
 	private array $networkIdCache = [];
@@ -126,8 +126,8 @@ final class RuntimeBlockMapping{
 	}
 
 	public function toRuntimeId(int $internalStateId, int $mappingProtocol) : int{
-		if(isset($this->networkIdCache[$internalStateId])){
-			return $this->networkIdCache[$internalStateId];
+		if(isset($this->networkIdCache[$mappingProtocol][$internalStateId])){
+			return $this->networkIdCache[$mappingProtocol][$internalStateId];
 		}
 
 		try{
