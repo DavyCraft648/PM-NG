@@ -25,6 +25,7 @@ namespace pocketmine\network\mcpe\convert;
 
 use PHPUnit\Framework\TestCase;
 use pocketmine\block\BlockFactory;
+use pocketmine\network\mcpe\protocol\ProtocolInfo;
 
 class RuntimeBlockMappingTest extends TestCase{
 
@@ -33,7 +34,7 @@ class RuntimeBlockMappingTest extends TestCase{
 	 */
 	public function testAllBlockStatesSerialize() : void{
 		foreach(BlockFactory::getInstance()->getAllKnownStates() as $state){
-			RuntimeBlockMapping::getInstance()->toRuntimeId($state->getStateId());
+			RuntimeBlockMapping::getInstance()->toRuntimeId($state->getStateId(), ProtocolInfo::CURRENT_PROTOCOL);
 		}
 	}
 }

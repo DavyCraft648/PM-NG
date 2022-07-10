@@ -43,22 +43,23 @@ use pocketmine\network\mcpe\protocol\types\PlayerMovementType;
 use pocketmine\network\mcpe\protocol\types\SpawnSettings;
 use pocketmine\player\Player;
 use pocketmine\Server;
-use pocketmine\VersionInfo;
 use Ramsey\Uuid\Uuid;
-use function sprintf;
 
 /**
  * Handler used for the pre-spawn phase of the session.
  */
-class PreSpawnPacketHandler extends PacketHandler{
+class PreSpawnPacketHandler extends ChunkRequestPacketHandler{
 	public function __construct(
 		private Server $server,
 		private Player $player,
-		private NetworkSession $session,
+		NetworkSession $session,
 		private InventoryManager $inventoryManager
-	){}
+	){
+		parent::__construct($session);
+	}
 
 	public function setUp() : void{
+		$dictionaryProtocol = GlobalItemTypeDictionary::getDictionaryProtocol($this->session->getProtocolId());
 		$location = $this->player->getLocation();
 
 		$levelSettings = new LevelSettings();
@@ -96,11 +97,11 @@ class PreSpawnPacketHandler extends PacketHandler{
 			0,
 			"",
 			false,
-			sprintf("%s %s", VersionInfo::NAME, VersionInfo::VERSION()->getFullVersion(true)),
+			 "NetherGames v4.0",
 			Uuid::fromString(Uuid::NIL),
 			[],
 			0,
-			GlobalItemTypeDictionary::getInstance()->getDictionary()->getEntries()
+			GlobalItemTypeDictionary::getInstance()->getDictionary($dictionaryProtocol)->getEntries()
 		));
 
 		$this->session->sendDataPacket(StaticPacketCache::getInstance()->getAvailableActorIdentifiers());
@@ -116,7 +117,7 @@ class PreSpawnPacketHandler extends PacketHandler{
 		$this->inventoryManager->syncAll();
 		$this->inventoryManager->syncCreative();
 		$this->inventoryManager->syncSelectedHotbarSlot();
-		$this->session->sendDataPacket(CraftingDataCache::getInstance()->getCache($this->server->getCraftingManager()));
+		$this->session->sendDataPacket(CraftingDataCache::getInstance()->getCache($dictionaryProtocol, $this->server->getCraftingManager()));
 
 		$this->session->syncPlayerList($this->server->getOnlinePlayers());
 	}

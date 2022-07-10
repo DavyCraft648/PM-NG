@@ -54,20 +54,23 @@ use pocketmine\player\Player;
 use pocketmine\utils\AssumptionFailedError;
 use pocketmine\utils\SingletonTrait;
 use function get_class;
+use function morton2d_encode;
 
 class TypeConverter{
 	use SingletonTrait;
 
 	private const PM_ID_TAG = "___Id___";
-	private const PM_META_TAG = "___Meta___";
 
 	private const RECIPE_INPUT_WILDCARD_META = 0x7fff;
 
-	private int $shieldRuntimeId;
+	/** @var int[] */
+	private $shieldRuntimeIds;
 
 	public function __construct(){
 		//TODO: inject stuff via constructor
-		$this->shieldRuntimeId = GlobalItemTypeDictionary::getInstance()->getDictionary()->fromStringId("minecraft:shield");
+		foreach(GlobalItemTypeDictionary::getInstance()->getDictionaries() as $protocolId => $dictionary){
+			$this->shieldRuntimeIds[$protocolId] = $dictionary->fromStringId("minecraft:shield");
+		}
 	}
 
 	/**
@@ -114,18 +117,18 @@ class TypeConverter{
 		}
 	}
 
-	public function coreRecipeIngredientToNet(?RecipeIngredient $ingredient) : ProtocolRecipeIngredient{
+	public function coreRecipeIngredientToNet(?RecipeIngredient $ingredient, int $dictionaryProtocol) : ProtocolRecipeIngredient{
 		if($ingredient === null){
 			return new ProtocolRecipeIngredient(0, 0, 0);
 		}
 		if($ingredient instanceof MetaWildcardRecipeIngredient){
-			$id = GlobalItemTypeDictionary::getInstance()->getDictionary()->fromStringId($ingredient->getItemId());
+			$id = GlobalItemTypeDictionary::getInstance()->getDictionary($dictionaryProtocol)->fromStringId($ingredient->getItemId());
 			$meta = self::RECIPE_INPUT_WILDCARD_META;
 		}elseif($ingredient instanceof ExactRecipeIngredient){
 			$item = $ingredient->getItem();
-			[$id, $meta, $blockRuntimeId] = ItemTranslator::getInstance()->toNetworkId($item);
+			[$id, $meta, $blockRuntimeId] = ItemTranslator::getInstance()->toNetworkId($item, $dictionaryProtocol);
 			if($blockRuntimeId !== ItemTranslator::NO_BLOCK_RUNTIME_ID){
-				$meta = RuntimeBlockMapping::getInstance()->getBlockStateDictionary()->getMetaFromStateId($blockRuntimeId);
+				$meta = RuntimeBlockMapping::getInstance()->getBlockStateDictionary($dictionaryProtocol)->getMetaFromStateId($blockRuntimeId);
 				if($meta === null){
 					throw new AssumptionFailedError("Every block state should have an associated meta value");
 				}
@@ -136,12 +139,12 @@ class TypeConverter{
 		return new ProtocolRecipeIngredient($id, $meta, 1);
 	}
 
-	public function netRecipeIngredientToCore(ProtocolRecipeIngredient $ingredient) : ?RecipeIngredient{
+	public function netRecipeIngredientToCore(ProtocolRecipeIngredient $ingredient, int $dictionaryProtocol) : ?RecipeIngredient{
 		if($ingredient->getId() === 0){
 			return null;
 		}
 
-		$itemId = GlobalItemTypeDictionary::getInstance()->getDictionary()->fromIntId($ingredient->getId());
+		$itemId = GlobalItemTypeDictionary::getInstance()->getDictionary($dictionaryProtocol)->fromIntId($ingredient->getId());
 
 		if($ingredient->getMeta() === self::RECIPE_INPUT_WILDCARD_META){
 			return new MetaWildcardRecipeIngredient($itemId);
@@ -150,16 +153,16 @@ class TypeConverter{
 		$meta = $ingredient->getMeta();
 		$blockRuntimeId = null;
 		if(($blockId = BlockItemIdMap::getInstance()->lookupBlockId($itemId)) !== null){
-			$blockRuntimeId = RuntimeBlockMapping::getInstance()->getBlockStateDictionary()->lookupStateIdFromIdMeta($blockId, $meta);
+			$blockRuntimeId = RuntimeBlockMapping::getInstance()->getBlockStateDictionary($dictionaryProtocol)->lookupStateIdFromIdMeta($blockId, $meta);
 			if($blockRuntimeId !== null){
 				$meta = 0;
 			}
 		}
-		$result = ItemTranslator::getInstance()->fromNetworkId($ingredient->getId(), $meta, $blockRuntimeId ?? ItemTranslator::NO_BLOCK_RUNTIME_ID);
+		$result = ItemTranslator::getInstance()->fromNetworkId($ingredient->getId(), $meta, $blockRuntimeId ?? ItemTranslator::NO_BLOCK_RUNTIME_ID, $dictionaryProtocol);
 		return new ExactRecipeIngredient($result);
 	}
 
-	public function coreItemStackToNet(Item $itemStack) : ItemStack{
+	public function coreItemStackToNet(Item $itemStack, int $protocolId) : ItemStack{
 		if($itemStack->isNull()){
 			return ItemStack::null();
 		}
@@ -168,16 +171,15 @@ class TypeConverter{
 			$nbt = clone $itemStack->getNamedTag();
 		}
 
-		$idMeta = ItemTranslator::getInstance()->toNetworkIdQuiet($itemStack);
+		$idMeta = ItemTranslator::getInstance()->toNetworkIdQuiet($itemStack, $protocolId);
 		if($idMeta === null){
 			//Display unmapped items as INFO_UPDATE, but stick something in their NBT to make sure they don't stack with
 			//other unmapped items.
-			[$id, $meta, $blockRuntimeId] = ItemTranslator::getInstance()->toNetworkId(VanillaBlocks::INFO_UPDATE()->asItem());
+			[$id, $meta, $blockRuntimeId] = ItemTranslator::getInstance()->toNetworkId(VanillaBlocks::INFO_UPDATE()->asItem(), $protocolId);
 			if($nbt === null){
 				$nbt = new CompoundTag();
 			}
-			$nbt->setInt(self::PM_ID_TAG, $itemStack->getId());
-			$nbt->setInt(self::PM_META_TAG, $itemStack->getMeta());
+			$nbt->setInt(self::PM_ID_TAG, morton2d_encode($itemStack->getTypeId(), $itemStack->computeTypeData()));
 		}else{
 			[$id, $meta, $blockRuntimeId] = $idMeta;
 		}
@@ -190,20 +192,20 @@ class TypeConverter{
 			$nbt,
 			[],
 			[],
-			$id === $this->shieldRuntimeId ? 0 : null
+			$id === $this->shieldRuntimeIds[$protocolId] ? 0 : null
 		);
 	}
 
 	/**
 	 * @throws TypeConversionException
 	 */
-	public function netItemStackToCore(ItemStack $itemStack) : Item{
+	public function netItemStackToCore(ItemStack $itemStack, int $dictionaryProtocol) : Item{
 		if($itemStack->getId() === 0){
 			return VanillaItems::AIR();
 		}
 		$compound = $itemStack->getNbt();
 
-		$itemResult = ItemTranslator::getInstance()->fromNetworkId($itemStack->getId(), $itemStack->getMeta(), $itemStack->getBlockRuntimeId());
+		$itemResult = ItemTranslator::getInstance()->fromNetworkId($itemStack->getId(), $itemStack->getMeta(), $itemStack->getBlockRuntimeId(), $dictionaryProtocol);
 
 		if($compound !== null){
 			$compound = clone $compound;
@@ -224,18 +226,18 @@ class TypeConverter{
 	/**
 	 * @throws TypeConversionException
 	 */
-	public function createInventoryAction(NetworkInventoryAction $action, Player $player, InventoryManager $inventoryManager) : ?InventoryAction{
+	public function createInventoryAction(NetworkInventoryAction $action, Player $player, InventoryManager $inventoryManager, int $dictionaryProtocol) : ?InventoryAction{
 		if($action->oldItem->getItemStack()->equals($action->newItem->getItemStack())){
 			//filter out useless noise in 1.13
 			return null;
 		}
 		try{
-			$old = $this->netItemStackToCore($action->oldItem->getItemStack());
+			$old = $this->netItemStackToCore($action->oldItem->getItemStack(), $dictionaryProtocol);
 		}catch(TypeConversionException $e){
 			throw TypeConversionException::wrap($e, "Inventory action: oldItem");
 		}
 		try{
-			$new = $this->netItemStackToCore($action->newItem->getItemStack());
+			$new = $this->netItemStackToCore($action->newItem->getItemStack(), $dictionaryProtocol);
 		}catch(TypeConversionException $e){
 			throw TypeConversionException::wrap($e, "Inventory action: newItem");
 		}

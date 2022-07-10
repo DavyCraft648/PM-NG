@@ -147,7 +147,7 @@ class InventoryManager{
 			if($action->sourceType === NetworkInventoryAction::SOURCE_CONTAINER && isset($this->windowMap[$action->windowId])){
 				//this won't cover stuff like crafting grid due to too much magic
 				try{
-					$item = TypeConverter::getInstance()->netItemStackToCore($action->newItem->getItemStack());
+					$item = TypeConverter::getInstance()->netItemStackToCore($action->newItem->getItemStack(), $this->session->getProtocolId());
 				}catch(TypeConversionException $e){
 					throw new PacketHandlingException($e->getMessage(), 0, $e);
 				}
@@ -285,7 +285,7 @@ class InventoryManager{
 			$currentItem = $inventory->getItem($slot);
 			$clientSideItem = $this->initiatedSlotChanges[$windowId][$slot] ?? null;
 			if($clientSideItem === null || !$clientSideItem->equalsExact($currentItem)){
-				$itemStackWrapper = ItemStackWrapper::legacy(TypeConverter::getInstance()->coreItemStackToNet($currentItem));
+				$itemStackWrapper = ItemStackWrapper::legacy(TypeConverter::getInstance()->coreItemStackToNet($currentItem, $this->session->getProtocolId()));
 				if($windowId === ContainerIds::OFFHAND){
 					//TODO: HACK!
 					//The client may sometimes ignore the InventorySlotPacket for the offhand slot.
@@ -315,11 +315,11 @@ class InventoryManager{
 				$this->session->sendDataPacket(InventorySlotPacket::create(
 					$windowId,
 					0,
-					ItemStackWrapper::legacy($typeConverter->coreItemStackToNet($inventory->getItem(0)))
+					ItemStackWrapper::legacy($typeConverter->coreItemStackToNet($inventory->getItem(0), $this->session->getProtocolId()))
 				));
 			}else{
 				$this->session->sendDataPacket(InventoryContentPacket::create($windowId, array_map(function(Item $itemStack) use ($typeConverter) : ItemStackWrapper{
-					return ItemStackWrapper::legacy($typeConverter->coreItemStackToNet($itemStack));
+					return ItemStackWrapper::legacy($typeConverter->coreItemStackToNet($itemStack, $this->session->getProtocolId()));
 				}, $inventory->getContents(true))));
 			}
 		}
@@ -369,7 +369,7 @@ class InventoryManager{
 		if($selected !== $this->clientSelectedHotbarSlot){
 			$this->session->sendDataPacket(MobEquipmentPacket::create(
 				$this->player->getId(),
-				ItemStackWrapper::legacy(TypeConverter::getInstance()->coreItemStackToNet($this->player->getInventory()->getItemInHand())),
+				ItemStackWrapper::legacy(TypeConverter::getInstance()->coreItemStackToNet($this->player->getInventory()->getItemInHand(), $this->session->getProtocolId())),
 				$selected,
 				$selected,
 				ContainerIds::INVENTORY
@@ -383,7 +383,7 @@ class InventoryManager{
 
 		$nextEntryId = 1;
 		$this->session->sendDataPacket(CreativeContentPacket::create(array_map(function(Item $item) use($typeConverter, &$nextEntryId) : CreativeContentEntry{
-			return new CreativeContentEntry($nextEntryId++, $typeConverter->coreItemStackToNet($item));
+			return new CreativeContentEntry($nextEntryId++, $typeConverter->coreItemStackToNet($item, $this->session->getProtocolId()));
 		}, $this->player->isSpectator() ? [] : CreativeInventory::getInstance()->getAll())));
 	}
 }

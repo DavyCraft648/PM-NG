@@ -28,6 +28,8 @@ use pocketmine\data\bedrock\block\BlockStateSerializeException;
 use pocketmine\data\bedrock\block\BlockStateSerializer;
 use pocketmine\data\bedrock\block\BlockTypeNames;
 use pocketmine\nbt\tag\CompoundTag;
+use pocketmine\network\mcpe\protocol\ProtocolInfo;
+use pocketmine\player\Player;
 use pocketmine\utils\AssumptionFailedError;
 use pocketmine\utils\SingletonTrait;
 use pocketmine\utils\Utils;
@@ -42,44 +44,96 @@ final class RuntimeBlockMapping{
 	use SingletonTrait;
 
 	/**
-	 * @var int[]
-	 * @phpstan-var array<int, int>
+	 * @var int[][]
+	 * @phpstan-var array<int, array<int, int>>
 	 */
 	private array $networkIdCache = [];
 
 	/** Used when a blockstate can't be correctly serialized (e.g. because it's unknown) */
 	private BlockStateData $fallbackStateData;
-	private int $fallbackStateId;
+	/** @var int[] */
+	private array $fallbackStateId;
+
+	private const BLOCK_PALETTE_PATH = 0;
+	private const META_MAP_PATH = 1;
 
 	private static function make() : self{
-		$canonicalBlockStatesFile = Path::join(\pocketmine\BEDROCK_DATA_PATH, "canonical_block_states.nbt");
-		$canonicalBlockStatesRaw = Utils::assumeNotFalse(file_get_contents($canonicalBlockStatesFile), "Missing required resource file");
+		$protocolPaths = [
+			ProtocolInfo::CURRENT_PROTOCOL => [
+				self::BLOCK_PALETTE_PATH => '',
+				self::META_MAP_PATH => '',
+			],
+			ProtocolInfo::PROTOCOL_1_18_30 => [
+				self::BLOCK_PALETTE_PATH => '-1.18.30',
+				self::META_MAP_PATH => '-1.18.30',
+			],
+			ProtocolInfo::PROTOCOL_1_18_10 => [
+				self::BLOCK_PALETTE_PATH => '-1.18.10',
+				self::META_MAP_PATH => '-1.18.10',
+			],
+			ProtocolInfo::PROTOCOL_1_18_0 => [
+				self::BLOCK_PALETTE_PATH => '-1.18.0',
+				self::META_MAP_PATH => '-1.18.0',
+			],
+			ProtocolInfo::PROTOCOL_1_17_40 => [ // 1.18.0 has negative chunk hacks
+				self::BLOCK_PALETTE_PATH => '-1.18.0',
+				self::META_MAP_PATH => '-1.18.0',
+			],
+			ProtocolInfo::PROTOCOL_1_17_30 => [
+				self::BLOCK_PALETTE_PATH => '-1.17.30',
+				self::META_MAP_PATH => '-1.18.0',
+			],
+			ProtocolInfo::PROTOCOL_1_17_10 => [
+				self::BLOCK_PALETTE_PATH => '-1.17.10',
+				self::META_MAP_PATH => '-1.17.10',
+			],
+			ProtocolInfo::PROTOCOL_1_17_0 => [
+				self::BLOCK_PALETTE_PATH => '-1.17.0',
+				self::META_MAP_PATH => '-1.17.10',
+			]
+		];
 
-		$metaMappingFile = Path::join(\pocketmine\BEDROCK_DATA_PATH, 'block_state_meta_map.json');
-		$metaMappingRaw = Utils::assumeNotFalse(file_get_contents($metaMappingFile), "Missing required resource file");
+		$blockStateDictionaries = [];
+
+		foreach($protocolPaths as $mappingProtocol => $paths){
+			$canonicalBlockStatesFile = Path::join(\pocketmine\BEDROCK_DATA_PATH, "canonical_block_states" . $paths[self::BLOCK_PALETTE_PATH] . ".nbt");
+			$canonicalBlockStatesRaw = Utils::assumeNotFalse(file_get_contents($canonicalBlockStatesFile), "Missing required resource file");
+
+			$metaMappingFile = Path::join(\pocketmine\BEDROCK_DATA_PATH, 'block_state_meta_map' . $paths[self::META_MAP_PATH] . '.json');
+			$metaMappingRaw = Utils::assumeNotFalse(file_get_contents($metaMappingFile), "Missing required resource file");
+
+			$blockStateDictionaries[$mappingProtocol] = BlockStateDictionary::loadFromString($canonicalBlockStatesRaw, $metaMappingRaw);
+		}
+
 		return new self(
-			BlockStateDictionary::loadFromString($canonicalBlockStatesRaw, $metaMappingRaw),
+			$blockStateDictionaries,
 			GlobalBlockStateHandlers::getSerializer()
 		);
 	}
 
+	/**
+	 * @param BlockStateDictionary[] $blockStateDictionaries
+	 */
 	public function __construct(
-		private BlockStateDictionary $blockStateDictionary,
+		private array $blockStateDictionaries,
 		private BlockStateSerializer $blockStateSerializer
 	){
 		$this->fallbackStateData = new BlockStateData(BlockTypeNames::INFO_UPDATE, CompoundTag::create(), BlockStateData::CURRENT_VERSION);
-		$this->fallbackStateId = $this->blockStateDictionary->lookupStateIdFromData($this->fallbackStateData) ?? throw new AssumptionFailedError(BlockTypeNames::INFO_UPDATE . " should always exist");
+
+		foreach($this->blockStateDictionaries as $mappingProtocol => $blockStateDictionary){
+			$this->fallbackStateId[$mappingProtocol] = $blockStateDictionary->lookupStateIdFromData($this->fallbackStateData) ?? throw new AssumptionFailedError(BlockTypeNames::INFO_UPDATE . " should always exist");
+		}
 	}
 
-	public function toRuntimeId(int $internalStateId) : int{
-		if(isset($this->networkIdCache[$internalStateId])){
-			return $this->networkIdCache[$internalStateId];
+	public function toRuntimeId(int $internalStateId, int $mappingProtocol) : int{
+		if(isset($this->networkIdCache[$mappingProtocol][$internalStateId])){
+			return $this->networkIdCache[$mappingProtocol][$internalStateId];
 		}
 
 		try{
 			$blockStateData = $this->blockStateSerializer->serialize($internalStateId);
 
-			$networkId = $this->blockStateDictionary->lookupStateIdFromData($blockStateData);
+			$networkId = $this->getBlockStateDictionary($mappingProtocol)->lookupStateIdFromData($blockStateData);
 			if($networkId === null){
 				throw new AssumptionFailedError("Unmapped blockstate returned by blockstate serializer: " . $blockStateData->toNbt());
 			}
@@ -89,10 +143,33 @@ final class RuntimeBlockMapping{
 			$networkId = $this->fallbackStateId;
 		}
 
-		return $this->networkIdCache[$internalStateId] = $networkId;
+		return $this->networkIdCache[$mappingProtocol][$internalStateId] = $networkId;
 	}
 
-	public function getBlockStateDictionary() : BlockStateDictionary{ return $this->blockStateDictionary; }
+	public function getBlockStateDictionary(int $mappingProtocol) : BlockStateDictionary{ return $this->blockStateDictionaries[$mappingProtocol] ?? throw new AssumptionFailedError("Missing block state dictionary for protocol $mappingProtocol"); }
 
 	public function getFallbackStateData() : BlockStateData{ return $this->fallbackStateData; }
+
+	public static function getMappingProtocol(int $protocolId) : int{ return $protocolId; }
+
+	/**
+	 * @param Player[] $players
+	 *
+	 * @return Player[][]
+	 */
+	public static function sortByProtocol(array $players) : array{
+		$sortPlayers = [];
+
+		foreach($players as $player){
+			$mappingProtocol = self::getMappingProtocol($player->getNetworkSession()->getProtocolId());
+
+			if(isset($sortPlayers[$mappingProtocol])){
+				$sortPlayers[$mappingProtocol][] = $player;
+			}else{
+				$sortPlayers[$mappingProtocol] = [$player];
+			}
+		}
+
+		return $sortPlayers;
+	}
 }

@@ -21,18 +21,20 @@
 
 declare(strict_types=1);
 
-namespace pocketmine\data\bedrock;
+namespace pocketmine\block\utils;
 
-use PHPUnit\Framework\TestCase;
-use pocketmine\block\utils\CoralType;
+use pocketmine\block\BlockBreakInfo;
+use pocketmine\block\BlockIdentifier;
 
-class CoralTypeIdMapTest extends TestCase{
+trait WoodTypeTrait{
+	private WoodType $woodType; //immutable for now
 
-	public function testFromIdExhaustiveness() : void{
-		foreach(CoralType::getAll() as $type){
-			$id = CoralTypeIdMap::getInstance()->toId($type);
-			$type2 = CoralTypeIdMap::getInstance()->fromId($id);
-			self::assertTrue($type2 !== null && $type->equals($type2));
-		}
+	public function __construct(BlockIdentifier $idInfo, string $name, BlockBreakInfo $breakInfo, WoodType $woodType){
+		$this->woodType = $woodType;
+		parent::__construct($idInfo, $name, $breakInfo);
+	}
+
+	public function getWoodType() : WoodType{
+		return $this->woodType;
 	}
 }

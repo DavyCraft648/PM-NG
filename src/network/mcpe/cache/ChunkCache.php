@@ -24,15 +24,17 @@ declare(strict_types=1);
 namespace pocketmine\network\mcpe\cache;
 
 use pocketmine\math\Vector3;
+use pocketmine\network\mcpe\CachedChunkPromise;
 use pocketmine\network\mcpe\ChunkRequestTask;
-use pocketmine\network\mcpe\compression\CompressBatchPromise;
 use pocketmine\network\mcpe\compression\Compressor;
+use pocketmine\network\mcpe\convert\RuntimeBlockMapping;
+use pocketmine\network\mcpe\protocol\ProtocolInfo;
 use pocketmine\world\ChunkListener;
 use pocketmine\world\ChunkListenerNoOpTrait;
 use pocketmine\world\format\Chunk;
 use pocketmine\world\World;
+use function count;
 use function spl_object_id;
-use function strlen;
 
 /**
  * This class is used by the current MCPE protocol system to store cached chunk packets for fast resending.
@@ -69,17 +71,19 @@ class ChunkCache implements ChunkListener{
 	public static function pruneCaches() : void{
 		foreach(self::$instances as $compressorMap){
 			foreach($compressorMap as $chunkCache){
-				foreach($chunkCache->caches as $chunkHash => $promise){
-					if($promise->hasResult()){
-						//Do not clear promises that are not yet fulfilled; they will have requesters waiting on them
-						unset($chunkCache->caches[$chunkHash]);
+				foreach($chunkCache->caches as $chunkHash => $caches){
+					foreach($caches as $mappingProtocol => $promise){
+						if($promise->hasResult()){
+							//Do not clear promises that are not yet fulfilled; they will have requesters waiting on them
+							unset($chunkCache->caches[$chunkHash][$mappingProtocol]);
+						}
 					}
 				}
 			}
 		}
 	}
 
-	/** @var CompressBatchPromise[] */
+	/** @var CachedChunkPromise[][] */
 	private array $caches = [];
 
 	private int $hits = 0;
@@ -93,9 +97,9 @@ class ChunkCache implements ChunkListener{
 	/**
 	 * Requests asynchronous preparation of the chunk at the given coordinates.
 	 *
-	 * @return CompressBatchPromise a promise of resolution which will contain a compressed chunk packet.
+	 * @return CachedChunkPromise a promise of resolution which will contain a compressed chunk packet.
 	 */
-	public function request(int $chunkX, int $chunkZ) : CompressBatchPromise{
+	public function request(int $chunkX, int $chunkZ, int $protocolId = ProtocolInfo::CURRENT_PROTOCOL) : CachedChunkPromise{
 		$this->world->registerChunkListener($this, $chunkX, $chunkZ);
 		$chunk = $this->world->getChunk($chunkX, $chunkZ);
 		if($chunk === null){
@@ -103,44 +107,59 @@ class ChunkCache implements ChunkListener{
 		}
 		$chunkHash = World::chunkHash($chunkX, $chunkZ);
 
-		if(isset($this->caches[$chunkHash])){
+		$mappingProtocol = RuntimeBlockMapping::getMappingProtocol($protocolId);
+
+		if(isset($this->caches[$chunkHash][$mappingProtocol])){
 			++$this->hits;
-			return $this->caches[$chunkHash];
+			return $this->caches[$chunkHash][$mappingProtocol];
 		}
 
 		++$this->misses;
 
 		$this->world->timings->syncChunkSendPrepare->startTiming();
 		try{
-			$this->caches[$chunkHash] = new CompressBatchPromise();
+			$this->caches[$chunkHash][$mappingProtocol] = new CachedChunkPromise();
 
 			$this->world->getServer()->getAsyncPool()->submitTask(
 				new ChunkRequestTask(
 					$chunkX,
 					$chunkZ,
 					$chunk,
-					$this->caches[$chunkHash],
+					$mappingProtocol,
+					$this->caches[$chunkHash][$mappingProtocol],
 					$this->compressor,
-					function() use ($chunkHash, $chunkX, $chunkZ) : void{
+					function() use ($chunkHash, $chunkX, $chunkZ, $mappingProtocol) : void{
 						$this->world->getLogger()->error("Failed preparing chunk $chunkX $chunkZ, retrying");
 
 						if(isset($this->caches[$chunkHash])){
-							$this->restartPendingRequest($chunkX, $chunkZ);
+							$this->restartPendingRequest($chunkX, $chunkZ, $mappingProtocol);
 						}
 					}
 				)
 			);
 
-			return $this->caches[$chunkHash];
+			return $this->caches[$chunkHash][$mappingProtocol];
 		}finally{
 			$this->world->timings->syncChunkSendPrepare->stopTiming();
 		}
 	}
 
-	private function destroy(int $chunkX, int $chunkZ) : bool{
+	private function destroy(int $chunkX, int $chunkZ, int $mappingProtocol = null) : bool{
 		$chunkHash = World::chunkHash($chunkX, $chunkZ);
-		$existing = $this->caches[$chunkHash] ?? null;
-		unset($this->caches[$chunkHash]);
+
+		if($mappingProtocol === null){
+			$existing = false;
+
+			if(isset($this->caches[$chunkHash])){
+				$existing = count($this->caches[$chunkHash]) > 0;
+				unset($this->caches[$chunkHash]);
+			}
+
+			return $existing;
+		}
+
+		$existing = $this->caches[$chunkHash][$mappingProtocol] ?? null;
+		unset($this->caches[$chunkHash][$mappingProtocol]);
 
 		return $existing !== null;
 	}
@@ -150,30 +169,33 @@ class ChunkCache implements ChunkListener{
 	 *
 	 * @throws \InvalidArgumentException
 	 */
-	private function restartPendingRequest(int $chunkX, int $chunkZ) : void{
+	private function restartPendingRequest(int $chunkX, int $chunkZ, int $mappingProtocol) : void{
 		$chunkHash = World::chunkHash($chunkX, $chunkZ);
-		$existing = $this->caches[$chunkHash] ?? null;
+		$existing = $this->caches[$chunkHash][$mappingProtocol] ?? null;
 		if($existing === null || $existing->hasResult()){
 			throw new \InvalidArgumentException("Restart can only be applied to unresolved promises");
 		}
 		$existing->cancel();
-		unset($this->caches[$chunkHash]);
+		unset($this->caches[$chunkHash][$mappingProtocol]);
 
-		$this->request($chunkX, $chunkZ)->onResolve(...$existing->getResolveCallbacks());
+		$this->request($chunkX, $chunkZ, $mappingProtocol)->onResolve(...$existing->getResolveCallbacks());
 	}
 
 	/**
 	 * @throws \InvalidArgumentException
 	 */
 	private function destroyOrRestart(int $chunkX, int $chunkZ) : void{
-		$cache = $this->caches[World::chunkHash($chunkX, $chunkZ)] ?? null;
-		if($cache !== null){
-			if(!$cache->hasResult()){
-				//some requesters are waiting for this chunk, so their request needs to be fulfilled
-				$this->restartPendingRequest($chunkX, $chunkZ);
-			}else{
-				//dump the cache, it'll be regenerated the next time it's requested
-				$this->destroy($chunkX, $chunkZ);
+		$chunkHash = World::chunkHash($chunkX, $chunkZ);
+
+		if(isset($this->caches[$chunkHash])){
+			foreach($this->caches[$chunkHash] as $mappingProtocol => $cache){
+				if(!$cache->hasResult()){
+					//some requesters are waiting for this chunk, so their request needs to be fulfilled
+					$this->restartPendingRequest($chunkX, $chunkZ, $mappingProtocol);
+				}else{
+					//dump the cache, it'll be regenerated the next time it's requested
+					$this->destroy($chunkX, $chunkZ, $mappingProtocol);
+				}
 			}
 		}
 	}
@@ -215,9 +237,11 @@ class ChunkCache implements ChunkListener{
 	 */
 	public function calculateCacheSize() : int{
 		$result = 0;
-		foreach($this->caches as $cache){
-			if($cache->hasResult()){
-				$result += strlen($cache->getResult());
+		foreach($this->caches as $caches){
+			foreach($caches as $cache){
+				if($cache->hasResult()){
+					$result += $cache->getResult()->getSize();
+				}
 			}
 		}
 		return $result;

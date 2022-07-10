@@ -54,7 +54,7 @@ class BlockTest extends TestCase{
 	public function testDeliberateOverrideBlock() : void{
 		$block = new MyCustomBlock(new BlockIdentifier(BlockTypeIds::COBBLESTONE), "Cobblestone", BlockBreakInfo::instant());
 		$this->blockFactory->register($block, true);
-		self::assertInstanceOf(MyCustomBlock::class, $this->blockFactory->fromFullBlock($block->getStateId()));
+		self::assertInstanceOf(MyCustomBlock::class, $this->blockFactory->fromStateId($block->getStateId()));
 	}
 
 	/**
@@ -65,7 +65,7 @@ class BlockTest extends TestCase{
 			if(!$this->blockFactory->isRegistered($i)){
 				$b = new StrangeNewBlock(new BlockIdentifier($i), "Strange New Block", BlockBreakInfo::instant());
 				$this->blockFactory->register($b);
-				self::assertInstanceOf(StrangeNewBlock::class, $this->blockFactory->fromFullBlock($b->getStateId()));
+				self::assertInstanceOf(StrangeNewBlock::class, $this->blockFactory->fromStateId($b->getStateId()));
 				return;
 			}
 		}
@@ -88,8 +88,8 @@ class BlockTest extends TestCase{
 	 */
 	public function testBlockFactoryClone() : void{
 		foreach($this->blockFactory->getAllKnownStates() as $k => $state){
-			$b1 = $this->blockFactory->fromFullBlock($k);
-			$b2 = $this->blockFactory->fromFullBlock($k);
+			$b1 = $this->blockFactory->fromStateId($k);
+			$b2 = $this->blockFactory->fromStateId($k);
 			self::assertNotSame($b1, $b2);
 		}
 	}
@@ -110,7 +110,16 @@ class BlockTest extends TestCase{
 		if(!is_array($list)){
 			throw new \pocketmine\utils\AssumptionFailedError("Old table should be array{knownStates: array<string, string>, stateDataBits: int}");
 		}
-		$knownStates = $list["knownStates"];
+		$knownStates = [];
+		/**
+		 * @var string $name
+		 * @var int[]  $stateIds
+		 */
+		foreach($list["knownStates"] as $name => $stateIds){
+			foreach($stateIds as $stateId){
+				$knownStates[$stateId] = $name;
+			}
+		}
 		$oldStateDataSize = $list["stateDataBits"];
 		self::assertSame($oldStateDataSize, Block::INTERNAL_STATE_DATA_BITS, "Changed number of state data bits - consistency check probably need regenerating");
 

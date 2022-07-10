@@ -45,24 +45,29 @@ use pocketmine\player\PlayerInfo;
 use pocketmine\player\XboxLivePlayerInfo;
 use pocketmine\Server;
 use Ramsey\Uuid\Uuid;
+use function in_array;
 use function is_array;
 
 /**
  * Handles the initial login phase of the session. This handler is used as the initial state.
  */
-class LoginPacketHandler extends PacketHandler{
+class LoginPacketHandler extends ChunkRequestPacketHandler{
 	/**
 	 * @phpstan-param \Closure(PlayerInfo) : void $playerInfoConsumer
 	 * @phpstan-param \Closure(bool $isAuthenticated, bool $authRequired, ?string $error, ?string $clientPubKey) : void $authCallback
 	 */
 	public function __construct(
 		private Server $server,
-		private NetworkSession $session,
+		NetworkSession $session,
 		private \Closure $playerInfoConsumer,
 		private \Closure $authCallback
-	){}
+	){
+		parent::__construct($session);
+	}
 
 	public function handleLogin(LoginPacket $packet) : bool{
+		$this->session->setProtocolId($packet->protocol);
+
 		if(!$this->isCompatibleProtocol($packet->protocol)){
 			$this->session->sendDataPacket(PlayStatusPacket::create($packet->protocol < ProtocolInfo::CURRENT_PROTOCOL ? PlayStatusPacket::LOGIN_FAILED_CLIENT : PlayStatusPacket::LOGIN_FAILED_SERVER), true);
 
@@ -119,8 +124,7 @@ class LoginPacketHandler extends PacketHandler{
 
 		$ev = new PlayerPreLoginEvent(
 			$playerInfo,
-			$this->session->getIp(),
-			$this->session->getPort(),
+			$this->session,
 			$this->server->requiresAuthentication()
 		);
 		if($this->server->getNetwork()->getConnectionCount() > $this->server->getMaxPlayers()){
@@ -217,6 +221,6 @@ class LoginPacketHandler extends PacketHandler{
 	}
 
 	protected function isCompatibleProtocol(int $protocolVersion) : bool{
-		return $protocolVersion === ProtocolInfo::CURRENT_PROTOCOL;
+		return in_array($protocolVersion, ProtocolInfo::ACCEPTED_PROTOCOL, true);
 	}
 }

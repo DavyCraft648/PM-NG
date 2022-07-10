@@ -28,7 +28,7 @@ use pocketmine\Server;
 use function spl_object_id;
 
 final class StandardPacketBroadcaster implements PacketBroadcaster{
-	public function __construct(private Server $server){}
+	public function __construct(private Server $server, private int $protocolId){}
 
 	public function broadcastPackets(array $recipients, array $packets) : void{
 		$buffers = [];
@@ -38,7 +38,7 @@ final class StandardPacketBroadcaster implements PacketBroadcaster{
 			$serializerContext = $recipient->getPacketSerializerContext();
 			$bufferId = spl_object_id($serializerContext);
 			if(!isset($buffers[$bufferId])){
-				$buffers[$bufferId] = PacketBatch::fromPackets($serializerContext, ...$packets);
+				$buffers[$bufferId] = PacketBatch::fromPackets($this->protocolId, $serializerContext, ...$packets);
 			}
 
 			//TODO: different compressors might be compatible, it might not be necessary to split them up by object

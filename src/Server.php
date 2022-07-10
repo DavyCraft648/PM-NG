@@ -199,6 +199,7 @@ class Server{
 	private bool $isRunning = true;
 
 	private bool $hasStopped = false;
+	private bool $hasForceShutdown = false;
 
 	private PluginManager $pluginManager;
 
@@ -277,6 +278,10 @@ class Server{
 
 	public function isRunning() : bool{
 		return $this->isRunning;
+	}
+
+	public function hasForceShutdown() : bool{
+		return $this->hasForceShutdown;
 	}
 
 	public function getPocketMineVersion() : string{
@@ -963,7 +968,7 @@ class Server{
 
 			$this->commandMap = new SimpleCommandMap($this);
 
-			$this->craftingManager = CraftingManagerFromDataHelper::make(Path::join(\pocketmine\BEDROCK_DATA_PATH, "recipes.json"));
+			$this->craftingManager = CraftingManagerFromDataHelper::make(Path::join(\pocketmine\BEDROCK_DATA_PATH, "recipes"));
 
 			$this->resourceManager = new ResourcePackManager(Path::join($this->getDataPath(), "resource_packs"), $this->logger);
 
@@ -1472,6 +1477,7 @@ class Server{
 
 		if($this->isRunning){
 			$this->logger->emergency($this->language->translate(KnownTranslationFactory::pocketmine_server_forcingShutdown()));
+			$this->hasForceShutdown = true;
 		}
 		try{
 			if(!$this->isRunning()){

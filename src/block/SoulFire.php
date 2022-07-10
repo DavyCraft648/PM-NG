@@ -21,21 +21,29 @@
 
 declare(strict_types=1);
 
-namespace pocketmine\item;
+namespace pocketmine\block;
 
-final class ItemIdentifierFlattened extends ItemIdentifier{
-	/**
-	 * @param int[] $additionalLegacyIds
-	 */
-	public function __construct(int $typeId, int $legacyId, int $legacyMeta, private array $additionalLegacyIds){
-		parent::__construct($typeId, $legacyId, $legacyMeta);
+use pocketmine\math\Facing;
+
+final class SoulFire extends BaseFire{
+
+	public function getLightLevel() : int{
+		return 10;
 	}
 
-	/** @return int[] */
-	public function getAdditionalLegacyIds() : array{ return $this->additionalLegacyIds; }
+	protected function getFireDamage() : int{
+		return 2;
+	}
 
-	/** @return int[] */
-	public function getAllLegacyIds() : array{
-		return [$this->getLegacyId(), ...$this->additionalLegacyIds];
+	public static function canBeSupportedBy(Block $block) : bool{
+		//TODO: this really ought to use some kind of tag system
+		$id = $block->getTypeId();
+		return $id === BlockTypeIds::SOUL_SAND || $id === BlockTypeIds::SOUL_SOIL;
+	}
+
+	public function onNearbyBlockChange() : void{
+		if(!self::canBeSupportedBy($this->getSide(Facing::DOWN))){
+			$this->position->getWorld()->setBlock($this->position, VanillaBlocks::AIR());
+		}
 	}
 }

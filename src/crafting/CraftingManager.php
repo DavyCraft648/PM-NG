@@ -91,7 +91,7 @@ class CraftingManager{
 	 */
 	public static function sort(Item $i1, Item $i2) : int{
 		//Use spaceship operator to compare each property, then try the next one if they are equivalent.
-		($retval = $i1->getId() <=> $i2->getId()) === 0 && ($retval = $i1->getMeta() <=> $i2->getMeta()) === 0 && ($retval = $i1->getCount() <=> $i2->getCount()) === 0;
+		($retval = $i1->getTypeId() <=> $i2->getTypeId()) === 0 && ($retval = $i1->computeTypeData() <=> $i2->computeTypeData()) === 0 && ($retval = $i1->getCount() <=> $i2->getCount()) === 0;
 
 		return $retval;
 	}
@@ -130,8 +130,7 @@ class CraftingManager{
 		foreach($outputs as $o){
 			//count is not written because the outputs might be from multiple repetitions of a single recipe
 			//this reduces the accuracy of the hash, but it won't matter in most cases.
-			$result->putVarInt($o->getId());
-			$result->putVarInt($o->getMeta());
+			$result->putVarInt(morton2d_encode($o->getTypeId(), $o->computeTypeData()));
 			$result->put((new LittleEndianNbtSerializer())->write(new TreeRoot($o->getNamedTag())));
 		}
 
@@ -256,21 +255,21 @@ class CraftingManager{
 	}
 
 	public function matchBrewingRecipe(Item $input, Item $ingredient) : ?BrewingRecipe{
-		$inputHash = morton2d_encode($input->getId(), $input->getMeta());
-		$ingredientHash = morton2d_encode($ingredient->getId(), $ingredient->getMeta());
+		$inputHash = morton2d_encode($input->getTypeId(), $input->computeTypeData());
+		$ingredientHash = morton2d_encode($ingredient->getTypeId(), $ingredient->computeTypeData());
 		$cached = $this->brewingRecipeCache[$inputHash][$ingredientHash] ?? null;
 		if($cached !== null){
 			return $cached;
 		}
 
 		foreach($this->potionContainerChangeRecipes as $recipe){
-			if($recipe->getIngredient()->equals($ingredient) && $recipe->getResultFor($input) !== null){
+			if($recipe->getIngredient()->accepts($ingredient) && $recipe->getResultFor($input) !== null){
 				return $this->brewingRecipeCache[$inputHash][$ingredientHash] = $recipe;
 			}
 		}
 
 		foreach($this->potionTypeRecipes as $recipe){
-			if($recipe->getIngredient()->equals($ingredient) && $recipe->getResultFor($input) !== null){
+			if($recipe->getIngredient()->accepts($ingredient) && $recipe->getResultFor($input) !== null){
 				return $this->brewingRecipeCache[$inputHash][$ingredientHash] = $recipe;
 			}
 		}

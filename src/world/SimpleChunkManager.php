@@ -45,7 +45,7 @@ class SimpleChunkManager implements ChunkManager{
 
 	public function getBlockAtLayer(int $x, int $y, int $z, int $layer = 0) : Block{
 		if($this->isInWorld($x, $y, $z) && ($chunk = $this->getChunk($x >> Chunk::COORD_BIT_SIZE, $z >> Chunk::COORD_BIT_SIZE)) !== null){
-			return BlockFactory::getInstance()->fromFullBlock($chunk->getFullBlock($x & Chunk::COORD_MASK, $y, $z & Chunk::COORD_MASK, $layer));
+			return BlockFactory::getInstance()->fromStateId($chunk->getFullBlock($x & Chunk::COORD_MASK, $y, $z & Chunk::COORD_MASK, $layer));
 		}
 		return VanillaBlocks::AIR();
 	}

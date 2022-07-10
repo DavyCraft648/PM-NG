@@ -44,6 +44,7 @@ use pocketmine\math\Facing;
 use pocketmine\math\Vector3;
 use pocketmine\nbt\tag\CompoundTag;
 use pocketmine\nbt\tag\StringTag;
+use pocketmine\network\mcpe\convert\RuntimeBlockMapping;
 use pocketmine\network\mcpe\convert\SkinAdapterSingleton;
 use pocketmine\network\mcpe\convert\TypeConversionException;
 use pocketmine\network\mcpe\convert\TypeConverter;
@@ -80,6 +81,7 @@ use pocketmine\network\mcpe\protocol\PlayerAuthInputPacket;
 use pocketmine\network\mcpe\protocol\PlayerHotbarPacket;
 use pocketmine\network\mcpe\protocol\PlayerInputPacket;
 use pocketmine\network\mcpe\protocol\PlayerSkinPacket;
+use pocketmine\network\mcpe\protocol\ProtocolInfo;
 use pocketmine\network\mcpe\protocol\RequestAbilityPacket;
 use pocketmine\network\mcpe\protocol\RequestChunkRadiusPacket;
 use pocketmine\network\mcpe\protocol\ServerSettingsRequestPacket;
@@ -134,7 +136,7 @@ use const JSON_THROW_ON_ERROR;
 /**
  * This handler handles packets related to general gameplay.
  */
-class InGamePacketHandler extends PacketHandler{
+class InGamePacketHandler extends ChunkRequestPacketHandler{
 	private const MAX_FORM_RESPONSE_DEPTH = 2; //modal/simple will be 1, custom forms 2 - they will never contain anything other than string|int|float|bool|null
 
 	protected ?CraftingTransaction $craftingTransaction = null;
@@ -146,9 +148,11 @@ class InGamePacketHandler extends PacketHandler{
 
 	public function __construct(
 		private Player $player,
-		private NetworkSession $session,
+		NetworkSession $session,
 		private InventoryManager $inventoryManager
-	){}
+	){
+		parent::__construct($session);
+	}
 
 	public function handleText(TextPacket $packet) : bool{
 		if($packet->type === TextPacket::TYPE_CHAT){
@@ -332,7 +336,7 @@ class InGamePacketHandler extends PacketHandler{
 			}
 
 			try{
-				$action = $converter->createInventoryAction($networkInventoryAction, $this->player, $this->inventoryManager);
+				$action = $converter->createInventoryAction($networkInventoryAction, $this->player, $this->inventoryManager, $this->session->getProtocolId());
 				if($action !== null){
 					$actions[] = $action;
 				}
@@ -483,7 +487,7 @@ class InGamePacketHandler extends PacketHandler{
 			}else{
 				$blocks[] = $blockPos;
 			}
-			foreach($this->player->getWorld()->createBlockUpdatePackets($blocks) as $packet){
+			foreach($this->player->getWorld()->createBlockUpdatePackets(RuntimeBlockMapping::getMappingProtocol($this->session->getProtocolId()), $blocks) as $packet){
 				$this->session->sendDataPacket($packet);
 			}
 		}
@@ -644,7 +648,27 @@ class InGamePacketHandler extends PacketHandler{
 	}
 
 	public function handleAdventureSettings(AdventureSettingsPacket $packet) : bool{
-		return true; //no longer used, but the client still sends it for flight changes
+		if($this->session->getProtocolId() >= ProtocolInfo::PROTOCOL_1_19_0){
+			return true; //no longer used, but the client still sends it for flight changes
+		}
+
+		if($packet->targetActorUniqueId !== $this->player->getId()){
+			return false; //TODO: operators can change other people's permissions using this
+		}
+
+		$handled = false;
+
+		$isFlying = $packet->getFlag(AdventureSettingsPacket::FLYING);
+		if($isFlying !== $this->player->isFlying()){
+			if(!$this->player->toggleFlight($isFlying)){
+				$this->session->syncAdventureSettings($this->player);
+			}
+			$handled = true;
+		}
+
+		//TODO: check for other changes
+
+		return $handled;
 	}
 
 	public function handleBlockActorData(BlockActorDataPacket $packet) : bool{
@@ -667,7 +691,7 @@ class InGamePacketHandler extends PacketHandler{
 
 				try{
 					if(!$block->updateText($this->player, $text)){
-						foreach($this->player->getWorld()->createBlockUpdatePackets([$pos]) as $updatePacket){
+						foreach($this->player->getWorld()->createBlockUpdatePackets(RuntimeBlockMapping::getMappingProtocol($this->session->getProtocolId()), [$pos]) as $updatePacket){
 							$this->session->sendDataPacket($updatePacket);
 						}
 					}
@@ -968,6 +992,10 @@ class InGamePacketHandler extends PacketHandler{
 	}
 
 	public function handleRequestAbility(RequestAbilityPacket $packet) : bool{
+		if($this->session->getProtocolId() < ProtocolInfo::PROTOCOL_1_19_0){
+			return false;
+		}
+
 		if($packet->getAbilityId() === RequestAbilityPacket::ABILITY_FLYING){
 			$isFlying = $packet->getAbilityValue();
 			if(!is_bool($isFlying)){

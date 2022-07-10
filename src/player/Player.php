@@ -142,6 +142,7 @@ use function max;
 use function mb_strlen;
 use function microtime;
 use function min;
+use function morton2d_encode;
 use function preg_match;
 use function spl_object_id;
 use function sqrt;
@@ -641,7 +642,7 @@ class Player extends Human implements CommandSender, ChunkListener, IPlayer{
 	 */
 	public function getItemCooldownExpiry(Item $item) : int{
 		$this->checkItemCooldowns();
-		return $this->usedItemsCooldown[$item->getId()] ?? 0;
+		return $this->usedItemsCooldown[morton2d_encode($item->getTypeId(), $item->computeTypeData())] ?? 0;
 	}
 
 	/**
@@ -649,7 +650,7 @@ class Player extends Human implements CommandSender, ChunkListener, IPlayer{
 	 */
 	public function hasItemCooldown(Item $item) : bool{
 		$this->checkItemCooldowns();
-		return isset($this->usedItemsCooldown[$item->getId()]);
+		return isset($this->usedItemsCooldown[morton2d_encode($item->getTypeId(), $item->computeTypeData())]);
 	}
 
 	/**
@@ -658,7 +659,7 @@ class Player extends Human implements CommandSender, ChunkListener, IPlayer{
 	public function resetItemCooldown(Item $item, ?int $ticks = null) : void{
 		$ticks = $ticks ?? $item->getCooldownTicks();
 		if($ticks > 0){
-			$this->usedItemsCooldown[$item->getId()] = $this->server->getTick() + $ticks;
+			$this->usedItemsCooldown[morton2d_encode($item->getTypeId(), $item->computeTypeData())] = $this->server->getTick() + $ticks;
 		}
 	}
 
@@ -1613,7 +1614,7 @@ class Player extends Human implements CommandSender, ChunkListener, IPlayer{
 		}
 
 		$block = $target->getSide($face);
-		if($block->getTypeId() === BlockTypeIds::FIRE){
+		if($block->getTypeId() === BlockTypeIds::FIRE || $block->getTypeId() === BlockTypeIds::SOUL_FIRE){
 			$this->getWorld()->setBlock($block->getPosition(), VanillaBlocks::AIR());
 			$this->getWorld()->addSound($block->getPosition()->add(0.5, 0.5, 0.5), new FireExtinguishSound());
 			return true;
@@ -1743,7 +1744,9 @@ class Player extends Human implements CommandSender, ChunkListener, IPlayer{
 
 		$soundPos = $entity->getPosition()->add(0, $entity->size->getHeight() / 2, 0);
 		if($ev->isCancelled()){
-			$this->getWorld()->addSound($soundPos, new EntityAttackNoDamageSound());
+			if(!$this->isSilent() && !$this->isAdventure()){
+				$this->getWorld()->addSound($soundPos, new EntityAttackNoDamageSound());
+			}
 			return false;
 		}
 		$this->getWorld()->addSound($soundPos, new EntityAttackSound());
@@ -1942,6 +1945,10 @@ class Player extends Human implements CommandSender, ChunkListener, IPlayer{
 	 * Sends a direct chat message to a player
 	 */
 	public function sendMessage(Translatable|string $message) : void{
+		if(!$this->isConnected()){
+			return;
+		}
+
 		if($message instanceof Translatable){
 			$this->sendTranslation($message->getText(), $message->getParameters());
 			return;

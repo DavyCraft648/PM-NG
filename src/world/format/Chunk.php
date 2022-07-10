@@ -29,6 +29,8 @@ namespace pocketmine\world\format;
 use pocketmine\block\Block;
 use pocketmine\block\BlockTypeIds;
 use pocketmine\block\tile\Tile;
+use pocketmine\data\bedrock\BiomeIds;
+use pocketmine\network\mcpe\protocol\types\DimensionIds;
 use function array_map;
 
 class Chunk{
@@ -61,6 +63,9 @@ class Chunk{
 
 	protected BiomeArray $biomeIds;
 
+	/** @var int */
+	protected $dimensionId;
+
 	/**
 	 * @param SubChunk[] $subChunks
 	 */
@@ -76,6 +81,13 @@ class Chunk{
 		$this->biomeIds = $biomeIds;
 
 		$this->terrainPopulated = $terrainPopulated;
+
+		// TODO: Hack! There's no way to cleanly do this without diverging from pmmp too much, so this is the best workaround for that
+		$this->dimensionId = match($biomeIds->get(0, 0)) {
+			BiomeIds::HELL => DimensionIds::NETHER,
+			BiomeIds::THE_END => DimensionIds::THE_END,
+			default => DimensionIds::OVERWORLD
+		};
 	}
 
 	/**
@@ -193,7 +205,7 @@ class Chunk{
 
 		$pos = $tile->getPosition();
 		if(isset($this->tiles[$index = Chunk::blockHash($pos->x, $pos->y, $pos->z)]) && $this->tiles[$index] !== $tile){
-			throw new \InvalidArgumentException("Another tile is already at this location");
+			$this->tiles[$index]->close(); // close the previous tile
 		}
 		$this->tiles[$index] = $tile;
 	}
@@ -274,6 +286,17 @@ class Chunk{
 
 	public function clearTerrainDirtyFlags() : void{
 		$this->terrainDirtyFlags = 0;
+	}
+
+	public function getDimensionId() : int{
+		return $this->dimensionId;
+	}
+
+	/**
+	 * @see DimensionIds
+	 */
+	public function setDimensionId(int $dimension) : void{
+		$this->dimensionId = $dimension;
 	}
 
 	public function getSubChunk(int $y) : SubChunk{

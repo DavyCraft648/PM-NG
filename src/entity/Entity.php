@@ -30,6 +30,7 @@ use pocketmine\block\Air;
 use pocketmine\block\Block;
 use pocketmine\block\Water;
 use pocketmine\entity\animation\Animation;
+use pocketmine\entity\animation\DictionaryAnimation;
 use pocketmine\event\entity\EntityDamageEvent;
 use pocketmine\event\entity\EntityDespawnEvent;
 use pocketmine\event\entity\EntityMotionEvent;
@@ -45,6 +46,8 @@ use pocketmine\nbt\tag\DoubleTag;
 use pocketmine\nbt\tag\FloatTag;
 use pocketmine\nbt\tag\ListTag;
 use pocketmine\nbt\tag\StringTag;
+use pocketmine\network\mcpe\convert\GlobalItemTypeDictionary;
+use pocketmine\network\mcpe\convert\RuntimeBlockMapping;
 use pocketmine\network\mcpe\protocol\AddActorPacket;
 use pocketmine\network\mcpe\protocol\MoveActorAbsolutePacket;
 use pocketmine\network\mcpe\protocol\SetActorMotionPacket;
@@ -60,6 +63,7 @@ use pocketmine\timings\TimingsHandler;
 use pocketmine\utils\Utils;
 use pocketmine\world\format\Chunk;
 use pocketmine\world\Position;
+use pocketmine\world\sound\MappingSound;
 use pocketmine\world\sound\Sound;
 use pocketmine\world\World;
 use function abs;
@@ -966,7 +970,9 @@ abstract class Entity{
 		if($this->closed){
 			throw new \LogicException("Cannot schedule update on garbage entity " . get_class($this));
 		}
-		$this->getWorld()->updateEntities[$this->id] = $this;
+		if($this->location->isValid()){
+			$this->getWorld()->updateEntities[$this->id] = $this;
+		}
 	}
 
 	public function onNearbyBlockChange() : void{
@@ -1311,6 +1317,7 @@ abstract class Entity{
 		$this->blocksAround = null;
 
 		if($oldWorld !== $newWorld){
+			$this->networkProperties->clearDirtyProperties();
 			$newWorld->addEntity($this);
 		}else{
 			$newWorld->onEntityMoved($this);
@@ -1580,6 +1587,10 @@ abstract class Entity{
 		}
 	}
 
+	public function isValid() : bool{
+		return $this->location->isValid();
+	}
+
 	/**
 	 * @return MetadataProperty[]
 	 * @phpstan-return array<int, MetadataProperty>
@@ -1631,7 +1642,17 @@ abstract class Entity{
 	 * @param Player[]|null $targets
 	 */
 	public function broadcastAnimation(Animation $animation, ?array $targets = null) : void{
-		$this->server->broadcastPackets($targets ?? $this->getViewers(), $animation->encode());
+		$targets = $targets ?? $this->getViewers();
+
+		if($animation instanceof DictionaryAnimation){
+			foreach(GlobalItemTypeDictionary::sortByProtocol($targets) as $dictionaryProtocol => $players){
+				$animation->setDictionaryProtocol($dictionaryProtocol);
+
+				$this->server->broadcastPackets($players, $animation->encode());
+			}
+		}else{
+			$this->server->broadcastPackets($targets, $animation->encode());
+		}
 	}
 
 	/**
@@ -1640,7 +1661,17 @@ abstract class Entity{
 	 */
 	public function broadcastSound(Sound $sound, ?array $targets = null) : void{
 		if(!$this->silent){
-			$this->server->broadcastPackets($targets ?? $this->getViewers(), $sound->encode($this->location));
+			$targets = $targets ?? $this->getViewers();
+
+			if($sound instanceof MappingSound){
+				foreach(RuntimeBlockMapping::sortByProtocol($targets) as $mappingProtocol => $players){
+					$sound->setMappingProtocol($mappingProtocol);
+
+					$this->server->broadcastPackets($players, $sound->encode($this->location));
+				}
+			}else{
+				$this->server->broadcastPackets($targets, $sound->encode($this->location));
+			}
 		}
 	}
 

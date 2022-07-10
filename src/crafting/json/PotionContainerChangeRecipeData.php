@@ -21,8 +21,21 @@
 
 declare(strict_types=1);
 
-namespace pocketmine\block\utils;
+namespace pocketmine\crafting\json;
 
-class InvalidBlockStateException extends \UnexpectedValueException{
+final class PotionContainerChangeRecipeData{
+	/** @required */
+	public string $input_item_name;
 
+	/** @required */
+	public RecipeIngredientData $ingredient;
+
+	/** @required */
+	public string $output_item_name;
+
+	public function __construct(string $input_item_name, RecipeIngredientData $ingredient, string $output_item_name){
+		$this->input_item_name = $input_item_name;
+		$this->ingredient = $ingredient;
+		$this->output_item_name = $output_item_name;
+	}
 }

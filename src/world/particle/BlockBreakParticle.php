@@ -23,17 +23,14 @@ declare(strict_types=1);
 
 namespace pocketmine\world\particle;
 
-use pocketmine\block\Block;
 use pocketmine\math\Vector3;
 use pocketmine\network\mcpe\convert\RuntimeBlockMapping;
 use pocketmine\network\mcpe\protocol\LevelEventPacket;
 use pocketmine\network\mcpe\protocol\types\LevelEvent;
 
-class BlockBreakParticle implements Particle{
+class BlockBreakParticle extends MappingParticle{
 	//TODO: rename this parameter when we can break BC
-	public function __construct(private Block $b){}
-
 	public function encode(Vector3 $pos) : array{
-		return [LevelEventPacket::create(LevelEvent::PARTICLE_DESTROY, RuntimeBlockMapping::getInstance()->toRuntimeId($this->b->getStateId()), $pos)];
+		return [LevelEventPacket::create(LevelEvent::PARTICLE_DESTROY, RuntimeBlockMapping::getInstance()->toRuntimeId($this->b->getStateId(), $this->mappingProtocol), $pos)];
 	}
 }

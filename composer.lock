@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "4d3d74b811713475413c03f95455c355",
+    "content-hash": "9db356fee03cce604e5eabeb6265ff16",
     "packages": [
         {
             "name": "adhocore/json-comment",
@@ -197,6 +197,86 @@
             "time": "2021-12-11T12:41:06+00:00"
         },
         {
+            "name": "nethergamesmc/bedrock-data",
+            "version": "dev-modern-world-support",
+            "source": {
+                "type": "git",
+                "url": "https://github.com/NetherGamesMC/BedrockData.git",
+                "reference": "bdc97a87a9a340693626132f7fca1e1a1dd2694e"
+            },
+            "dist": {
+                "type": "zip",
+                "url": "https://api.github.com/repos/NetherGamesMC/BedrockData/zipball/bdc97a87a9a340693626132f7fca1e1a1dd2694e",
+                "reference": "bdc97a87a9a340693626132f7fca1e1a1dd2694e",
+                "shasum": ""
+            },
+            "type": "library",
+            "license": [
+                "CC0-1.0"
+            ],
+            "description": "Blobs of data generated from Minecraft: Bedrock Edition, used by PocketMine-MP",
+            "support": {
+                "source": "https://github.com/NetherGamesMC/BedrockData/tree/modern-world-support"
+            },
+            "time": "2022-07-07T12:21:09+00:00"
+        },
+        {
+            "name": "nethergamesmc/bedrock-protocol",
+            "version": "dev-master",
+            "source": {
+                "type": "git",
+                "url": "https://github.com/NetherGamesMC/BedrockProtocol.git",
+                "reference": "2b54c52b103e187e807c37161948f674ead100f6"
+            },
+            "dist": {
+                "type": "zip",
+                "url": "https://api.github.com/repos/NetherGamesMC/BedrockProtocol/zipball/2b54c52b103e187e807c37161948f674ead100f6",
+                "reference": "2b54c52b103e187e807c37161948f674ead100f6",
+                "shasum": ""
+            },
+            "require": {
+                "ext-json": "*",
+                "netresearch/jsonmapper": "^4.0",
+                "php": "^8.0",
+                "pocketmine/binaryutils": "^0.2.0",
+                "pocketmine/color": "^0.2.0",
+                "pocketmine/math": "^0.3.0 || ^0.4.0",
+                "pocketmine/nbt": "^0.3.0",
+                "ramsey/uuid": "^4.1"
+            },
+            "require-dev": {
+                "phpstan/phpstan": "1.7.11",
+                "phpstan/phpstan-phpunit": "^1.0.0",
+                "phpstan/phpstan-strict-rules": "^1.0.0",
+                "phpunit/phpunit": "^9.5"
+            },
+            "default-branch": true,
+            "type": "library",
+            "autoload": {
+                "psr-4": {
+                    "pocketmine\\network\\mcpe\\protocol\\": "src/"
+                }
+            },
+            "autoload-dev": {
+                "psr-4": {
+                    "pocketmine\\network\\mcpe\\protocol\\": "tests/phpunit/"
+                }
+            },
+            "scripts": {
+                "update-create-methods": [
+                    "@php tools/generate-create-static-methods.php"
+                ]
+            },
+            "license": [
+                "LGPL-3.0"
+            ],
+            "description": "An implementation of the Minecraft: Bedrock Edition protocol in PHP",
+            "support": {
+                "source": "https://github.com/NetherGamesMC/BedrockProtocol/tree/master"
+            },
+            "time": "2022-06-08T11:03:08+00:00"
+        },
+        {
             "name": "netresearch/jsonmapper",
             "version": "v4.0.0",
             "source": {
@@ -253,12 +333,12 @@
             "source": {
                 "type": "git",
                 "url": "https://github.com/pmmp/BedrockBlockUpgradeSchema.git",
-                "reference": "c7aa3e04ae36dbb9a97905a2595f4453d914aa5c"
+                "reference": "680ed5e351b92959c365b36bebc2698228b59834"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/pmmp/BedrockBlockUpgradeSchema/zipball/c7aa3e04ae36dbb9a97905a2595f4453d914aa5c",
-                "reference": "c7aa3e04ae36dbb9a97905a2595f4453d914aa5c",
+                "url": "https://api.github.com/repos/pmmp/BedrockBlockUpgradeSchema/zipball/680ed5e351b92959c365b36bebc2698228b59834",
+                "reference": "680ed5e351b92959c365b36bebc2698228b59834",
                 "shasum": ""
             },
             "default-branch": true,
@@ -272,33 +352,7 @@
                 "issues": "https://github.com/pmmp/BedrockBlockUpgradeSchema/issues",
                 "source": "https://github.com/pmmp/BedrockBlockUpgradeSchema/tree/master"
             },
-            "time": "2022-06-08T13:20:45+00:00"
-        },
-        {
-            "name": "pocketmine/bedrock-data",
-            "version": "dev-modern-world-support",
-            "source": {
-                "type": "git",
-                "url": "https://github.com/pmmp/BedrockData.git",
-                "reference": "a546e15f6a8d7498fb25d5a02ce16184a429bb78"
-            },
-            "dist": {
-                "type": "zip",
-                "url": "https://api.github.com/repos/pmmp/BedrockData/zipball/a546e15f6a8d7498fb25d5a02ce16184a429bb78",
-                "reference": "a546e15f6a8d7498fb25d5a02ce16184a429bb78",
-                "shasum": ""
-            },
-            "type": "library",
-            "notification-url": "https://packagist.org/downloads/",
-            "license": [
-                "CC0-1.0"
-            ],
-            "description": "Blobs of data generated from Minecraft: Bedrock Edition, used by PocketMine-MP",
-            "support": {
-                "issues": "https://github.com/pmmp/BedrockData/issues",
-                "source": "https://github.com/pmmp/BedrockData/tree/modern-world-support"
-            },
-            "time": "2022-07-02T15:28:28+00:00"
+            "time": "2022-07-03T19:17:51+00:00"
         },
         {
             "name": "pocketmine/bedrock-item-upgrade-schema",
@@ -326,53 +380,6 @@
                 "source": "https://github.com/pmmp/BedrockItemUpgradeSchema/tree/master"
             },
             "time": "2022-06-08T13:47:48+00:00"
-        },
-        {
-            "name": "pocketmine/bedrock-protocol",
-            "version": "10.0.1+bedrock-1.19.0",
-            "source": {
-                "type": "git",
-                "url": "https://github.com/pmmp/BedrockProtocol.git",
-                "reference": "331fb0eb45c26daadf8cf01a3b6f20e909d7684b"
-            },
-            "dist": {
-                "type": "zip",
-                "url": "https://api.github.com/repos/pmmp/BedrockProtocol/zipball/331fb0eb45c26daadf8cf01a3b6f20e909d7684b",
-                "reference": "331fb0eb45c26daadf8cf01a3b6f20e909d7684b",
-                "shasum": ""
-            },
-            "require": {
-                "ext-json": "*",
-                "netresearch/jsonmapper": "^4.0",
-                "php": "^8.0",
-                "pocketmine/binaryutils": "^0.2.0",
-                "pocketmine/color": "^0.2.0",
-                "pocketmine/math": "^0.3.0 || ^0.4.0",
-                "pocketmine/nbt": "^0.3.0",
-                "ramsey/uuid": "^4.1"
-            },
-            "require-dev": {
-                "phpstan/phpstan": "1.7.11",
-                "phpstan/phpstan-phpunit": "^1.0.0",
-                "phpstan/phpstan-strict-rules": "^1.0.0",
-                "phpunit/phpunit": "^9.5"
-            },
-            "type": "library",
-            "autoload": {
-                "psr-4": {
-                    "pocketmine\\network\\mcpe\\protocol\\": "src/"
-                }
-            },
-            "notification-url": "https://packagist.org/downloads/",
-            "license": [
-                "LGPL-3.0"
-            ],
-            "description": "An implementation of the Minecraft: Bedrock Edition protocol in PHP",
-            "support": {
-                "issues": "https://github.com/pmmp/BedrockProtocol/issues",
-                "source": "https://github.com/pmmp/BedrockProtocol/tree/10.0.1+bedrock-1.19.0"
-            },
-            "time": "2022-06-08T01:11:15+00:00"
         },
         {
             "name": "pocketmine/binaryutils",
@@ -739,16 +746,16 @@
         },
         {
             "name": "pocketmine/nbt",
-            "version": "0.3.2",
+            "version": "0.3.3",
             "source": {
                 "type": "git",
                 "url": "https://github.com/pmmp/NBT.git",
-                "reference": "3e0d9ef6b6c5fb45e3745a121296e75631b3eefe"
+                "reference": "f4321be50df1a18b9f4e94d428a2e68a6e2ac2b4"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/pmmp/NBT/zipball/3e0d9ef6b6c5fb45e3745a121296e75631b3eefe",
-                "reference": "3e0d9ef6b6c5fb45e3745a121296e75631b3eefe",
+                "url": "https://api.github.com/repos/pmmp/NBT/zipball/f4321be50df1a18b9f4e94d428a2e68a6e2ac2b4",
+                "reference": "f4321be50df1a18b9f4e94d428a2e68a6e2ac2b4",
                 "shasum": ""
             },
             "require": {
@@ -758,7 +765,7 @@
             },
             "require-dev": {
                 "phpstan/extension-installer": "^1.0",
-                "phpstan/phpstan": "1.2.0",
+                "phpstan/phpstan": "1.7.7",
                 "phpstan/phpstan-strict-rules": "^1.0",
                 "phpunit/phpunit": "^9.5"
             },
@@ -775,9 +782,9 @@
             "description": "PHP library for working with Named Binary Tags",
             "support": {
                 "issues": "https://github.com/pmmp/NBT/issues",
-                "source": "https://github.com/pmmp/NBT/tree/0.3.2"
+                "source": "https://github.com/pmmp/NBT/tree/0.3.3"
             },
-            "time": "2021-12-16T01:02:37+00:00"
+            "time": "2022-07-06T14:13:26+00:00"
         },
         {
             "name": "pocketmine/raklib",
@@ -1791,16 +1798,16 @@
         },
         {
             "name": "phpstan/phpstan",
-            "version": "1.7.15",
+            "version": "1.8.0",
             "source": {
                 "type": "git",
                 "url": "https://github.com/phpstan/phpstan.git",
-                "reference": "cd0202ea1b1fc6d1bbe156c6e2e18a03e0ff160a"
+                "reference": "b7648d4ee9321665acaf112e49da9fd93df8fbd5"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/phpstan/phpstan/zipball/cd0202ea1b1fc6d1bbe156c6e2e18a03e0ff160a",
-                "reference": "cd0202ea1b1fc6d1bbe156c6e2e18a03e0ff160a",
+                "url": "https://api.github.com/repos/phpstan/phpstan/zipball/b7648d4ee9321665acaf112e49da9fd93df8fbd5",
+                "reference": "b7648d4ee9321665acaf112e49da9fd93df8fbd5",
                 "shasum": ""
             },
             "require": {
@@ -1826,7 +1833,7 @@
             "description": "PHPStan - PHP Static Analysis Tool",
             "support": {
                 "issues": "https://github.com/phpstan/phpstan/issues",
-                "source": "https://github.com/phpstan/phpstan/tree/1.7.15"
+                "source": "https://github.com/phpstan/phpstan/tree/1.8.0"
             },
             "funding": [
                 {
@@ -1846,7 +1853,7 @@
                     "type": "tidelift"
                 }
             ],
-            "time": "2022-06-20T08:29:01+00:00"
+            "time": "2022-06-29T08:53:31+00:00"
         },
         {
             "name": "phpstan/phpstan-phpunit",
@@ -3387,8 +3394,9 @@
     "minimum-stability": "stable",
     "stability-flags": {
         "pocketmine/bedrock-block-upgrade-schema": 20,
-        "pocketmine/bedrock-data": 20,
-        "pocketmine/bedrock-item-upgrade-schema": 20
+        "pocketmine/bedrock-item-upgrade-schema": 20,
+        "nethergamesmc/bedrock-data": 20,
+        "nethergamesmc/bedrock-protocol": 20
     },
     "prefer-stable": false,
     "prefer-lowest": false,
