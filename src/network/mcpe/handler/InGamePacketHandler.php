@@ -214,12 +214,7 @@ class InGamePacketHandler extends ChunkRequestPacketHandler{
 		$sprinting = $this->resolveOnOffInputFlags($packet, PlayerAuthInputFlags::START_SPRINTING, PlayerAuthInputFlags::STOP_SPRINTING);
 		$swimming = $this->resolveOnOffInputFlags($packet, PlayerAuthInputFlags::START_SWIMMING, PlayerAuthInputFlags::STOP_SWIMMING);
 		$gliding = $this->resolveOnOffInputFlags($packet, PlayerAuthInputFlags::START_GLIDING, PlayerAuthInputFlags::STOP_GLIDING);
-		$mismatch =
-			($sneaking !== null && !$this->player->toggleSneak($sneaking)) |
-			($sprinting !== null && !$this->player->toggleSprint($sprinting)) |
-			($swimming !== null && !$this->player->toggleSwim($swimming)) |
-			($gliding !== null && !$this->player->toggleGlide($gliding));
-		if((bool) $mismatch){
+		if(!$this->player->syncPlayerActions($sneaking, $sprinting, $swimming, $gliding)){
 			$this->player->sendData([$this->player]);
 		}
 
@@ -665,7 +660,7 @@ class InGamePacketHandler extends ChunkRequestPacketHandler{
 		$isFlying = $packet->getFlag(AdventureSettingsPacket::FLYING);
 		if($isFlying !== $this->player->isFlying()){
 			if(!$this->player->toggleFlight($isFlying)){
-				$this->session->syncAdventureSettings($this->player);
+				$this->session->syncAbilities($this->player);
 			}
 			$handled = true;
 		}
@@ -1007,7 +1002,7 @@ class InGamePacketHandler extends ChunkRequestPacketHandler{
 			}
 			if($isFlying !== $this->player->isFlying()){
 				if(!$this->player->toggleFlight($isFlying)){
-					$this->session->syncAdventureSettings($this->player);
+					$this->session->syncAbilities($this->player);
 				}
 			}
 

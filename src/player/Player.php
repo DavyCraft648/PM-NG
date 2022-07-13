@@ -105,6 +105,7 @@ use pocketmine\nbt\tag\IntTag;
 use pocketmine\network\mcpe\NetworkSession;
 use pocketmine\network\mcpe\protocol\AnimatePacket;
 use pocketmine\network\mcpe\protocol\MovePlayerPacket;
+use pocketmine\network\mcpe\protocol\ProtocolInfo;
 use pocketmine\network\mcpe\protocol\SetActorMotionPacket;
 use pocketmine\network\mcpe\protocol\types\BlockPosition;
 use pocketmine\network\mcpe\protocol\types\entity\EntityMetadataCollection;
@@ -421,7 +422,7 @@ class Player extends Human implements CommandSender, ChunkListener, IPlayer{
 	public function setAllowFlight(bool $value) : void{
 		if($this->allowFlight !== $value){
 			$this->allowFlight = $value;
-			$this->getNetworkSession()->syncAdventureSettings($this);
+			$this->getNetworkSession()->syncAbilities($this);
 		}
 	}
 
@@ -432,7 +433,7 @@ class Player extends Human implements CommandSender, ChunkListener, IPlayer{
 	public function setHasBlockCollision(bool $value) : void{
 		if($this->blockCollision !== $value){
 			$this->blockCollision = $value;
-			$this->getNetworkSession()->syncAdventureSettings($this);
+			$this->getNetworkSession()->syncAbilities($this);
 		}
 	}
 
@@ -444,7 +445,7 @@ class Player extends Human implements CommandSender, ChunkListener, IPlayer{
 		if($this->flying !== $value){
 			$this->flying = $value;
 			$this->resetFallDistance();
-			$this->getNetworkSession()->syncAdventureSettings($this);
+			$this->getNetworkSession()->syncAbilities($this);
 		}
 	}
 
@@ -455,7 +456,11 @@ class Player extends Human implements CommandSender, ChunkListener, IPlayer{
 	public function setAutoJump(bool $value) : void{
 		if($this->autoJump !== $value){
 			$this->autoJump = $value;
-			$this->getNetworkSession()->syncAdventureSettings($this);
+			if($this->getNetworkSession()->getProtocolId() >= ProtocolInfo::PROTOCOL_1_19_10){
+				$this->getNetworkSession()->syncAdventureSettings();
+			}else{
+				$this->getNetworkSession()->syncAbilities($this);
+			}
 		}
 	}
 
@@ -2349,6 +2354,45 @@ class Player extends Human implements CommandSender, ChunkListener, IPlayer{
 
 		$properties->setPlayerFlag(PlayerMetadataFlags::SLEEP, $this->sleeping !== null);
 		$properties->setBlockPos(EntityMetadataProperties::PLAYER_BED_POSITION, $this->sleeping !== null ? BlockPosition::fromVector3($this->sleeping) : new BlockPosition(0, 0, 0));
+	}
+
+	/**
+	 * @internal Used to sync player actions with the server.
+	 */
+	public function syncPlayerActions(?bool $sneaking, ?bool $sprinting, ?bool $swimming, ?bool $gliding) : bool{
+		$networkPropertiesDirty = $this->networkPropertiesDirty;
+		$isDesynchronized = $this->moveSpeedAttr->isDesynchronized();
+
+		$mismatch =
+			($sneaking !== null && !$this->toggleSneak($sneaking)) |
+			($sprinting !== null && !$this->toggleSprint($sprinting)) |
+			($swimming !== null && !$this->toggleSwim($swimming)) |
+			($gliding !== null && !$this->toggleGlide($gliding));
+
+		if((bool) $mismatch){
+			return false;
+		}
+
+		// We do not want to do anything with gliding and swimming,
+		// because it is syncing the player own bounding boxes, and if the movement speed is in range of the
+		// default movement speed (0.1 -> 0.13), we accept them as is. (Speed effect is still server-authoritative)
+		if($sneaking !== null || $sprinting !== null && $this->getMovementSpeed() <= 0.13){
+			// In case the previous network properties was dirty.
+			$this->networkPropertiesDirty = $networkPropertiesDirty;
+
+			if($sprinting !== null && !$isDesynchronized){
+				// Mark as synchronized, we accept them as-is
+				$this->moveSpeedAttr->markSynchronized();
+			}
+		}elseif($sprinting !== null && !$this->moveSpeedAttr->isDesynchronized()){
+			// Re-synchronize the player's speed attribute when we receive any sprint flag, since the player's
+			// sprint -> not-sprint will always set the player's own speed attribute to 0.1, they negate whatever value the
+			// previous attribute is set. (This can be tested when the player has food exhaustion while having speed before).
+			$this->networkPropertiesDirty = true;
+			$this->moveSpeedAttr->markSynchronized(false);
+		}
+
+		return true;
 	}
 
 	public function sendData(?array $targets, ?array $data = null) : void{
