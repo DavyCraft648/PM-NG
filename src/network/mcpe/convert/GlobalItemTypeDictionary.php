@@ -49,6 +49,9 @@ final class GlobalItemTypeDictionary{
 		$dictionaries = [];
 
 		foreach ($protocolPaths as $protocolId => $path){
+			if($protocolId !== ProtocolInfo::CURRENT_PROTOCOL){
+				continue;
+			}
 			$data = Utils::assumeNotFalse(file_get_contents(Path::join(\pocketmine\BEDROCK_DATA_PATH, 'required_item_list' . $path . '.json')), "Missing required resource file");
 			$dictionaries[$protocolId] = ItemTypeDictionaryFromDataHelper::loadFromString($data);
 		}

@@ -96,6 +96,9 @@ final class RuntimeBlockMapping{
 		$blockStateDictionaries = [];
 
 		foreach($protocolPaths as $mappingProtocol => $paths){
+			if($mappingProtocol !== ProtocolInfo::CURRENT_PROTOCOL){
+				continue;
+			}
 			$canonicalBlockStatesFile = Path::join(\pocketmine\BEDROCK_DATA_PATH, "canonical_block_states" . $paths[self::BLOCK_PALETTE_PATH] . ".nbt");
 			$canonicalBlockStatesRaw = Utils::assumeNotFalse(file_get_contents($canonicalBlockStatesFile), "Missing required resource file");
 
