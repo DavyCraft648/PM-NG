@@ -125,7 +125,7 @@ final class RuntimeBlockMapping{
 					new BlockStateData(BlockTypeNames::INFO_UPDATE, [], BlockStateData::CURRENT_VERSION)
 				) ?? throw new AssumptionFailedError(BlockTypeNames::INFO_UPDATE . " should always exist");
 			//lookup the state data from the dictionary to avoid keeping two copies of the same data around
-			$this->fallbackStateData[$mappingProtocol] = $blockStateDictionary->getDataFromStateId($this->fallbackStateId) ?? throw new AssumptionFailedError("We just looked up this state data, so it must exist");
+			$this->fallbackStateData[$mappingProtocol] = $blockStateDictionary->getDataFromStateId($this->fallbackStateId[$mappingProtocol]) ?? throw new AssumptionFailedError("We just looked up this state data, so it must exist");
 		}
 	}
 

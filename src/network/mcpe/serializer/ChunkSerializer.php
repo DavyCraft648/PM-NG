@@ -162,7 +162,7 @@ final class ChunkSerializer{
 					//TODO: introduce a binary cache for this
 					$state = $blockStateDictionary->getDataFromStateId($blockMapper->toRuntimeId($p, $stream->getProtocolId()));
 					if($state === null){
-						$state = $blockMapper->getFallbackStateData();
+						$state = $blockMapper->getFallbackStateData($stream->getProtocolId());
 					}
 
 					$stream->put($nbtSerializer->write(new TreeRoot($state->toNbt())));
