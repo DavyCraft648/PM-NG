@@ -27,7 +27,6 @@ use pocketmine\data\bedrock\block\BlockStateData;
 use pocketmine\data\bedrock\block\BlockStateSerializeException;
 use pocketmine\data\bedrock\block\BlockStateSerializer;
 use pocketmine\data\bedrock\block\BlockTypeNames;
-use pocketmine\nbt\tag\CompoundTag;
 use pocketmine\network\mcpe\protocol\ProtocolInfo;
 use pocketmine\player\Player;
 use pocketmine\utils\AssumptionFailedError;
@@ -49,8 +48,8 @@ final class RuntimeBlockMapping{
 	 */
 	private array $networkIdCache = [];
 
-	/** Used when a blockstate can't be correctly serialized (e.g. because it's unknown) */
-	private BlockStateData $fallbackStateData;
+	/** @var BlockStateData[] Used when a blockstate can't be correctly serialized (e.g. because it's unknown) */
+	private array $fallbackStateData;
 	/** @var int[] */
 	private array $fallbackStateId;
 
@@ -121,10 +120,12 @@ final class RuntimeBlockMapping{
 		private array $blockStateDictionaries,
 		private BlockStateSerializer $blockStateSerializer
 	){
-		$this->fallbackStateData = new BlockStateData(BlockTypeNames::INFO_UPDATE, CompoundTag::create(), BlockStateData::CURRENT_VERSION);
-
 		foreach($this->blockStateDictionaries as $mappingProtocol => $blockStateDictionary){
-			$this->fallbackStateId[$mappingProtocol] = $blockStateDictionary->lookupStateIdFromData($this->fallbackStateData) ?? throw new AssumptionFailedError(BlockTypeNames::INFO_UPDATE . " should always exist");
+			$this->fallbackStateId[$mappingProtocol] = $blockStateDictionary->lookupStateIdFromData(
+					new BlockStateData(BlockTypeNames::INFO_UPDATE, [], BlockStateData::CURRENT_VERSION)
+				) ?? throw new AssumptionFailedError(BlockTypeNames::INFO_UPDATE . " should always exist");
+			//lookup the state data from the dictionary to avoid keeping two copies of the same data around
+			$this->fallbackStateData[$mappingProtocol] = $blockStateDictionary->getDataFromStateId($this->fallbackStateId) ?? throw new AssumptionFailedError("We just looked up this state data, so it must exist");
 		}
 	}
 
@@ -143,7 +144,7 @@ final class RuntimeBlockMapping{
 		}catch(BlockStateSerializeException){
 			//TODO: this will swallow any error caused by invalid block properties; this is not ideal, but it should be
 			//covered by unit tests, so this is probably a safe assumption.
-			$networkId = $this->fallbackStateId;
+			$networkId = $this->fallbackStateId[$mappingProtocol];
 		}
 
 		return $this->networkIdCache[$mappingProtocol][$internalStateId] = $networkId;
@@ -151,7 +152,7 @@ final class RuntimeBlockMapping{
 
 	public function getBlockStateDictionary(int $mappingProtocol) : BlockStateDictionary{ return $this->blockStateDictionaries[$mappingProtocol] ?? throw new AssumptionFailedError("Missing block state dictionary for protocol $mappingProtocol"); }
 
-	public function getFallbackStateData() : BlockStateData{ return $this->fallbackStateData; }
+	public function getFallbackStateData(int $mappingProtocol) : BlockStateData{ return $this->fallbackStateData[$mappingProtocol]; }
 
 	public static function getMappingProtocol(int $protocolId) : int{ return $protocolId; }
 

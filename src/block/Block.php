@@ -47,6 +47,7 @@ use pocketmine\world\format\Chunk;
 use pocketmine\world\Position;
 use pocketmine\world\World;
 use function count;
+use function get_class;
 use const PHP_INT_MAX;
 
 class Block{
@@ -111,7 +112,7 @@ class Block{
 		$this->decodeType($reader);
 		$readBits = $reader->getOffset();
 		if($typeBits !== $readBits){
-			throw new \LogicException("Exactly $typeBits bits of type data were provided, but $readBits were read");
+			throw new \LogicException(get_class($this) . ": Exactly $typeBits bits of type data were provided, but $readBits were read");
 		}
 	}
 
@@ -128,7 +129,7 @@ class Block{
 		$this->decodeState($reader);
 		$readBits = $reader->getOffset() - $typeBits;
 		if($stateBits !== $readBits){
-			throw new \LogicException("Exactly $stateBits bits of state data were provided, but $readBits were read");
+			throw new \LogicException(get_class($this) . ": Exactly $stateBits bits of state data were provided, but $readBits were read");
 		}
 	}
 
@@ -151,7 +152,7 @@ class Block{
 		$this->encodeType($writer);
 		$writtenBits = $writer->getOffset();
 		if($typeBits !== $writtenBits){
-			throw new \LogicException("Exactly $typeBits bits of type data were expected, but $writtenBits were written");
+			throw new \LogicException(get_class($this) . ": Exactly $typeBits bits of type data were expected, but $writtenBits were written");
 		}
 
 		return $writer->getValue();
@@ -170,7 +171,7 @@ class Block{
 		$this->encodeState($writer);
 		$writtenBits = $writer->getOffset() - $typeBits;
 		if($stateBits !== $writtenBits){
-			throw new \LogicException("Exactly $stateBits bits of state data were expected, but $writtenBits were written");
+			throw new \LogicException(get_class($this) . ": Exactly $stateBits bits of state data were expected, but $writtenBits were written");
 		}
 
 		return $writer->getValue();
@@ -520,6 +521,10 @@ class Block{
 	 */
 	public function getMaxStackSize() : int{
 		return 64;
+	}
+
+	public function isFireProofAsItem() : bool{
+		return false;
 	}
 
 	/**

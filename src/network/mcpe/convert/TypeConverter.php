@@ -24,9 +24,11 @@ declare(strict_types=1);
 namespace pocketmine\network\mcpe\convert;
 
 use pocketmine\block\inventory\AnvilInventory;
+use pocketmine\block\inventory\CartographyTableInventory;
 use pocketmine\block\inventory\CraftingTableInventory;
 use pocketmine\block\inventory\EnchantInventory;
 use pocketmine\block\inventory\LoomInventory;
+use pocketmine\block\inventory\SmithingTableInventory;
 use pocketmine\block\inventory\StonecutterInventory;
 use pocketmine\block\VanillaBlocks;
 use pocketmine\crafting\ExactRecipeIngredient;
@@ -260,6 +262,8 @@ class TypeConverter{
 							$current instanceof LoomInventory => UIInventorySlotOffset::LOOM,
 							$current instanceof StonecutterInventory => [UIInventorySlotOffset::STONE_CUTTER_INPUT => StonecutterInventory::SLOT_INPUT],
 							$current instanceof CraftingTableInventory => UIInventorySlotOffset::CRAFTING3X3_INPUT,
+							$current instanceof CartographyTableInventory => UIInventorySlotOffset::CARTOGRAPHY_TABLE,
+							$current instanceof SmithingTableInventory => UIInventorySlotOffset::SMITHING_TABLE,
 							default => null
 						};
 						if($slotMap !== null){
@@ -296,15 +300,10 @@ class TypeConverter{
 
 				}
 			case NetworkInventoryAction::SOURCE_TODO:
-				//These types need special handling.
-				switch($action->windowId){
-					case NetworkInventoryAction::SOURCE_TYPE_CRAFTING_RESULT:
-					case NetworkInventoryAction::SOURCE_TYPE_CRAFTING_USE_INGREDIENT:
-						return null;
-				}
-
-				//TODO: more stuff
-				throw new TypeConversionException("No open container with window ID $action->windowId");
+				//These are used to balance a transaction that involves special actions, like crafting, enchanting, etc.
+				//The vanilla server just accepted these without verifying them. We don't need to care about them since
+				//we verify crafting by checking for imbalances anyway.
+				return null;
 			default:
 				throw new TypeConversionException("Unknown inventory source type $action->sourceType");
 		}

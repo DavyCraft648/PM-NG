@@ -269,7 +269,6 @@ class InGamePacketHandler extends ChunkRequestPacketHandler{
 			//TODO HACK: EATING_ITEM is sent back to the server when the server sends it for other players (1.14 bug, maybe earlier)
 			return $packet->actorRuntimeId === ActorEvent::EATING_ITEM;
 		}
-		$this->player->removeCurrentWindow();
 
 		switch($packet->eventId){
 			case ActorEvent::EATING_ITEM: //TODO: ignore this and handle it server-side
@@ -319,12 +318,7 @@ class InGamePacketHandler extends ChunkRequestPacketHandler{
 		$converter = TypeConverter::getInstance();
 		foreach($data->getActions() as $networkInventoryAction){
 			if(
-				(
-					$networkInventoryAction->sourceType === NetworkInventoryAction::SOURCE_TODO && (
-						$networkInventoryAction->windowId === NetworkInventoryAction::SOURCE_TYPE_CRAFTING_RESULT ||
-						$networkInventoryAction->windowId === NetworkInventoryAction::SOURCE_TYPE_CRAFTING_USE_INGREDIENT
-					)
-				) || (
+				$networkInventoryAction->sourceType === NetworkInventoryAction::SOURCE_TODO || (
 					$this->craftingTransaction !== null &&
 					!$networkInventoryAction->oldItem->getItemStack()->equals($networkInventoryAction->newItem->getItemStack()) &&
 					$networkInventoryAction->sourceType === NetworkInventoryAction::SOURCE_CONTAINER &&
@@ -1003,7 +997,7 @@ class InGamePacketHandler extends ChunkRequestPacketHandler{
 			}
 			if($isFlying !== $this->player->isFlying()){
 				if(!$this->player->toggleFlight($isFlying)){
-					$this->session->syncAdventureSettings($this->player);
+					$this->session->syncAbilities($this->player);
 				}
 			}
 

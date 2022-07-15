@@ -135,9 +135,13 @@ use function mb_strtolower;
  * @method static BrownMushroomBlock BROWN_MUSHROOM_BLOCK()
  * @method static Cactus CACTUS()
  * @method static Cake CAKE()
+ * @method static CakeWithCandle CAKE_WITH_CANDLE()
+ * @method static CakeWithDyedCandle CAKE_WITH_DYED_CANDLE()
  * @method static Opaque CALCITE()
+ * @method static Candle CANDLE()
  * @method static Carpet CARPET()
  * @method static Carrot CARROTS()
+ * @method static CartographyTable CARTOGRAPHY_TABLE()
  * @method static CarvedPumpkin CARVED_PUMPKIN()
  * @method static ChemicalHeat CHEMICAL_HEAT()
  * @method static Chest CHEST()
@@ -164,6 +168,7 @@ use function mb_strtolower;
  * @method static ChemistryTable COMPOUND_CREATOR()
  * @method static Concrete CONCRETE()
  * @method static ConcretePowder CONCRETE_POWDER()
+ * @method static Copper COPPER()
  * @method static CopperOre COPPER_ORE()
  * @method static Coral CORAL()
  * @method static CoralBlock CORAL_BLOCK()
@@ -188,6 +193,10 @@ use function mb_strtolower;
  * @method static Wood CRIMSON_STEM()
  * @method static WoodenTrapdoor CRIMSON_TRAPDOOR()
  * @method static WallSign CRIMSON_WALL_SIGN()
+ * @method static Opaque CRYING_OBSIDIAN()
+ * @method static Copper CUT_COPPER()
+ * @method static CopperSlab CUT_COPPER_SLAB()
+ * @method static CopperStairs CUT_COPPER_STAIRS()
  * @method static Opaque CUT_RED_SANDSTONE()
  * @method static Slab CUT_RED_SANDSTONE_SLAB()
  * @method static Opaque CUT_SANDSTONE()
@@ -241,6 +250,7 @@ use function mb_strtolower;
  * @method static DoubleTallGrass DOUBLE_TALLGRASS()
  * @method static DragonEgg DRAGON_EGG()
  * @method static DriedKelp DRIED_KELP()
+ * @method static DyedCandle DYED_CANDLE()
  * @method static DyedShulkerBox DYED_SHULKER_BOX()
  * @method static Element ELEMENT_ACTINIUM()
  * @method static Element ELEMENT_ALUMINUM()
@@ -381,6 +391,7 @@ use function mb_strtolower;
  * @method static FlowerPot FLOWER_POT()
  * @method static FrostedIce FROSTED_ICE()
  * @method static Furnace FURNACE()
+ * @method static GildedBlackstone GILDED_BLACKSTONE()
  * @method static Glass GLASS()
  * @method static GlassPane GLASS_PANE()
  * @method static GlazedTerracotta GLAZED_TERRACOTTA()
@@ -396,6 +407,7 @@ use function mb_strtolower;
  * @method static GrassPath GRASS_PATH()
  * @method static Gravel GRAVEL()
  * @method static Torch GREEN_TORCH()
+ * @method static HangingRoots HANGING_ROOTS()
  * @method static HardenedClay HARDENED_CLAY()
  * @method static HardenedGlass HARDENED_GLASS()
  * @method static HardenedGlassPane HARDENED_GLASS_PANE()
@@ -445,6 +457,7 @@ use function mb_strtolower;
  * @method static Opaque LEGACY_STONECUTTER()
  * @method static Lever LEVER()
  * @method static Light LIGHT()
+ * @method static LightningRod LIGHTNING_ROD()
  * @method static DoublePlant LILAC()
  * @method static Flower LILY_OF_THE_VALLEY()
  * @method static WaterLily LILY_PAD()
@@ -483,6 +496,7 @@ use function mb_strtolower;
  * @method static Wall MUD_BRICK_WALL()
  * @method static MushroomStem MUSHROOM_STEM()
  * @method static Mycelium MYCELIUM()
+ * @method static Opaque NETHERITE()
  * @method static Netherrack NETHERRACK()
  * @method static Opaque NETHER_BRICKS()
  * @method static Fence NETHER_BRICK_FENCE()
@@ -600,6 +614,7 @@ use function mb_strtolower;
  * @method static Opaque SHROOMLIGHT()
  * @method static ShulkerBox SHULKER_BOX()
  * @method static Slime SLIME()
+ * @method static SmithingTable SMITHING_TABLE()
  * @method static Furnace SMOKER()
  * @method static Opaque SMOOTH_BASALT()
  * @method static Opaque SMOOTH_QUARTZ()
@@ -679,11 +694,13 @@ use function mb_strtolower;
  * @method static Wood WARPED_STEM()
  * @method static WoodenTrapdoor WARPED_TRAPDOOR()
  * @method static WallSign WARPED_WALL_SIGN()
+ * @method static Opaque WARPED_WART_BLOCK()
  * @method static Water WATER()
  * @method static WeightedPressurePlateHeavy WEIGHTED_PRESSURE_PLATE_HEAVY()
  * @method static WeightedPressurePlateLight WEIGHTED_PRESSURE_PLATE_LIGHT()
  * @method static Wheat WHEAT()
  * @method static Flower WHITE_TULIP()
+ * @method static WitherRose WITHER_ROSE()
  * @method static Wool WOOL()
  */
 final class VanillaBlocks{
@@ -1144,6 +1161,7 @@ final class VanillaBlocks{
 		self::registerBlocksR17();
 		self::registerMudBlocks();
 
+		self::registerCraftingTables();
 		self::registerOres();
 		self::registerWoodenBlocks();
 	}
@@ -1342,8 +1360,16 @@ final class VanillaBlocks{
 		self::register("nether_gold_ore", new NetherGoldOre(new BID(Ids::NETHER_GOLD_ORE), "Nether Gold Ore", $netherrackOreBreakInfo));
 	}
 
+	private static function registerCraftingTables() : void{
+		//TODO: this is the same for all wooden crafting blocks
+		$craftingBlockBreakInfo = new BreakInfo(2.5, ToolType::AXE);
+		self::register("cartography_table", new CartographyTable(new BID(Ids::CARTOGRAPHY_TABLE), "Cartography Table", $craftingBlockBreakInfo));
+		self::register("smithing_table", new SmithingTable(new BID(Ids::SMITHING_TABLE), "Smithing Table", $craftingBlockBreakInfo));
+	}
+
 	private static function registerBlocksR13() : void{
 		self::register("light", new Light(new BID(Ids::LIGHT), "Light Block", BreakInfo::indestructible()));
+		self::register("wither_rose", new WitherRose(new BID(Ids::WITHER_ROSE), "Wither Rose", BreakInfo::instant()));
 	}
 
 	private static function registerBlocksR14() : void{
@@ -1355,6 +1381,10 @@ final class VanillaBlocks{
 		$slabBreakInfo = new BreakInfo(2.0, ToolType::PICKAXE, ToolTier::WOOD()->getHarvestLevel(), 30.0);
 
 		self::register("ancient_debris", new Opaque(new BID(Ids::ANCIENT_DEBRIS), "Ancient Debris", new BreakInfo(30, ToolType::PICKAXE, ToolTier::DIAMOND()->getHarvestLevel(), 3600.0)));
+		$netheriteBreakInfo = new BreakInfo(50, ToolType::PICKAXE, ToolTier::DIAMOND()->getHarvestLevel(), 3600.0);
+		self::register("netherite", new class(new BID(Ids::NETHERITE), "Netherite Block", $netheriteBreakInfo) extends Opaque{
+			public function isFireProofAsItem() : bool{ return true; }
+		});
 
 		$basaltBreakInfo = new BreakInfo(1.25, ToolType::PICKAXE, ToolTier::WOOD()->getHarvestLevel(), 21.0);
 		self::register("basalt", new SimplePillar(new BID(Ids::BASALT), "Basalt", $basaltBreakInfo));
@@ -1366,6 +1396,8 @@ final class VanillaBlocks{
 		self::register("blackstone_slab", new Slab(new BID(Ids::BLACKSTONE_SLAB), "Blackstone", $slabBreakInfo));
 		self::register("blackstone_stairs", new Stair(new BID(Ids::BLACKSTONE_STAIRS), "Blackstone Stairs", $blackstoneBreakInfo));
 		self::register("blackstone_wall", new Wall(new BID(Ids::BLACKSTONE_WALL), "Blackstone Wall", $blackstoneBreakInfo));
+
+		self::register("gilded_blackstone", new GildedBlackstone(new BID(Ids::GILDED_BLACKSTONE), "Gilded Blackstone", $blackstoneBreakInfo));
 
 		//TODO: polished blackstone ought to have 2.0 hardness (as per java) but it's 1.5 in Bedrock (probably parity bug)
 		$prefix = fn(string $thing) => "Polished Blackstone" . ($thing !== "" ? " $thing" : "");
@@ -1392,6 +1424,11 @@ final class VanillaBlocks{
 
 		self::register("shroomlight", new class(new BID(Ids::SHROOMLIGHT), "Shroomlight", new BreakInfo(1.0, ToolType::HOE)) extends Opaque{
 			public function getLightLevel() : int{ return 15; }
+		});
+
+		self::register("warped_wart_block", new Opaque(new BID(Ids::WARPED_WART_BLOCK), "Warped Wart Block", new BreakInfo(1.0, ToolType::HOE)));
+		self::register("crying_obsidian", new class(new BID(Ids::CRYING_OBSIDIAN), "Crying Obsidian", new BreakInfo(35.0 /* 50 in Java */, ToolType::PICKAXE, ToolTier::DIAMOND()->getHarvestLevel())) extends Opaque{
+			public function getLightLevel() : int{ return 10;}
 		});
 	}
 
@@ -1439,6 +1476,26 @@ final class VanillaBlocks{
 		self::register("polished_deepslate_wall", new Wall(new BID(Ids::POLISHED_DEEPSLATE_WALL), "Polished Deepslate Wall", $polishedDeepslateBreakInfo));
 
 		self::register("tinted_glass", new TintedGlass(new BID(Ids::TINTED_GLASS), "Tinted Glass", new BreakInfo(0.3)));
+
+		//blast resistance should be 30 if we were matched with java :(
+		$copperBreakInfo = new BreakInfo(3.0, ToolType::PICKAXE, ToolTier::STONE()->getHarvestLevel(), 18.0);
+		self::register("lightning_rod", new LightningRod(new BID(Ids::LIGHTNING_ROD), "Lightning Rod", $copperBreakInfo));
+
+		self::register("copper", new Copper(new BID(Ids::COPPER), "Copper Block", $copperBreakInfo));
+		self::register("cut_copper", new Copper(new BID(Ids::CUT_COPPER), "Cut Copper Block", $copperBreakInfo));
+		self::register("cut_copper_slab", new CopperSlab(new BID(Ids::CUT_COPPER_SLAB), "Cut Copper Slab", $copperBreakInfo));
+		self::register("cut_copper_stairs", new CopperStairs(new BID(Ids::CUT_COPPER_STAIRS), "Cut Copper Stairs", $copperBreakInfo));
+
+		$candleBreakInfo = new BreakInfo(0.1);
+		self::register("candle", new Candle(new BID(Ids::CANDLE), "Candle", $candleBreakInfo));
+		self::register("dyed_candle", new DyedCandle(new BID(Ids::DYED_CANDLE), "Dyed Candle", $candleBreakInfo));
+
+		//TODO: duplicated break info :(
+		$cakeBreakInfo = new BreakInfo(0.5);
+		self::register("cake_with_candle", new CakeWithCandle(new BID(Ids::CAKE_WITH_CANDLE), "Cake With Candle", $cakeBreakInfo));
+		self::register("cake_with_dyed_candle", new CakeWithDyedCandle(new BID(Ids::CAKE_WITH_DYED_CANDLE), "Cake With Dyed Candle", $cakeBreakInfo));
+
+		self::register("hanging_roots", new HangingRoots(new BID(Ids::HANGING_ROOTS), "Hanging Roots", BreakInfo::instant(ToolType::SHEARS, 1)));
 	}
 
 	private static function registerMudBlocks() : void{

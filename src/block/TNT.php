@@ -25,14 +25,14 @@ namespace pocketmine\block;
 
 use pocketmine\data\runtime\RuntimeDataReader;
 use pocketmine\data\runtime\RuntimeDataWriter;
-use pocketmine\entity\Entity;
 use pocketmine\entity\Location;
 use pocketmine\entity\object\PrimedTNT;
-use pocketmine\entity\projectile\Arrow;
+use pocketmine\entity\projectile\Projectile;
 use pocketmine\item\Durable;
 use pocketmine\item\enchantment\VanillaEnchantments;
 use pocketmine\item\FlintSteel;
 use pocketmine\item\Item;
+use pocketmine\math\RayTraceResult;
 use pocketmine\math\Vector3;
 use pocketmine\player\Player;
 use pocketmine\utils\Random;
@@ -101,18 +101,6 @@ class TNT extends Opaque{
 		return false;
 	}
 
-	public function hasEntityCollision() : bool{
-		return true;
-	}
-
-	public function onEntityInside(Entity $entity) : bool{
-		if($entity instanceof Arrow && $entity->isOnFire()){
-			$this->ignite();
-			return false;
-		}
-		return true;
-	}
-
 	public function ignite(int $fuse = 80) : void{
 		$this->position->getWorld()->setBlock($this->position, VanillaBlocks::AIR());
 
@@ -137,5 +125,11 @@ class TNT extends Opaque{
 
 	public function onIncinerate() : void{
 		$this->ignite();
+	}
+
+	public function onProjectileHit(Projectile $projectile, RayTraceResult $hitResult) : void{
+		if($projectile->isOnFire()){
+			$this->ignite();
+		}
 	}
 }
