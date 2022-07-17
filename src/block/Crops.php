@@ -46,7 +46,7 @@ abstract class Crops extends Flowable{
 	}
 
 	protected function encodeState(RuntimeDataWriter $w) : void{
-		$w->writeInt(3, $this->age);
+		$w->writeBoundedInt(3, 0, self::MAX_AGE, $this->age);
 	}
 
 	public function getAge() : int{ return $this->age; }
@@ -68,7 +68,7 @@ abstract class Crops extends Flowable{
 		return false;
 	}
 
-	public function onInteract(Item $item, int $face, Vector3 $clickVector, ?Player $player = null) : bool{
+	public function onInteract(Item $item, int $face, Vector3 $clickVector, ?Player $player = null, array &$returnedItems = []) : bool{
 		if($this->age < self::MAX_AGE && $item instanceof Fertilizer){
 			$block = clone $this;
 			$block->age += mt_rand(2, 5);

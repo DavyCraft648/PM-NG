@@ -48,13 +48,13 @@ class RedstoneRepeater extends Flowable{
 
 	protected function decodeState(RuntimeDataReader $r) : void{
 		$this->facing = $r->readHorizontalFacing();
-		$this->delay = $r->readBoundedInt(2, self::MIN_DELAY - 1, self::MAX_DELAY - 1) + 1;
+		$this->delay = $r->readBoundedInt(2, self::MIN_DELAY, self::MAX_DELAY);
 		$this->powered = $r->readBool();
 	}
 
 	protected function encodeState(RuntimeDataWriter $w) : void{
 		$w->writeHorizontalFacing($this->facing);
-		$w->writeInt(2, $this->delay - 1);
+		$w->writeBoundedInt(2, self::MIN_DELAY, self::MAX_DELAY, $this->delay);
 		$w->writeBool($this->powered);
 	}
 
@@ -88,7 +88,7 @@ class RedstoneRepeater extends Flowable{
 		return false;
 	}
 
-	public function onInteract(Item $item, int $face, Vector3 $clickVector, ?Player $player = null) : bool{
+	public function onInteract(Item $item, int $face, Vector3 $clickVector, ?Player $player = null, array &$returnedItems = []) : bool{
 		if(++$this->delay > self::MAX_DELAY){
 			$this->delay = self::MIN_DELAY;
 		}

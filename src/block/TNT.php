@@ -25,14 +25,14 @@ namespace pocketmine\block;
 
 use pocketmine\data\runtime\RuntimeDataReader;
 use pocketmine\data\runtime\RuntimeDataWriter;
-use pocketmine\entity\Entity;
 use pocketmine\entity\Location;
 use pocketmine\entity\object\PrimedTNT;
-use pocketmine\entity\projectile\Arrow;
+use pocketmine\entity\projectile\Projectile;
 use pocketmine\item\Durable;
 use pocketmine\item\enchantment\VanillaEnchantments;
 use pocketmine\item\FlintSteel;
 use pocketmine\item\Item;
+use pocketmine\math\RayTraceResult;
 use pocketmine\math\Vector3;
 use pocketmine\player\Player;
 use pocketmine\utils\Random;
@@ -81,15 +81,15 @@ class TNT extends Opaque{
 		return $this;
 	}
 
-	public function onBreak(Item $item, ?Player $player = null) : bool{
+	public function onBreak(Item $item, ?Player $player = null, array &$returnedItems = []) : bool{
 		if($this->unstable){
 			$this->ignite();
 			return true;
 		}
-		return parent::onBreak($item, $player);
+		return parent::onBreak($item, $player, $returnedItems);
 	}
 
-	public function onInteract(Item $item, int $face, Vector3 $clickVector, ?Player $player = null) : bool{
+	public function onInteract(Item $item, int $face, Vector3 $clickVector, ?Player $player = null, array &$returnedItems = []) : bool{
 		if($item instanceof FlintSteel || $item->hasEnchantment(VanillaEnchantments::FIRE_ASPECT())){
 			if($item instanceof Durable){
 				$item->applyDamage(1);
@@ -99,18 +99,6 @@ class TNT extends Opaque{
 		}
 
 		return false;
-	}
-
-	public function hasEntityCollision() : bool{
-		return true;
-	}
-
-	public function onEntityInside(Entity $entity) : bool{
-		if($entity instanceof Arrow && $entity->isOnFire()){
-			$this->ignite();
-			return false;
-		}
-		return true;
 	}
 
 	public function ignite(int $fuse = 80) : void{
@@ -137,5 +125,11 @@ class TNT extends Opaque{
 
 	public function onIncinerate() : void{
 		$this->ignite();
+	}
+
+	public function onProjectileHit(Projectile $projectile, RayTraceResult $hitResult) : void{
+		if($projectile->isOnFire()){
+			$this->ignite();
+		}
 	}
 }

@@ -56,7 +56,7 @@ class CocoaBlock extends Transparent{
 
 	protected function encodeState(RuntimeDataWriter $w) : void{
 		$w->writeHorizontalFacing($this->facing);
-		$w->writeInt(2, $this->age);
+		$w->writeBoundedInt(2, 0, self::MAX_AGE, $this->age);
 	}
 
 	public function getAge() : int{ return $this->age; }
@@ -101,7 +101,7 @@ class CocoaBlock extends Transparent{
 		return false;
 	}
 
-	public function onInteract(Item $item, int $face, Vector3 $clickVector, ?Player $player = null) : bool{
+	public function onInteract(Item $item, int $face, Vector3 $clickVector, ?Player $player = null, array &$returnedItems = []) : bool{
 		if($item instanceof Fertilizer && $this->grow()){
 			$item->pop();
 

@@ -41,11 +41,23 @@ class ItemFrame extends Flowable{
 
 	public const ROTATIONS = 8;
 
+	protected bool $glowing = false;
+
 	protected bool $hasMap = false; //makes frame appear large if set
 
 	protected ?Item $framedItem = null;
 	protected int $itemRotation = 0;
 	protected float $itemDropChance = 1.0;
+
+	public function getRequiredTypeDataBits() : int{ return 1; }
+
+	protected function decodeType(RuntimeDataReader $r) : void{
+		$this->glowing = $r->readBool();
+	}
+
+	protected function encodeType(RuntimeDataWriter $w) : void{
+		$w->writeBool($this->glowing);
+	}
 
 	public function getRequiredStateDataBits() : int{ return 4; }
 
@@ -59,7 +71,7 @@ class ItemFrame extends Flowable{
 		$w->writeBool($this->hasMap);
 	}
 
-	public function readStateFromWorld() : void{
+	public function readStateFromWorld() : Block{
 		parent::readStateFromWorld();
 		$tile = $this->position->getWorld()->getTile($this->position);
 		if($tile instanceof TileItemFrame){
@@ -70,6 +82,8 @@ class ItemFrame extends Flowable{
 			$this->itemRotation = $tile->getItemRotation() % self::ROTATIONS;
 			$this->itemDropChance = $tile->getItemDropChance();
 		}
+
+		return $this;
 	}
 
 	public function writeStateToWorld() : void{
@@ -133,7 +147,15 @@ class ItemFrame extends Flowable{
 		return $this;
 	}
 
-	public function onInteract(Item $item, int $face, Vector3 $clickVector, ?Player $player = null) : bool{
+	public function isGlowing() : bool{ return $this->glowing; }
+
+	/** @return $this */
+	public function setGlowing(bool $glowing) : self{
+		$this->glowing = $glowing;
+		return $this;
+	}
+
+	public function onInteract(Item $item, int $face, Vector3 $clickVector, ?Player $player = null, array &$returnedItems = []) : bool{
 		if($this->framedItem !== null){
 			$this->itemRotation = ($this->itemRotation + 1) % self::ROTATIONS;
 		}elseif(!$item->isNull()){

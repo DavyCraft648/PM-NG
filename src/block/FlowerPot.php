@@ -36,7 +36,7 @@ class FlowerPot extends Flowable{
 
 	protected ?Block $plant = null;
 
-	public function readStateFromWorld() : void{
+	public function readStateFromWorld() : Block{
 		parent::readStateFromWorld();
 		$tile = $this->position->getWorld()->getTile($this->position);
 		if($tile instanceof TileFlowerPot){
@@ -44,6 +44,8 @@ class FlowerPot extends Flowable{
 		}else{
 			$this->setPlant(null);
 		}
+
+		return $this;
 	}
 
 	public function writeStateToWorld() : void{
@@ -112,7 +114,7 @@ class FlowerPot extends Flowable{
 		return $block->getSupportType(Facing::UP)->hasCenterSupport();
 	}
 
-	public function onInteract(Item $item, int $face, Vector3 $clickVector, ?Player $player = null) : bool{
+	public function onInteract(Item $item, int $face, Vector3 $clickVector, ?Player $player = null, array &$returnedItems = []) : bool{
 		$plant = $item->getBlock();
 		if($this->plant !== null){
 			if($this->isValidPlant($plant)){

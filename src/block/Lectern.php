@@ -59,13 +59,15 @@ class Lectern extends Transparent{
 		$w->writeBool($this->producingSignal);
 	}
 
-	public function readStateFromWorld() : void{
+	public function readStateFromWorld() : Block{
 		parent::readStateFromWorld();
 		$tile = $this->position->getWorld()->getTile($this->position);
 		if($tile instanceof TileLectern){
 			$this->viewedPage = $tile->getViewedPage();
 			$this->book = $tile->getBook();
 		}
+
+		return $this;
 	}
 
 	public function writeStateToWorld() : void{
@@ -127,7 +129,7 @@ class Lectern extends Transparent{
 		return $this;
 	}
 
-	public function onInteract(Item $item, int $face, Vector3 $clickVector, ?Player $player = null) : bool{
+	public function onInteract(Item $item, int $face, Vector3 $clickVector, ?Player $player = null, array &$returnedItems = []) : bool{
 		if($this->book === null && $item instanceof WritableBookBase){
 			$this->position->getWorld()->setBlock($this->position, $this->setBook($item));
 			$this->position->getWorld()->addSound($this->position, new LecternPlaceBookSound());

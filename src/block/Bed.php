@@ -68,13 +68,15 @@ class Bed extends Transparent{
 		$w->writeBool($this->head);
 	}
 
-	public function readStateFromWorld() : void{
+	public function readStateFromWorld() : Block{
 		parent::readStateFromWorld();
 		//read extra state information from the tile - this is an ugly hack
 		$tile = $this->position->getWorld()->getTile($this->position);
 		if($tile instanceof TileBed){
 			$this->color = $tile->getColor();
 		}
+
+		return $this;
 	}
 
 	public function writeStateToWorld() : void{
@@ -130,7 +132,7 @@ class Bed extends Transparent{
 		return null;
 	}
 
-	public function onInteract(Item $item, int $face, Vector3 $clickVector, ?Player $player = null) : bool{
+	public function onInteract(Item $item, int $face, Vector3 $clickVector, ?Player $player = null, array &$returnedItems = []) : bool{
 		if($player !== null){
 			$other = $this->getOtherHalf();
 			$playerPos = $player->getPosition();

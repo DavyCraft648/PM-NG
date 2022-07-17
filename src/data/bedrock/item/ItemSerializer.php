@@ -25,6 +25,7 @@ namespace pocketmine\data\bedrock\item;
 
 use pocketmine\block\Bed;
 use pocketmine\block\Block;
+use pocketmine\block\ItemFrame;
 use pocketmine\block\Skull;
 use pocketmine\block\utils\DyeColor;
 use pocketmine\block\VanillaBlocks as Blocks;
@@ -233,7 +234,7 @@ final class ItemSerializer{
 		$this->mapBlock(Blocks::FLOWER_POT(), self::id(Ids::FLOWER_POT));
 		$this->mapBlock(Blocks::HOPPER(), self::id(Ids::HOPPER));
 		$this->mapBlock(Blocks::IRON_DOOR(), self::id(Ids::IRON_DOOR));
-		$this->mapBlock(Blocks::ITEM_FRAME(), self::id(Ids::FRAME));
+		$this->mapBlock(Blocks::ITEM_FRAME(), fn(ItemFrame $block) => new Data($block->isGlowing() ? Ids::GLOW_FRAME : Ids::FRAME));
 		$this->mapBlock(Blocks::JUNGLE_DOOR(), self::id(Ids::JUNGLE_DOOR));
 		$this->mapBlock(Blocks::MANGROVE_DOOR(), self::id(Ids::MANGROVE_DOOR));
 		$this->mapBlock(Blocks::NETHER_WART(), self::id(Ids::NETHER_WART));
@@ -435,6 +436,17 @@ final class ItemSerializer{
 		$this->map(Items::MINECART(), self::id(Ids::MINECART));
 		$this->map(Items::MUSHROOM_STEW(), self::id(Ids::MUSHROOM_STEW));
 		$this->map(Items::NAUTILUS_SHELL(), self::id(Ids::NAUTILUS_SHELL));
+		$this->map(Items::NETHERITE_AXE(), self::id(Ids::NETHERITE_AXE));
+		$this->map(Items::NETHERITE_BOOTS(), self::id(Ids::NETHERITE_BOOTS));
+		$this->map(Items::NETHERITE_CHESTPLATE(), self::id(Ids::NETHERITE_CHESTPLATE));
+		$this->map(Items::NETHERITE_HELMET(), self::id(Ids::NETHERITE_HELMET));
+		$this->map(Items::NETHERITE_HOE(), self::id(Ids::NETHERITE_HOE));
+		$this->map(Items::NETHERITE_INGOT(), self::id(Ids::NETHERITE_INGOT));
+		$this->map(Items::NETHERITE_LEGGINGS(), self::id(Ids::NETHERITE_LEGGINGS));
+		$this->map(Items::NETHERITE_PICKAXE(), self::id(Ids::NETHERITE_PICKAXE));
+		$this->map(Items::NETHERITE_SCRAP(), self::id(Ids::NETHERITE_SCRAP));
+		$this->map(Items::NETHERITE_SHOVEL(), self::id(Ids::NETHERITE_SHOVEL));
+		$this->map(Items::NETHERITE_SWORD(), self::id(Ids::NETHERITE_SWORD));
 		$this->map(Items::NETHER_BRICK(), self::id(Ids::NETHERBRICK));
 		$this->map(Items::NETHER_QUARTZ(), self::id(Ids::QUARTZ));
 		$this->map(Items::NETHER_STAR(), self::id(Ids::NETHER_STAR));

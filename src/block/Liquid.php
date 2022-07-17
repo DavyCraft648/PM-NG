@@ -58,7 +58,7 @@ abstract class Liquid extends Transparent{
 	}
 
 	protected function encodeState(RuntimeDataWriter $w) : void{
-		$w->writeInt(3, $this->decay);
+		$w->writeBoundedInt(3, 0, self::MAX_DECAY, $this->decay);
 		$w->writeBool($this->falling);
 		$w->writeBool($this->still);
 	}
@@ -160,9 +160,11 @@ abstract class Liquid extends Transparent{
 		return $block->falling ? 0 : $block->decay;
 	}
 
-	public function readStateFromWorld() : void{
+	public function readStateFromWorld() : Block{
 		parent::readStateFromWorld();
 		$this->flowVector = null;
+
+		return $this;
 	}
 
 	public function getFlowVector() : Vector3{
