@@ -145,7 +145,7 @@ final class RuntimeBlockMapping{
 		}catch(BlockStateSerializeException){
 			//TODO: this will swallow any error caused by invalid block properties; this is not ideal, but it should be
 			//covered by unit tests, so this is probably a safe assumption.
-			$networkId = $this->fallbackStateId;
+			$networkId = $this->fallbackStateId[$mappingProtocol];
 		}
 
 		return $this->networkIdCache[$mappingProtocol][$internalStateId] = $networkId;
