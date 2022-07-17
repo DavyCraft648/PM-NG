@@ -246,6 +246,15 @@ abstract class Living extends Entity{
 		}
 	}
 
+	public function getDefaultSpeed() : float{
+		return $this->moveSpeedAttr->getDefaultValue();
+	}
+
+	public function setDefaultSpeed(float $speed, bool $fit = false) : void{
+		$this->moveSpeedAttr->setDefaultValue($speed);
+		$this->setMovementSpeed($this->isSprinting() ? ($speed * 1.3) : $speed, $fit);
+	}
+
 	public function getMovementSpeed() : float{
 		return $this->moveSpeedAttr->getValue();
 	}
