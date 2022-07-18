@@ -888,7 +888,11 @@ class World implements ChunkManager{
 
 			foreach([0, 1] as $layer){
 				$block = $this->getBlockAtLayer($x, $y, $z, $layer);
-				$block->readStateFromWorld(); //for blocks like fences, force recalculation of connected AABBs
+				$replacement = $block->readStateFromWorld(); //for blocks like fences, force recalculation of connected AABBs
+				if($replacement !== $block){
+					$replacement->position($this, $x, $y, $z);
+					$block = $replacement;
+				}
 
 				$ev = new BlockUpdateEvent($block);
 				$ev->call();
@@ -1630,7 +1634,11 @@ class World implements ChunkManager{
 			$addToCache = false;
 		}else{
 			$dynamicStateRead = true;
-			$block->readStateFromWorld();
+			$replacement = $block->readStateFromWorld();
+			if($replacement !== $block){
+				$replacement->position($this, $x, $y, $z);
+				$block = $replacement;
+			}
 			$dynamicStateRead = false;
 		}
 
@@ -1759,9 +1767,10 @@ class World implements ChunkManager{
 	 * Tries to break a block using a item, including Player time checks if available
 	 * It'll try to lower the durability if Item is a tool, and set it to Air if broken.
 	 *
-	 * @param Item    $item reference parameter (if null, can break anything)
+	 * @param Item   &$item reference parameter (if null, can break anything)
+	 * @param Item[] &$returnedItems Items to be added to the target's inventory (or dropped, if the inventory is full)
 	 */
-	public function useBreakOn(Vector3 $vector, Item &$item = null, ?Player $player = null, bool $createParticles = false, int $layer = 0) : bool{
+	public function useBreakOn(Vector3 $vector, Item &$item = null, ?Player $player = null, bool $createParticles = false, array &$returnedItems = []) : bool{
 		$vector = $vector->floor();
 
 		$chunkX = $vector->getFloorX() >> Chunk::COORD_BIT_SIZE;
@@ -1770,7 +1779,7 @@ class World implements ChunkManager{
 			return false;
 		}
 
-		$target = $this->getBlockLayer($vector, $layer);
+		$target = $this->getBlock($vector);
 		$affectedBlocks = $target->getAffectedBlocks();
 
 		if($item === null){
@@ -1823,10 +1832,10 @@ class World implements ChunkManager{
 		}
 
 		foreach($affectedBlocks as $t){
-			$this->destroyBlockInternal($t, $item, $player, $createParticles);
+			$this->destroyBlockInternal($t, $item, $player, $createParticles, $returnedItems);
 		}
 
-		$item->onDestroyBlock($target);
+		$item->onDestroyBlock($target, $returnedItems);
 
 		if(count($drops) > 0){
 			$dropPos = $vector->add(0.5, 0.5, 0.5);
@@ -1844,12 +1853,15 @@ class World implements ChunkManager{
 		return true;
 	}
 
-	private function destroyBlockInternal(Block $target, Item $item, ?Player $player = null, bool $createParticles = false) : void{
+	/**
+	 * @param Item[] &$returnedItems
+	 */
+	private function destroyBlockInternal(Block $target, Item $item, ?Player $player, bool $createParticles, array &$returnedItems) : void{
 		if($createParticles){
 			$this->addParticle($target->getPosition()->add(0.5, 0.5, 0.5), new BlockBreakParticle($target));
 		}
 
-		$target->onBreak($item, $player);
+		$target->onBreak($item, $player, $returnedItems);
 
 		$tile = $this->getTile($target->getPosition());
 		if($tile !== null){
@@ -1860,10 +1872,11 @@ class World implements ChunkManager{
 	/**
 	 * Uses a item on a position and face, placing it or activating the block
 	 *
-	 * @param Player|null  $player default null
-	 * @param bool         $playSound Whether to play a block-place sound if the block was placed successfully.
+	 * @param Player|null $player default null
+	 * @param bool        $playSound Whether to play a block-place sound if the block was placed successfully.
+	 * @param Item[]      &$returnedItems Items to be added to the target's inventory (or dropped if the inventory is full)
 	 */
-	public function useItemOn(Vector3 $vector, Item &$item, int $face, ?Vector3 $clickVector = null, ?Player $player = null, bool $playSound = false) : bool{
+	public function useItemOn(Vector3 $vector, Item &$item, int $face, ?Vector3 $clickVector = null, ?Player $player = null, bool $playSound = false, array &$returnedItems = []) : bool{
 		$blockClicked = $this->getBlock($vector);
 		$blockReplace = $blockClicked->getSide($face);
 
@@ -1893,18 +1906,18 @@ class World implements ChunkManager{
 
 			$ev->call();
 			if(!$ev->isCancelled()){
-				if((!$player->isSneaking() || $item->isNull()) && $blockClicked->onInteract($item, $face, $clickVector, $player)){
+				if((!$player->isSneaking() || $item->isNull()) && $blockClicked->onInteract($item, $face, $clickVector, $player, $returnedItems)){
 					return true;
 				}
 
-				$result = $item->onInteractBlock($player, $blockReplace, $blockClicked, $face, $clickVector);
+				$result = $item->onInteractBlock($player, $blockReplace, $blockClicked, $face, $clickVector, $returnedItems);
 				if(!$result->equals(ItemUseResult::NONE())){
 					return $result->equals(ItemUseResult::SUCCESS());
 				}
 			}else{
 				return false;
 			}
-		}elseif($blockClicked->onInteract($item, $face, $clickVector, $player)){
+		}elseif($blockClicked->onInteract($item, $face, $clickVector, $player, $returnedItems)){
 			return true;
 		}
 

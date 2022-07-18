@@ -191,9 +191,14 @@ class Block{
 	 *
 	 * Clears any cached precomputed objects, such as bounding boxes. Remove any outdated precomputed things such as
 	 * AABBs and force recalculation.
+	 *
+	 * A replacement block may be returned. This is useful if the block type changed due to reading of world data (e.g.
+	 * data from a block entity).
 	 */
-	public function readStateFromWorld() : void{
+	public function readStateFromWorld() : Block{
 		$this->collisionBoxes = null;
+
+		return $this;
 	}
 
 	public function writeStateToWorld() : void{
@@ -294,8 +299,10 @@ class Block{
 
 	/**
 	 * Do the actions needed so the block is broken with the Item
+	 *
+	 * @param Item[] &$returnedItems Items to be added to the target's inventory (or dropped, if full)
 	 */
-	public function onBreak(Item $item, ?Player $player = null) : bool{
+	public function onBreak(Item $item, ?Player $player = null, array &$returnedItems = []) : bool{
 		if(($t = $this->position->getWorld()->getTile($this->position)) !== null){
 			$t->onBlockDestroyed();
 		}
@@ -334,8 +341,10 @@ class Block{
 
 	/**
 	 * Do actions when interacted by Item. Returns if it has done anything
+	 *
+	 * @param Item[] &$returnedItems Items to be added to the target's inventory (or dropped, if the inventory is full)
 	 */
-	public function onInteract(Item $item, int $face, Vector3 $clickVector, ?Player $player = null) : bool{
+	public function onInteract(Item $item, int $face, Vector3 $clickVector, ?Player $player = null, array &$returnedItems = []) : bool{
 		return false;
 	}
 
