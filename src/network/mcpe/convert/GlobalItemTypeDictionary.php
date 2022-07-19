@@ -50,7 +50,7 @@ final class GlobalItemTypeDictionary{
 		$dictionaries = [];
 
 		foreach ($protocolPaths as $protocolId => $path){
-			if($protocolId !== ProtocolInfo::CURRENT_PROTOCOL){
+			if($protocolId < ProtocolInfo::PROTOCOL_1_19_0){
 				continue;
 			}
 			$data = Utils::assumeNotFalse(file_get_contents(Path::join(\pocketmine\BEDROCK_DATA_PATH, 'required_item_list' . $path . '.json')), "Missing required resource file");

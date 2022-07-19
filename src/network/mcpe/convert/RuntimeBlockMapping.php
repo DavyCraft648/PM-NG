@@ -99,7 +99,7 @@ final class RuntimeBlockMapping{
 		$blockStateDictionaries = [];
 
 		foreach($protocolPaths as $mappingProtocol => $paths){
-			if($mappingProtocol !== ProtocolInfo::CURRENT_PROTOCOL){
+			if($mappingProtocol < ProtocolInfo::PROTOCOL_1_19_0){
 				continue;
 			}
 			$canonicalBlockStatesFile = Path::join(\pocketmine\BEDROCK_DATA_PATH, "canonical_block_states" . $paths[self::BLOCK_PALETTE_PATH] . ".nbt");
@@ -157,7 +157,7 @@ final class RuntimeBlockMapping{
 	/**
 	 * Looks up the network state data associated with the given internal state ID.
 	 */
-	public function toStateData(int $internalStateId, int $mappingProtocol) : BlockStateData{
+	public function toStateData(int $internalStateId, int $mappingProtocol = ProtocolInfo::CURRENT_PROTOCOL) : BlockStateData{
 		//we don't directly use the blockstate serializer here - we can't assume that the network blockstate NBT is the
 		//same as the disk blockstate NBT, in case we decide to have different world version than network version (or in
 		//case someone wants to implement multi version).
