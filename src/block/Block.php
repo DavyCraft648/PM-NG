@@ -109,7 +109,7 @@ class Block{
 		$givenBits = $typeBits;
 		$reader = new RuntimeDataReader($givenBits, $data);
 
-		$this->decodeType($reader);
+		$this->describeType($reader);
 		$readBits = $reader->getOffset();
 		if($typeBits !== $readBits){
 			throw new \LogicException(get_class($this) . ": Exactly $typeBits bits of type data were provided, but $readBits were read");
@@ -126,19 +126,11 @@ class Block{
 		$reader = new RuntimeDataReader($givenBits, $data);
 		$this->decodeTypeData($reader->readInt($typeBits));
 
-		$this->decodeState($reader);
+		$this->describeState($reader);
 		$readBits = $reader->getOffset() - $typeBits;
 		if($stateBits !== $readBits){
 			throw new \LogicException(get_class($this) . ": Exactly $stateBits bits of state data were provided, but $readBits were read");
 		}
-	}
-
-	protected function decodeType(RuntimeDataReader $r) : void{
-		//NOOP
-	}
-
-	protected function decodeState(RuntimeDataReader $r) : void{
-		//NOOP
 	}
 
 	/**
@@ -149,7 +141,7 @@ class Block{
 		$requiredBits = $typeBits;
 		$writer = new RuntimeDataWriter($requiredBits);
 
-		$this->encodeType($writer);
+		$this->describeType($writer);
 		$writtenBits = $writer->getOffset();
 		if($typeBits !== $writtenBits){
 			throw new \LogicException(get_class($this) . ": Exactly $typeBits bits of type data were expected, but $writtenBits were written");
@@ -166,9 +158,9 @@ class Block{
 		$stateBits = $this->getRequiredStateDataBits();
 		$requiredBits = $typeBits + $stateBits;
 		$writer = new RuntimeDataWriter($requiredBits);
-		$writer->writeInt($typeBits, $this->computeTypeData());
+		$writer->int($typeBits, $this->computeTypeData());
 
-		$this->encodeState($writer);
+		$this->describeState($writer);
 		$writtenBits = $writer->getOffset() - $typeBits;
 		if($stateBits !== $writtenBits){
 			throw new \LogicException(get_class($this) . ": Exactly $stateBits bits of state data were expected, but $writtenBits were written");
@@ -177,11 +169,11 @@ class Block{
 		return $writer->getValue();
 	}
 
-	protected function encodeType(RuntimeDataWriter $w) : void{
+	protected function describeType(RuntimeDataReader|RuntimeDataWriter $w) : void{
 		//NOOP
 	}
 
-	protected function encodeState(RuntimeDataWriter $w) : void{
+	protected function describeState(RuntimeDataReader|RuntimeDataWriter $w) : void{
 		//NOOP
 	}
 
