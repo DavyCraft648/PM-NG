@@ -331,7 +331,7 @@ abstract class Liquid extends Transparent{
 			}
 
 			if($adjacentDecay <= self::MAX_DECAY){
-				$calculator = new MinimumCostFlowCalculator($this->position->getWorld(), $this->getFlowDecayPerBlock(), \Closure::fromCallable([$this, 'canFlowInto']));
+				$calculator = new MinimumCostFlowCalculator($world, $this->getFlowDecayPerBlock(), \Closure::fromCallable([$this, 'canFlowInto']));
 				foreach($calculator->getOptimalFlowDirections($this->position->getFloorX(), $this->position->getFloorY(), $this->position->getFloorZ()) as $facing){
 					$this->flowIntoBlock($world->getBlock($this->position->getSide($facing)), $adjacentDecay, false);
 				}
@@ -353,13 +353,14 @@ abstract class Liquid extends Transparent{
 			$ev = new BlockSpreadEvent($block, $this, $new);
 			$ev->call();
 			if(!$ev->isCancelled()){
+				$world = $this->position->getWorld();
 				foreach([$block, $block->getBlockLayer($block->getLayer() === 1 ? 0 : 1)] as $b){
 					if(!$b->canWaterlogged($this) && $b->getTypeId() !== BlockTypeIds::AIR){
-						$this->position->getWorld()->useBreakOn($block->position, $i, null, false, $b->getLayer());
+						$world->useBreakOn($block->position, $i, null, false, $b->getLayer());
 					}
 				}
 
-				$this->position->getWorld()->setBlockLayer($block->position, $ev->getNewState(), (in_array(1, $this->getSupportedLayers(), true) && $block->canWaterlogged($this)) ? 1 : 0);
+				$world->setBlockLayer($block->position, $ev->getNewState(), (in_array(1, $this->getSupportedLayers(), true) && $block->canWaterlogged($this)) ? 1 : 0);
 			}
 		}
 	}
@@ -393,8 +394,9 @@ abstract class Liquid extends Transparent{
 		$ev = new BlockFormEvent($this, $result);
 		$ev->call();
 		if(!$ev->isCancelled()){
-			$this->position->getWorld()->setBlock($this->position, $ev->getNewState());
-			$this->position->getWorld()->addSound($this->position->add(0.5, 0.5, 0.5), new FizzSound(2.6 + (lcg_value() - lcg_value()) * 0.8));
+			$world = $this->position->getWorld();
+			$world->setBlock($this->position, $ev->getNewState());
+			$world->addSound($this->position->add(0.5, 0.5, 0.5), new FizzSound(2.6 + (lcg_value() - lcg_value()) * 0.8));
 		}
 		return true;
 	}

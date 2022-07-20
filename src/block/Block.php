@@ -194,14 +194,15 @@ class Block{
 	}
 
 	public function writeStateToWorld() : void{
-		$this->position->getWorld()->getOrLoadChunkAtPosition($this->position)->setFullBlock($this->position->x & Chunk::COORD_MASK, $this->position->y, $this->position->z & Chunk::COORD_MASK, $this->getStateId(), $this->layer);
+		$world = $this->position->getWorld();
+		$world->getOrLoadChunkAtPosition($this->position)->setFullBlock($this->position->x & Chunk::COORD_MASK, $this->position->y, $this->position->z & Chunk::COORD_MASK, $this->getStateId(), $this->layer);
 
 		if($this->layer !== 0){
 			return;
 		}
 
 		$tileType = $this->idInfo->getTileClass();
-		$oldTile = $this->position->getWorld()->getTile($this->position);
+		$oldTile = $world->getTile($this->position);
 		if($oldTile !== null){
 			if($tileType === null || !($oldTile instanceof $tileType)){
 				$oldTile->close();
@@ -215,8 +216,8 @@ class Block{
 			 * @var Tile $tile
 			 * @see Tile::__construct()
 			 */
-			$tile = new $tileType($this->position->getWorld(), $this->position->asVector3());
-			$this->position->getWorld()->addTile($tile);
+			$tile = new $tileType($world, $this->position->asVector3());
+			$world->addTile($tile);
 		}
 	}
 
@@ -295,10 +296,11 @@ class Block{
 	 * @param Item[] &$returnedItems Items to be added to the target's inventory (or dropped, if full)
 	 */
 	public function onBreak(Item $item, ?Player $player = null, array &$returnedItems = []) : bool{
-		if(($t = $this->position->getWorld()->getTile($this->position)) !== null){
+		$world = $this->position->getWorld();
+		if(($t = $world->getTile($this->position)) !== null){
 			$t->onBlockDestroyed();
 		}
-		$this->position->getWorld()->setBlockLayer($this->position, VanillaBlocks::AIR(), $this->layer);
+		$world->setBlockLayer($this->position, VanillaBlocks::AIR(), $this->layer);
 		return true;
 	}
 
