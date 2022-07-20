@@ -1025,7 +1025,7 @@ class World implements ChunkManager{
 				);
 				$packets[] = UpdateBlockPacket::create(
 					$blockPosition,
-					$blockMapping->getBlockStateDictionary()->lookupStateIdFromData($fakeStateData) ?? throw new AssumptionFailedError("Unmapped fake blockstate data: " . $fakeStateData->toNbt()),
+					$blockMapping->getBlockStateDictionary($mappingProtocol)->lookupStateIdFromData($fakeStateData) ?? throw new AssumptionFailedError("Unmapped fake blockstate data: " . $fakeStateData->toNbt()),
 					UpdateBlockPacket::FLAG_NETWORK,
 					UpdateBlockPacket::DATA_LAYER_NORMAL
 				);
