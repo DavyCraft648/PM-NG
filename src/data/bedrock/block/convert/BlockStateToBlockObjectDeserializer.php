@@ -60,6 +60,7 @@ final class BlockStateToBlockObjectDeserializer implements BlockStateDeserialize
 
 	public function __construct(){
 		$this->registerCandleDeserializers();
+		$this->registerCauldronDeserializers();
 		$this->registerSimpleDeserializers();
 		$this->registerDeserializers();
 	}
@@ -134,6 +135,25 @@ final class BlockStateToBlockObjectDeserializer implements BlockStateDeserialize
 		$this->map(Ids::RED_CANDLE_CAKE, $cakeWithDyedCandleDeserializer(DyeColor::RED()));
 		$this->map(Ids::WHITE_CANDLE_CAKE, $cakeWithDyedCandleDeserializer(DyeColor::WHITE()));
 		$this->map(Ids::YELLOW_CANDLE_CAKE, $cakeWithDyedCandleDeserializer(DyeColor::YELLOW()));
+	}
+
+	private function registerCauldronDeserializers() : void{
+		$deserializer = function(Reader $in) : Block{
+			$level = $in->readBoundedInt(StateNames::FILL_LEVEL, 0, 6);
+			if($level === 0){
+				$in->ignored(StateNames::CAULDRON_LIQUID);
+				return Blocks::CAULDRON();
+			}
+
+			return (match($liquid = $in->readString(StateNames::CAULDRON_LIQUID)){
+				StringValues::CAULDRON_LIQUID_WATER => Blocks::WATER_CAULDRON(),
+				StringValues::CAULDRON_LIQUID_LAVA => Blocks::LAVA_CAULDRON(),
+				StringValues::CAULDRON_LIQUID_POWDER_SNOW => throw new UnsupportedBlockStateException("Powder snow is not supported yet"),
+				default => throw $in->badValueException(StateNames::CAULDRON_LIQUID, $liquid)
+			})->setFillLevel($level);
+		};
+		$this->map(Ids::CAULDRON, $deserializer);
+		$this->map(Ids::LAVA_CAULDRON, $deserializer);
 	}
 
 	private function registerSimpleDeserializers() : void{
@@ -371,6 +391,7 @@ final class BlockStateToBlockObjectDeserializer implements BlockStateDeserialize
 		$this->map(Ids::SNOW, fn() => Blocks::SNOW());
 		$this->map(Ids::SOUL_SAND, fn() => Blocks::SOUL_SAND());
 		$this->map(Ids::SOUL_SOIL, fn() => Blocks::SOUL_SOIL());
+		$this->map(Ids::SPORE_BLOSSOM, fn() => Blocks::SPORE_BLOSSOM());
 		$this->map(Ids::STONECUTTER, fn() => Blocks::LEGACY_STONECUTTER());
 		$this->map(Ids::TINTED_GLASS, fn() => Blocks::TINTED_GLASS());
 		$this->map(Ids::TUFF, fn() => Blocks::TUFF());

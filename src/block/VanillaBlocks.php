@@ -34,6 +34,7 @@ use pocketmine\block\tile\Bed as TileBed;
 use pocketmine\block\tile\Bell as TileBell;
 use pocketmine\block\tile\BlastFurnace as TileBlastFurnace;
 use pocketmine\block\tile\BrewingStand as TileBrewingStand;
+use pocketmine\block\tile\Cauldron as TileCauldron;
 use pocketmine\block\tile\Chest as TileChest;
 use pocketmine\block\tile\Comparator as TileComparator;
 use pocketmine\block\tile\DaylightSensor as TileDaylightSensor;
@@ -143,6 +144,7 @@ use function mb_strtolower;
  * @method static Carrot CARROTS()
  * @method static CartographyTable CARTOGRAPHY_TABLE()
  * @method static CarvedPumpkin CARVED_PUMPKIN()
+ * @method static Cauldron CAULDRON()
  * @method static ChemicalHeat CHEMICAL_HEAT()
  * @method static Chest CHEST()
  * @method static Opaque CHISELED_DEEPSLATE()
@@ -453,6 +455,7 @@ use function mb_strtolower;
  * @method static LapisOre LAPIS_LAZULI_ORE()
  * @method static DoubleTallGrass LARGE_FERN()
  * @method static Lava LAVA()
+ * @method static LavaCauldron LAVA_CAULDRON()
  * @method static Lectern LECTERN()
  * @method static Opaque LEGACY_STONECUTTER()
  * @method static Lever LEVER()
@@ -558,6 +561,7 @@ use function mb_strtolower;
  * @method static Stair POLISHED_GRANITE_STAIRS()
  * @method static Flower POPPY()
  * @method static Potato POTATOES()
+ * @method static PotionCauldron POTION_CAULDRON()
  * @method static PoweredRail POWERED_RAIL()
  * @method static Opaque PRISMARINE()
  * @method static Opaque PRISMARINE_BRICKS()
@@ -636,6 +640,7 @@ use function mb_strtolower;
  * @method static Opaque SOUL_SOIL()
  * @method static Torch SOUL_TORCH()
  * @method static Sponge SPONGE()
+ * @method static SporeBlossom SPORE_BLOSSOM()
  * @method static WoodenButton SPRUCE_BUTTON()
  * @method static WoodenDoor SPRUCE_DOOR()
  * @method static WoodenFence SPRUCE_FENCE()
@@ -696,6 +701,7 @@ use function mb_strtolower;
  * @method static WallSign WARPED_WALL_SIGN()
  * @method static Opaque WARPED_WART_BLOCK()
  * @method static Water WATER()
+ * @method static WaterCauldron WATER_CAULDRON()
  * @method static WeightedPressurePlateHeavy WEIGHTED_PRESSURE_PLATE_HEAVY()
  * @method static WeightedPressurePlateLight WEIGHTED_PRESSURE_PLATE_LIGHT()
  * @method static Wheat WHEAT()
@@ -1159,11 +1165,13 @@ final class VanillaBlocks{
 		self::registerBlocksR14();
 		self::registerBlocksR16();
 		self::registerBlocksR17();
+		self::registerBlocksR18();
 		self::registerMudBlocks();
 
 		self::registerCraftingTables();
 		self::registerOres();
 		self::registerWoodenBlocks();
+		self::registerCauldronBlocks();
 	}
 
 	private static function registerWoodenBlocks() : void{
@@ -1498,6 +1506,10 @@ final class VanillaBlocks{
 		self::register("hanging_roots", new HangingRoots(new BID(Ids::HANGING_ROOTS), "Hanging Roots", BreakInfo::instant(ToolType::SHEARS, 1)));
 	}
 
+	private static function registerBlocksR18() : void{
+		self::register("spore_blossom", new SporeBlossom(new BID(Ids::SPORE_BLOSSOM), "Spore Blossom", BreakInfo::instant()));
+	}
+
 	private static function registerMudBlocks() : void{
 		$mudBricksBreakInfo = new BreakInfo(2.0, ToolType::PICKAXE, ToolTier::WOOD()->getHarvestLevel(), 30.0);
 
@@ -1507,4 +1519,12 @@ final class VanillaBlocks{
 		self::register("mud_brick_wall", new Wall(new BID(Ids::MUD_BRICK_WALL), "Mud Brick Wall", $mudBricksBreakInfo));
 	}
 
+	private static function registerCauldronBlocks() : void{
+		$cauldronBreakInfo = new BreakInfo(2, ToolType::PICKAXE, ToolTier::WOOD()->getHarvestLevel());
+
+		self::register("cauldron", new Cauldron(new BID(Ids::CAULDRON, TileCauldron::class), "Cauldron", $cauldronBreakInfo));
+		self::register("water_cauldron", new WaterCauldron(new BID(Ids::WATER_CAULDRON, TileCauldron::class), "Water Cauldron", $cauldronBreakInfo));
+		self::register("lava_cauldron", new LavaCauldron(new BID(Ids::LAVA_CAULDRON, TileCauldron::class), "Lava Cauldron", $cauldronBreakInfo));
+		self::register("potion_cauldron", new PotionCauldron(new BID(Ids::POTION_CAULDRON, TileCauldron::class), "Potion Cauldron", $cauldronBreakInfo));
+	}
 }

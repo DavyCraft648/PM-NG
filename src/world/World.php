@@ -36,6 +36,7 @@ use pocketmine\block\tile\TileFactory;
 use pocketmine\block\UnknownBlock;
 use pocketmine\block\VanillaBlocks;
 use pocketmine\data\bedrock\BiomeIds;
+use pocketmine\data\bedrock\block\BlockStateData;
 use pocketmine\data\SavedDataLoadingException;
 use pocketmine\entity\Entity;
 use pocketmine\entity\EntityFactory;
@@ -1011,18 +1012,31 @@ class World implements ChunkManager{
 				throw new \TypeError("Expected Vector3 in blocks array, got " . (is_object($b) ? get_class($b) : gettype($b)));
 			}
 
+			$fullBlock = $this->getBlockAt($b->x, $b->y, $b->z);
 			$blockPosition = BlockPosition::fromVector3($b);
-			foreach([UpdateBlockPacket::DATA_LAYER_NORMAL, UpdateBlockPacket::DATA_LAYER_LIQUID] as $layer){
-				$fullBlock = $this->getBlockAtLayer($b->x, $b->y, $b->z, $layer);
-				$packets[] = UpdateBlockPacket::create(
-					$blockPosition,
-					$blockMapping->toRuntimeId($fullBlock->getStateId(), $mappingProtocol),
-					UpdateBlockPacket::FLAG_NETWORK,
-					$layer
-				);
-			}
 
 			$tile = $this->getTileAt($b->x, $b->y, $b->z);
+			if($tile instanceof Spawnable && count($fakeStateProperties = $tile->getRenderUpdateBugWorkaroundStateProperties($fullBlock)) > 0){
+				$originalStateData = $blockMapping->toStateData($fullBlock->getStateId());
+				$fakeStateData = new BlockStateData(
+					$originalStateData->getName(),
+					array_merge($originalStateData->getStates(), $fakeStateProperties),
+					$originalStateData->getVersion()
+				);
+				$packets[] = UpdateBlockPacket::create(
+					$blockPosition,
+					$blockMapping->getBlockStateDictionary()->lookupStateIdFromData($fakeStateData) ?? throw new AssumptionFailedError("Unmapped fake blockstate data: " . $fakeStateData->toNbt()),
+					UpdateBlockPacket::FLAG_NETWORK,
+					UpdateBlockPacket::DATA_LAYER_NORMAL
+				);
+			}
+			$packets[] = UpdateBlockPacket::create(
+				$blockPosition,
+				$blockMapping->toRuntimeId($fullBlock->getStateId(), $mappingProtocol),
+				UpdateBlockPacket::FLAG_NETWORK,
+				UpdateBlockPacket::DATA_LAYER_NORMAL
+			);
+
 			if($tile instanceof Spawnable){
 				$packets[] = BlockActorDataPacket::create($blockPosition, $tile->getSerializedSpawnCompound());
 			}
