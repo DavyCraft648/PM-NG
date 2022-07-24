@@ -33,7 +33,9 @@ use pocketmine\block\SweetBerryBush;
 use pocketmine\block\utils\BrewingStandSlot;
 use pocketmine\block\utils\CopperOxidation;
 use pocketmine\block\utils\CoralType;
+use pocketmine\block\utils\DirtType;
 use pocketmine\block\utils\DyeColor;
+use pocketmine\block\utils\FroglightType;
 use pocketmine\block\utils\LeverFacing;
 use pocketmine\block\utils\SlabType;
 use pocketmine\block\VanillaBlocks as Blocks;
@@ -356,9 +358,12 @@ final class BlockStateToBlockObjectDeserializer implements BlockStateDeserialize
 		$this->map(Ids::MAGMA, fn() => Blocks::MAGMA());
 		$this->map(Ids::MANGROVE_FENCE, fn() => Blocks::MANGROVE_FENCE());
 		$this->map(Ids::MANGROVE_PLANKS, fn() => Blocks::MANGROVE_PLANKS());
+		$this->map(Ids::MANGROVE_ROOTS, fn() => Blocks::MANGROVE_ROOTS());
 		$this->map(Ids::MELON_BLOCK, fn() => Blocks::MELON());
 		$this->map(Ids::MOB_SPAWNER, fn() => Blocks::MONSTER_SPAWNER());
 		$this->map(Ids::MOSSY_COBBLESTONE, fn() => Blocks::MOSSY_COBBLESTONE());
+		$this->map(Ids::MUD, fn() => Blocks::MUD());
+		$this->map(Ids::MUDDY_MANGROVE_ROOTS, fn() => Blocks::MUDDY_MANGROVE_ROOTS());
 		$this->map(Ids::MUD_BRICKS, fn() => Blocks::MUD_BRICKS());
 		$this->map(Ids::MYCELIUM, fn() => Blocks::MYCELIUM());
 		$this->map(Ids::NETHER_BRICK, fn() => Blocks::NETHER_BRICKS());
@@ -371,6 +376,7 @@ final class BlockStateToBlockObjectDeserializer implements BlockStateDeserialize
 		$this->map(Ids::NOTEBLOCK, fn() => Blocks::NOTE_BLOCK());
 		$this->map(Ids::OBSIDIAN, fn() => Blocks::OBSIDIAN());
 		$this->map(Ids::PACKED_ICE, fn() => Blocks::PACKED_ICE());
+		$this->map(Ids::PACKED_MUD, fn() => Blocks::PACKED_MUD());
 		$this->map(Ids::PODZOL, fn() => Blocks::PODZOL());
 		$this->map(Ids::POLISHED_BLACKSTONE, fn() => Blocks::POLISHED_BLACKSTONE());
 		$this->map(Ids::POLISHED_BLACKSTONE_BRICKS, fn() => Blocks::POLISHED_BLACKSTONE_BRICKS());
@@ -641,12 +647,13 @@ final class BlockStateToBlockObjectDeserializer implements BlockStateDeserialize
 		$this->mapStairs(Ids::DIORITE_STAIRS, fn() => Blocks::DIORITE_STAIRS());
 		$this->map(Ids::DIRT, function(Reader $in) : Block{
 			return Blocks::DIRT()
-				->setCoarse(match($value = $in->readString(StateNames::DIRT_TYPE)){
-					StringValues::DIRT_TYPE_NORMAL => false,
-					StringValues::DIRT_TYPE_COARSE => true,
+				->setDirtType(match($value = $in->readString(StateNames::DIRT_TYPE)){
+					StringValues::DIRT_TYPE_NORMAL => DirtType::NORMAL(),
+					StringValues::DIRT_TYPE_COARSE => DirtType::COARSE(),
 					default => throw $in->badValueException(StateNames::DIRT_TYPE, $value),
 				});
 		});
+		$this->map(Ids::DIRT_WITH_ROOTS, fn() => Blocks::DIRT()->setDirtType(DirtType::ROOTED()));
 		$this->map(Ids::DOUBLE_PLANT, function(Reader $in) : Block{
 			return (match($type = $in->readString(StateNames::DOUBLE_PLANT_TYPE)){
 				StringValues::DOUBLE_PLANT_TYPE_FERN => Blocks::LARGE_FERN(),
@@ -912,11 +919,13 @@ final class BlockStateToBlockObjectDeserializer implements BlockStateDeserialize
 		});
 		$this->mapStairs(Ids::NORMAL_STONE_STAIRS, fn() => Blocks::STONE_STAIRS());
 		$this->mapStairs(Ids::OAK_STAIRS, fn() => Blocks::OAK_STAIRS());
+		$this->map(Ids::OCHRE_FROGLIGHT, fn(Reader $in) => Blocks::FROGLIGHT()->setFroglightType(FroglightType::OCHRE())->setAxis($in->readPillarAxis()));
 		$this->map(Ids::ORANGE_GLAZED_TERRACOTTA, fn(Reader $in) => Helper::decodeGlazedTerracotta(DyeColor::ORANGE(), $in));
 		$this->map(Ids::OXIDIZED_COPPER, fn() => Helper::decodeCopper(Blocks::COPPER(), CopperOxidation::OXIDIZED()));
 		$this->map(Ids::OXIDIZED_CUT_COPPER, fn() => Helper::decodeCopper(Blocks::CUT_COPPER(), CopperOxidation::OXIDIZED()));
 		$this->mapSlab(Ids::OXIDIZED_CUT_COPPER_SLAB, Ids::OXIDIZED_DOUBLE_CUT_COPPER_SLAB, fn() => Helper::decodeCopper(Blocks::CUT_COPPER_SLAB(), CopperOxidation::OXIDIZED()));
 		$this->mapStairs(Ids::OXIDIZED_CUT_COPPER_STAIRS, fn() => Helper::decodeCopper(Blocks::CUT_COPPER_STAIRS(), CopperOxidation::OXIDIZED()));
+		$this->map(Ids::PEARLESCENT_FROGLIGHT, fn(Reader $in) => Blocks::FROGLIGHT()->setFroglightType(FroglightType::PEARLESCENT())->setAxis($in->readPillarAxis()));
 		$this->map(Ids::PINK_GLAZED_TERRACOTTA, fn(Reader $in) => Helper::decodeGlazedTerracotta(DyeColor::PINK(), $in));
 		$this->map(Ids::PLANKS, function(Reader $in) : Block{
 			return match($woodName = $in->readString(StateNames::WOOD_TYPE)){
@@ -1259,6 +1268,7 @@ final class BlockStateToBlockObjectDeserializer implements BlockStateDeserialize
 		$this->map(Ids::UNPOWERED_COMPARATOR, fn(Reader $in) => Helper::decodeComparator(Blocks::REDSTONE_COMPARATOR(), $in));
 		$this->map(Ids::UNPOWERED_REPEATER, fn(Reader $in) => Helper::decodeRepeater(Blocks::REDSTONE_REPEATER(), $in)
 				->setPowered(false));
+		$this->map(Ids::VERDANT_FROGLIGHT, fn(Reader $in) => Blocks::FROGLIGHT()->setFroglightType(FroglightType::VERDANT())->setAxis($in->readPillarAxis()));
 		$this->map(Ids::VINE, function(Reader $in) : Block{
 			$vineDirectionFlags = $in->readBoundedInt(StateNames::VINE_DIRECTION_BITS, 0, 15);
 			return Blocks::VINES()

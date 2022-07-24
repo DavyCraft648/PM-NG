@@ -74,6 +74,7 @@ use pocketmine\block\Fire;
 use pocketmine\block\FloorBanner;
 use pocketmine\block\FloorCoralFan;
 use pocketmine\block\FloorSign;
+use pocketmine\block\Froglight;
 use pocketmine\block\FrostedIce;
 use pocketmine\block\Furnace;
 use pocketmine\block\GlazedTerracotta;
@@ -132,7 +133,9 @@ use pocketmine\block\TripwireHook;
 use pocketmine\block\UnderwaterTorch;
 use pocketmine\block\utils\BrewingStandSlot;
 use pocketmine\block\utils\CoralType;
+use pocketmine\block\utils\DirtType;
 use pocketmine\block\utils\DyeColor;
+use pocketmine\block\utils\FroglightType;
 use pocketmine\block\utils\LeverFacing;
 use pocketmine\block\VanillaBlocks as Blocks;
 use pocketmine\block\Vine;
@@ -506,9 +509,12 @@ final class BlockObjectToBlockStateSerializer implements BlockStateSerializer{
 		$this->mapSimple(Blocks::MAGMA(), Ids::MAGMA);
 		$this->mapSimple(Blocks::MANGROVE_FENCE(), Ids::MANGROVE_FENCE);
 		$this->mapSimple(Blocks::MANGROVE_PLANKS(), Ids::MANGROVE_PLANKS);
+		$this->mapSimple(Blocks::MANGROVE_ROOTS(), Ids::MANGROVE_ROOTS);
 		$this->mapSimple(Blocks::MELON(), Ids::MELON_BLOCK);
 		$this->mapSimple(Blocks::MONSTER_SPAWNER(), Ids::MOB_SPAWNER);
 		$this->mapSimple(Blocks::MOSSY_COBBLESTONE(), Ids::MOSSY_COBBLESTONE);
+		$this->mapSimple(Blocks::MUD(), Ids::MUD);
+		$this->mapSimple(Blocks::MUDDY_MANGROVE_ROOTS(), Ids::MUDDY_MANGROVE_ROOTS);
 		$this->mapSimple(Blocks::MUD_BRICKS(), Ids::MUD_BRICKS);
 		$this->mapSimple(Blocks::MYCELIUM(), Ids::MYCELIUM);
 		$this->mapSimple(Blocks::NETHERITE(), Ids::NETHERITE_BLOCK);
@@ -522,6 +528,7 @@ final class BlockObjectToBlockStateSerializer implements BlockStateSerializer{
 		$this->mapSimple(Blocks::NOTE_BLOCK(), Ids::NOTEBLOCK);
 		$this->mapSimple(Blocks::OBSIDIAN(), Ids::OBSIDIAN);
 		$this->mapSimple(Blocks::PACKED_ICE(), Ids::PACKED_ICE);
+		$this->mapSimple(Blocks::PACKED_MUD(), Ids::PACKED_MUD);
 		$this->mapSimple(Blocks::PODZOL(), Ids::PODZOL);
 		$this->mapSimple(Blocks::POLISHED_BLACKSTONE(), Ids::POLISHED_BLACKSTONE);
 		$this->mapSimple(Blocks::POLISHED_BLACKSTONE_BRICKS(), Ids::POLISHED_BLACKSTONE_BRICKS);
@@ -886,8 +893,16 @@ final class BlockObjectToBlockStateSerializer implements BlockStateSerializer{
 		$this->mapStairs(Blocks::DIORITE_STAIRS(), Ids::DIORITE_STAIRS);
 		$this->map(Blocks::DIORITE_WALL(), fn(Wall $block) => Helper::encodeLegacyWall($block, StringValues::WALL_BLOCK_TYPE_DIORITE));
 		$this->map(Blocks::DIRT(), function(Dirt $block) : Writer{
+			$dirtType = $block->getDirtType();
+			if($dirtType->equals(DirtType::ROOTED())){
+				return new Writer(Ids::DIRT_WITH_ROOTS);
+			}
 			return Writer::create(Ids::DIRT)
-				->writeString(StateNames::DIRT_TYPE, $block->isCoarse() ? StringValues::DIRT_TYPE_COARSE : StringValues::DIRT_TYPE_NORMAL);
+				->writeString(StateNames::DIRT_TYPE, match($dirtType){
+					DirtType::COARSE() => StringValues::DIRT_TYPE_COARSE,
+					DirtType::NORMAL() => StringValues::DIRT_TYPE_NORMAL,
+					default => throw new AssumptionFailedError("Unhandled dirt type " . $dirtType->name())
+				});
 		});
 		$this->map(Blocks::DOUBLE_TALLGRASS(), fn(DoubleTallGrass $block) => Helper::encodeDoublePlant($block, StringValues::DOUBLE_PLANT_TYPE_GRASS, Writer::create(Ids::DOUBLE_PLANT)));
 		$this->map(Blocks::DYED_SHULKER_BOX(), function(DyedShulkerBox $block) : Writer{
@@ -925,6 +940,15 @@ final class BlockObjectToBlockStateSerializer implements BlockStateSerializer{
 		$this->map(Blocks::FLOWER_POT(), function() : Writer{
 			return Writer::create(Ids::FLOWER_POT)
 				->writeBool(StateNames::UPDATE_BIT, false); //to keep MCPE happy
+		});
+		$this->map(Blocks::FROGLIGHT(), function(Froglight $block){
+			return Writer::create(match($block->getFroglightType()){
+				FroglightType::OCHRE() => Ids::OCHRE_FROGLIGHT,
+				FroglightType::PEARLESCENT() => Ids::PEARLESCENT_FROGLIGHT,
+				FroglightType::VERDANT() => Ids::VERDANT_FROGLIGHT,
+				default => throw new AssumptionFailedError("Unhandled froglight type " . $block->getFroglightType()->name())
+			})
+				->writePillarAxis($block->getAxis());
 		});
 		$this->map(Blocks::FROSTED_ICE(), function(FrostedIce $block) : Writer{
 			return Writer::create(Ids::FROSTED_ICE)

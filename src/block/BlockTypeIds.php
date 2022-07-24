@@ -701,6 +701,9 @@ final class BlockTypeIds{
 	public const POWDER_SNOW_CAULDRON = 10674;
 	public const CHORUS_FLOWER = 10675;
 	public const CHORUS_PLANT = 10676;
+	public const MANGROVE_ROOTS = 10677;
+	public const MUDDY_MANGROVE_ROOTS = 10678;
+	public const FROGLIGHT = 10679;
 
-	public const FIRST_UNUSED_BLOCK_ID = 10676;
+	public const FIRST_UNUSED_BLOCK_ID = 10680;
 }

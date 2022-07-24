@@ -23,30 +23,34 @@ declare(strict_types=1);
 
 namespace pocketmine\block;
 
+use pocketmine\block\utils\FroglightType;
 use pocketmine\data\runtime\RuntimeDataReader;
 use pocketmine\data\runtime\RuntimeDataWriter;
-use pocketmine\item\Item;
 
-class UnknownBlock extends Transparent{
+final class Froglight extends SimplePillar{
 
-	private int $stateData;
+	private FroglightType $froglightType;
 
-	public function __construct(BlockIdentifier $idInfo, BlockTypeInfo $typeInfo, int $stateData){
-		parent::__construct($idInfo, "Unknown", $typeInfo);
-		$this->stateData = $stateData;
+	public function __construct(BlockIdentifier $idInfo, string $name, BlockTypeInfo $typeInfo){
+		$this->froglightType = FroglightType::OCHRE();
+		parent::__construct($idInfo, $name, $typeInfo);
 	}
+
+	public function getRequiredTypeDataBits() : int{ return 2; }
 
 	protected function describeType(RuntimeDataReader|RuntimeDataWriter $w) : void{
-		//use type instead of state, so we don't lose any information like colour
-		//this might be an improperly registered plugin block
-		$w->int(Block::INTERNAL_STATE_DATA_BITS, $this->stateData);
+		$w->froglightType($this->froglightType);
 	}
 
-	public function canBePlaced() : bool{
-		return false;
+	public function getFroglightType() : FroglightType{ return $this->froglightType; }
+
+	/** @return $this */
+	public function setFroglightType(FroglightType $froglightType) : self{
+		$this->froglightType = $froglightType;
+		return $this;
 	}
 
-	public function getDrops(Item $item) : array{
-		return [];
+	public function getLightLevel() : int{
+		return 15;
 	}
 }

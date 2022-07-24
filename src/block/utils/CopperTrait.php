@@ -23,8 +23,8 @@ declare(strict_types=1);
 
 namespace pocketmine\block\utils;
 
-use pocketmine\block\BlockBreakInfo;
 use pocketmine\block\BlockIdentifier;
+use pocketmine\block\BlockTypeInfo;
 use pocketmine\data\runtime\RuntimeDataReader;
 use pocketmine\data\runtime\RuntimeDataWriter;
 use pocketmine\item\Axe;
@@ -40,9 +40,9 @@ trait CopperTrait{
 	private CopperOxidation $oxidation;
 	private bool $waxed = false;
 
-	public function __construct(BlockIdentifier $identifier, string $name, BlockBreakInfo $breakInfo){
+	public function __construct(BlockIdentifier $identifier, string $name, BlockTypeInfo $typeInfo){
 		$this->oxidation = CopperOxidation::NONE();
-		parent::__construct($identifier, $name, $breakInfo);
+		parent::__construct($identifier, $name, $typeInfo);
 	}
 
 	public function getRequiredTypeDataBits() : int{ return 3; }

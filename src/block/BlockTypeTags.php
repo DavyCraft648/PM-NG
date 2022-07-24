@@ -23,20 +23,10 @@ declare(strict_types=1);
 
 namespace pocketmine\block;
 
-use pocketmine\block\utils\WoodTypeTrait;
+final class BlockTypeTags{
 
-class Planks extends Opaque{
-	use WoodTypeTrait;
-
-	public function getFuelTime() : int{
-		return $this->woodType->isFlammable() ? 300 : 0;
-	}
-
-	public function getFlameEncouragement() : int{
-		return $this->woodType->isFlammable() ? 5 : 0;
-	}
-
-	public function getFlammability() : int{
-		return $this->woodType->isFlammable() ? 20 : 0;
-	}
+	public const DIRT = "dirt";
+	public const MUD = "mud";
+	public const SAND = "sand";
+	public const POTTABLE_PLANTS = "pottable";
 }

@@ -21,22 +21,28 @@
 
 declare(strict_types=1);
 
-namespace pocketmine\block;
+namespace pocketmine\block\utils;
 
-use pocketmine\block\utils\WoodTypeTrait;
+use pocketmine\utils\EnumTrait;
 
-class Planks extends Opaque{
-	use WoodTypeTrait;
+/**
+ * This doc-block is generated automatically, do not modify it manually.
+ * This must be regenerated whenever registry members are added, removed or changed.
+ * @see build/generate-registry-annotations.php
+ * @generate-registry-docblock
+ *
+ * @method static DirtType COARSE()
+ * @method static DirtType NORMAL()
+ * @method static DirtType ROOTED()
+ */
+final class DirtType{
+	use EnumTrait;
 
-	public function getFuelTime() : int{
-		return $this->woodType->isFlammable() ? 300 : 0;
-	}
-
-	public function getFlameEncouragement() : int{
-		return $this->woodType->isFlammable() ? 5 : 0;
-	}
-
-	public function getFlammability() : int{
-		return $this->woodType->isFlammable() ? 20 : 0;
+	protected static function setup() : void{
+		self::registerAll(
+			new self("normal"),
+			new self("coarse"),
+			new self("rooted")
+		);
 	}
 }

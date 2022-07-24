@@ -62,6 +62,15 @@ trait RuntimeEnumSerializerTrait{
 		});
 	}
 
+	public function dirtType(\pocketmine\block\utils\DirtType $value) : void{
+		$this->int(2, match($value){
+			\pocketmine\block\utils\DirtType::COARSE() => 0,
+			\pocketmine\block\utils\DirtType::NORMAL() => 1,
+			\pocketmine\block\utils\DirtType::ROOTED() => 2,
+			default => throw new \pocketmine\utils\AssumptionFailedError("All DirtType cases should be covered")
+		});
+	}
+
 	public function dyeColor(\pocketmine\block\utils\DyeColor $value) : void{
 		$this->int(4, match($value){
 			\pocketmine\block\utils\DyeColor::BLACK() => 0,
@@ -81,6 +90,15 @@ trait RuntimeEnumSerializerTrait{
 			\pocketmine\block\utils\DyeColor::WHITE() => 14,
 			\pocketmine\block\utils\DyeColor::YELLOW() => 15,
 			default => throw new \pocketmine\utils\AssumptionFailedError("All DyeColor cases should be covered")
+		});
+	}
+
+	public function froglightType(\pocketmine\block\utils\FroglightType $value) : void{
+		$this->int(2, match($value){
+			\pocketmine\block\utils\FroglightType::OCHRE() => 0,
+			\pocketmine\block\utils\FroglightType::PEARLESCENT() => 1,
+			\pocketmine\block\utils\FroglightType::VERDANT() => 2,
+			default => throw new \pocketmine\utils\AssumptionFailedError("All FroglightType cases should be covered")
 		});
 	}
 

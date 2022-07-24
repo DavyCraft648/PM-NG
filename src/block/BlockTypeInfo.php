@@ -23,20 +23,30 @@ declare(strict_types=1);
 
 namespace pocketmine\block;
 
-use pocketmine\block\utils\WoodTypeTrait;
+use function array_fill_keys;
+use function array_keys;
 
-class Planks extends Opaque{
-	use WoodTypeTrait;
+final class BlockTypeInfo{
+	/**
+	 * @var true[]
+	 * @phpstan-var array<string, true>
+	 */
+	private array $typeTags;
 
-	public function getFuelTime() : int{
-		return $this->woodType->isFlammable() ? 300 : 0;
+	/**
+	 * @param string[] $typeTags
+	 */
+	public function __construct(
+		private BlockBreakInfo $breakInfo,
+		array $typeTags = []
+	){
+		$this->typeTags = array_fill_keys($typeTags, true);
 	}
 
-	public function getFlameEncouragement() : int{
-		return $this->woodType->isFlammable() ? 5 : 0;
-	}
+	public function getBreakInfo() : BlockBreakInfo{ return $this->breakInfo; }
 
-	public function getFlammability() : int{
-		return $this->woodType->isFlammable() ? 20 : 0;
-	}
+	/** @return string[] */
+	public function getTypeTags() : array{ return array_keys($this->typeTags); }
+
+	public function hasTypeTag(string $tag) : bool{ return isset($this->typeTags[$tag]); }
 }

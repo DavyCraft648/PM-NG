@@ -21,22 +21,28 @@
 
 declare(strict_types=1);
 
-namespace pocketmine\block;
+namespace pocketmine\world\sound;
 
-use pocketmine\block\utils\WoodTypeTrait;
+use pocketmine\math\Vector3;
+use pocketmine\network\mcpe\protocol\LevelSoundEventPacket;
+use pocketmine\network\mcpe\protocol\types\LevelSoundEvent;
 
-class Planks extends Opaque{
-	use WoodTypeTrait;
+final class WaterSplashSound implements Sound{
 
-	public function getFuelTime() : int{
-		return $this->woodType->isFlammable() ? 300 : 0;
+	public function __construct(private float $volume){
+		if($volume < 0 || $volume > 1){
+			throw new \InvalidArgumentException("Volume must be between 0 and 1");
+		}
 	}
 
-	public function getFlameEncouragement() : int{
-		return $this->woodType->isFlammable() ? 5 : 0;
-	}
-
-	public function getFlammability() : int{
-		return $this->woodType->isFlammable() ? 20 : 0;
+	public function encode(Vector3 $pos) : array{
+		return [LevelSoundEventPacket::create(
+			LevelSoundEvent::SPLASH,
+			$pos,
+			(int) ($this->volume * 16777215),
+			":",
+			false,
+			false
+		)];
 	}
 }
