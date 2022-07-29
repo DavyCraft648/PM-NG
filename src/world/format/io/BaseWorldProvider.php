@@ -60,6 +60,7 @@ abstract class BaseWorldProvider implements WorldProvider{
 		foreach($palette as $k => $legacyIdMeta){
 			$newStateData = $blockDataUpgrader->upgradeIntIdMeta($legacyIdMeta >> 4, $legacyIdMeta & 0xf);
 			if($newStateData === null){
+				\GlobalLogger::get()->warning("Unknown block " . $legacyIdMeta >> 4 . ":" . $legacyIdMeta & 0xf);
 				//TODO: remember data for unknown states so we can implement them later
 				$newStateData = GlobalBlockStateHandlers::getUnknownBlockStateData();
 			}

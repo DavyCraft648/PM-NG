@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "9db356fee03cce604e5eabeb6265ff16",
+    "content-hash": "666380adcb2d3e1a0dbd644ad8f5755e",
     "packages": [
         {
             "name": "adhocore/json-comment",
@@ -201,13 +201,13 @@
             "version": "dev-modern-world-support",
             "source": {
                 "type": "git",
-                "url": "https://github.com/NetherGamesMC/BedrockData.git",
-                "reference": "80b59ff8ca06e2f1184bf952621dd6cdbb15eb07"
+                "url": "https://github.com/DavyCraft648/BedrockData.git",
+                "reference": "af5d4af81a419c5e50b56258df1492b472147882"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/NetherGamesMC/BedrockData/zipball/80b59ff8ca06e2f1184bf952621dd6cdbb15eb07",
-                "reference": "80b59ff8ca06e2f1184bf952621dd6cdbb15eb07",
+                "url": "https://api.github.com/repos/DavyCraft648/BedrockData/zipball/af5d4af81a419c5e50b56258df1492b472147882",
+                "reference": "af5d4af81a419c5e50b56258df1492b472147882",
                 "shasum": ""
             },
             "type": "library",
@@ -216,9 +216,9 @@
             ],
             "description": "Blobs of data generated from Minecraft: Bedrock Edition, used by PocketMine-MP",
             "support": {
-                "source": "https://github.com/NetherGamesMC/BedrockData/tree/modern-world-support"
+                "source": "https://github.com/DavyCraft648/BedrockData/tree/modern-world-support"
             },
-            "time": "2022-07-17T18:08:58+00:00"
+            "time": "2022-07-18T10:38:14+00:00"
         },
         {
             "name": "nethergamesmc/bedrock-protocol",
