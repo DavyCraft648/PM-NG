@@ -51,6 +51,7 @@ final class BlockDataUpgrader{
 			$blockStateData = $this->upgradeStringIdMeta($id, $data);
 			if($blockStateData === null){
 				//unknown block, invalid ID
+				\GlobalLogger::get()->warning("Unknown block $id:$data");
 				$blockStateData = new BlockStateData(BlockTypeNames::INFO_UPDATE, [], BlockStateData::CURRENT_VERSION);
 			}
 		}else{
