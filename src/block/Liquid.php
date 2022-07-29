@@ -354,10 +354,8 @@ abstract class Liquid extends Transparent{
 			$ev->call();
 			if(!$ev->isCancelled()){
 				$world = $this->position->getWorld();
-				foreach([$block, $block->getBlockLayer($block->getLayer() === 1 ? 0 : 1)] as $b){
-					if(!$b->canWaterlogged($this) && $b->getTypeId() !== BlockTypeIds::AIR){
-						$world->useBreakOn($block->position, $i, null, false, $b->getLayer());
-					}
+				if($block->getTypeId() !== BlockTypeIds::AIR){
+					$world->useBreakOn($block->position);
 				}
 
 				$world->setBlockLayer($block->position, $ev->getNewState(), (in_array(1, $this->getSupportedLayers(), true) && $block->canWaterlogged($this)) ? 1 : 0);
