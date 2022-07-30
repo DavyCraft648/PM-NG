@@ -166,7 +166,7 @@ class FallingBlock extends Entity{
 		$this->getNetworkProperties()->setInt(EntityMetadataProperties::VARIANT, RuntimeBlockMapping::getInstance()->toRuntimeId($this->block->getStateId(), RuntimeBlockMapping::getMappingProtocol($player->getNetworkSession()->getProtocolId())));
 		$this->getNetworkProperties()->clearDirtyProperties(); //needed for multi protocol
 
-		self::sendSpawnPacket($player);
+		parent::sendSpawnPacket($player);
 	}
 
 	//protected function syncNetworkData(EntityMetadataCollection $properties) : void{ No need due to multi protocol
