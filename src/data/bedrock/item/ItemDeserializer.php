@@ -70,7 +70,7 @@ final class ItemDeserializer{
 	 */
 	public function deserializeType(Data $data) : Item{
 		$id = $data->getName();
-		if(($blockData = $data->getBlock()) !== null || ($blockData = GlobalBlockStateHandlers::getUpgrader()->upgradeStringIdMeta($id, 0)) !== null){
+		if(($blockData = $data->getBlock()) !== null || (!isset($this->deserializers[$id]) && ($blockData = GlobalBlockStateHandlers::getUpgrader()->upgradeStringIdMeta($id, 0)) !== null)){
 			//TODO: this is rough duct tape; we need a better way to deal with this
 			try{
 				$block = $this->blockStateDeserializer->deserialize($blockData);
