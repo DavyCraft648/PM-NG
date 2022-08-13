@@ -100,6 +100,7 @@ class PreSpawnPacketHandler extends ChunkRequestPacketHandler{
 			false,
 			 "NetherGames v4.0",
 			Uuid::fromString(Uuid::NIL),
+			false,
 			[],
 			0,
 			GlobalItemTypeDictionary::getInstance()->getDictionary($dictionaryProtocol)->getEntries()

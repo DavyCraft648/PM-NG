@@ -63,8 +63,8 @@ final class RuntimeBlockMapping{
 				self::META_MAP_PATH => '',
 			],
 			ProtocolInfo::PROTOCOL_1_19_0 => [
-				self::BLOCK_PALETTE_PATH => '',
-				self::META_MAP_PATH => '',
+				self::BLOCK_PALETTE_PATH => '-1.19.0',
+				self::META_MAP_PATH => '-1.19.0',
 			]/*,
 			ProtocolInfo::PROTOCOL_1_18_30 => [
 				self::BLOCK_PALETTE_PATH => '-1.18.30',
@@ -170,7 +170,12 @@ final class RuntimeBlockMapping{
 
 	public function getFallbackStateData(int $mappingProtocol) : BlockStateData{ return $this->fallbackStateData[$mappingProtocol]; }
 
-	public static function getMappingProtocol(int $protocolId) : int{ return $protocolId; }
+	public static function getMappingProtocol(int $protocolId) : int{
+		if($protocolId === ProtocolInfo::PROTOCOL_1_19_10){
+			return ProtocolInfo::PROTOCOL_1_19_0;
+		}
+		return $protocolId;
+	}
 
 	/**
 	 * @param Player[] $players

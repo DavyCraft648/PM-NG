@@ -66,6 +66,9 @@ final class GlobalItemTypeDictionary{
 	public function __construct(private array $dictionaries){}
 
 	public static function getDictionaryProtocol(int $protocolId) : int{
+		if($protocolId === ProtocolInfo::PROTOCOL_1_19_10){
+			return ProtocolInfo::PROTOCOL_1_19_20;
+		}
 		return $protocolId;
 	}
 
