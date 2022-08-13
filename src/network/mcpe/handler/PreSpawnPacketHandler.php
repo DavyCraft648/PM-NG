@@ -59,7 +59,7 @@ class PreSpawnPacketHandler extends ChunkRequestPacketHandler{
 	}
 
 	public function setUp() : void{
-		$dictionaryProtocol = GlobalItemTypeDictionary::getDictionaryProtocol($this->session->getProtocolId());
+		$dictionaryProtocol = GlobalItemTypeDictionary::getDictionaryProtocol($protocolId = $this->session->getProtocolId());
 		$location = $this->player->getLocation();
 		$world = $location->getWorld();
 
@@ -120,7 +120,7 @@ class PreSpawnPacketHandler extends ChunkRequestPacketHandler{
 		$this->inventoryManager->syncAll();
 		$this->inventoryManager->syncCreative();
 		$this->inventoryManager->syncSelectedHotbarSlot();
-		$this->session->sendDataPacket(CraftingDataCache::getInstance()->getCache($dictionaryProtocol, $this->server->getCraftingManager()));
+		$this->session->sendDataPacket(CraftingDataCache::getInstance()->getCache($protocolId, $this->server->getCraftingManager()));
 
 		$this->session->syncPlayerList($this->server->getOnlinePlayers());
 	}
