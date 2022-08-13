@@ -194,20 +194,20 @@ class TypeConverter{
 			$nbt,
 			[],
 			[],
-			$id === $this->shieldRuntimeIds[$protocolId] ? 0 : null
+			$id === $this->shieldRuntimeIds[GlobalItemTypeDictionary::getDictionaryProtocol($protocolId)] ? 0 : null
 		);
 	}
 
 	/**
 	 * @throws TypeConversionException
 	 */
-	public function netItemStackToCore(ItemStack $itemStack, int $dictionaryProtocol) : Item{
+	public function netItemStackToCore(ItemStack $itemStack, int $protocolId) : Item{
 		if($itemStack->getId() === 0){
 			return VanillaItems::AIR();
 		}
 		$compound = $itemStack->getNbt();
 
-		$itemResult = ItemTranslator::getInstance()->fromNetworkId($itemStack->getId(), $itemStack->getMeta(), $itemStack->getBlockRuntimeId(), $dictionaryProtocol);
+		$itemResult = ItemTranslator::getInstance()->fromNetworkId($itemStack->getId(), $itemStack->getMeta(), $itemStack->getBlockRuntimeId(), $protocolId);
 
 		if($compound !== null){
 			$compound = clone $compound;
