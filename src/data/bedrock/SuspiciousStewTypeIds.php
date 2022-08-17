@@ -21,28 +21,17 @@
 
 declare(strict_types=1);
 
-namespace pocketmine\command\defaults;
+namespace pocketmine\data\bedrock;
 
-use pocketmine\command\Command;
-use pocketmine\command\CommandSender;
-use pocketmine\lang\KnownTranslationFactory;
-use pocketmine\permission\DefaultPermissionNames;
-
-class StopCommand extends VanillaCommand{
-
-	public function __construct(string $name){
-		parent::__construct(
-			$name,
-			KnownTranslationFactory::pocketmine_command_stop_description()
-		);
-		$this->setPermission(DefaultPermissionNames::COMMAND_STOP);
-	}
-
-	public function execute(CommandSender $sender, string $commandLabel, array $args){
-		Command::broadcastCommandMessage($sender, KnownTranslationFactory::commands_stop_start());
-
-		$sender->getServer()->shutdown();
-
-		return true;
-	}
+final class SuspiciousStewTypeIds{
+	public const POPPY = 0;
+	public const CORNFLOWER = 1;
+	public const TULIP = 2;
+	public const AZURE_BLUET = 3;
+	public const LILY_OF_THE_VALLEY = 4;
+	public const DANDELION = 5;
+	public const BLUE_ORCHID = 6;
+	public const ALLIUM = 7;
+	public const OXEYE_DAISY = 8;
+	public const WITHER_ROSE = 9;
 }

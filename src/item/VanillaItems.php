@@ -156,6 +156,7 @@ use pocketmine\world\World;
  * @method static ExperienceBottle EXPERIENCE_BOTTLE()
  * @method static Item FEATHER()
  * @method static Item FERMENTED_SPIDER_EYE()
+ * @method static FireCharge FIRE_CHARGE()
  * @method static FishingRod FISHING_ROD()
  * @method static Item FLINT()
  * @method static FlintSteel FLINT_AND_STEEL()
@@ -285,6 +286,7 @@ use pocketmine\world\World;
  * @method static Sword STONE_SWORD()
  * @method static StringItem STRING()
  * @method static Item SUGAR()
+ * @method static SuspiciousStew SUSPICIOUS_STEW()
  * @method static SweetBerries SWEET_BERRIES()
  * @method static Totem TOTEM()
  * @method static SpawnEgg VILLAGER_SPAWN_EGG()
@@ -423,6 +425,7 @@ final class VanillaItems{
 		self::register("experience_bottle", new ExperienceBottle(new IID(Ids::EXPERIENCE_BOTTLE), "Bottle o' Enchanting"));
 		self::register("feather", new Item(new IID(Ids::FEATHER), "Feather"));
 		self::register("fermented_spider_eye", new Item(new IID(Ids::FERMENTED_SPIDER_EYE), "Fermented Spider Eye"));
+		self::register("fire_charge", new FireCharge(new IID(Ids::FIRE_CHARGE), "Fire Charge"));
 		self::register("fishing_rod", new FishingRod(new IID(Ids::FISHING_ROD), "Fishing Rod"));
 		self::register("flint", new Item(new IID(Ids::FLINT), "Flint"));
 		self::register("flint_and_steel", new FlintSteel(new IID(Ids::FLINT_AND_STEEL), "Flint and Steel"));
@@ -516,6 +519,7 @@ final class VanillaItems{
 		self::register("stick", new Stick(new IID(Ids::STICK), "Stick"));
 		self::register("string", new StringItem(new IID(Ids::STRING), "String"));
 		self::register("sugar", new Item(new IID(Ids::SUGAR), "Sugar"));
+		self::register("suspicious_stew", new SuspiciousStew(new IID(Ids::SUSPICIOUS_STEW), "Suspicious Stew"));
 		self::register("sweet_berries", new SweetBerries(new IID(Ids::SWEET_BERRIES), "Sweet Berries"));
 		self::register("totem", new Totem(new IID(Ids::TOTEM), "Totem of Undying"));
 		self::register("warped_sign", new ItemBlockWallOrFloor(new IID(Ids::WARPED_SIGN), Blocks::WARPED_SIGN(), Blocks::WARPED_WALL_SIGN()));

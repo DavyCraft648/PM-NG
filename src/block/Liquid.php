@@ -389,7 +389,7 @@ abstract class Liquid extends Transparent{
 	}
 
 	protected function liquidCollide(Block $cause, Block $result) : bool{
-		$ev = new BlockFormEvent($this, $result);
+		$ev = new BlockFormEvent($this, $result, $cause);
 		$ev->call();
 		if(!$ev->isCancelled()){
 			$world = $this->position->getWorld();
