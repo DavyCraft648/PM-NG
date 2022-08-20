@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "666380adcb2d3e1a0dbd644ad8f5755e",
+    "content-hash": "01965972d488e273b772e80d4b743ce0",
     "packages": [
         {
             "name": "adhocore/json-comment",
@@ -222,12 +222,12 @@
             "source": {
                 "type": "git",
                 "url": "https://github.com/NetherGamesMC/BedrockProtocol.git",
-                "reference": "800e78d59b3c41e1f9d2a695f13511bc178d7eda"
+                "reference": "62f42fbf44dde7ea08fd5c7f1638c9b7610ea13d"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/NetherGamesMC/BedrockProtocol/zipball/800e78d59b3c41e1f9d2a695f13511bc178d7eda",
-                "reference": "800e78d59b3c41e1f9d2a695f13511bc178d7eda",
+                "url": "https://api.github.com/repos/NetherGamesMC/BedrockProtocol/zipball/62f42fbf44dde7ea08fd5c7f1638c9b7610ea13d",
+                "reference": "62f42fbf44dde7ea08fd5c7f1638c9b7610ea13d",
                 "shasum": ""
             },
             "require": {
@@ -270,7 +270,7 @@
             "support": {
                 "source": "https://github.com/NetherGamesMC/BedrockProtocol/tree/master"
             },
-            "time": "2022-08-09T19:33:05+00:00"
+            "time": "2022-08-15T22:10:29+00:00"
         },
         {
             "name": "netresearch/jsonmapper",
@@ -593,16 +593,16 @@
         },
         {
             "name": "pocketmine/locale-data",
-            "version": "2.8.3",
+            "version": "2.8.5",
             "source": {
                 "type": "git",
                 "url": "https://github.com/pmmp/Language.git",
-                "reference": "113c115a3b8976917eb22b74dccab464831b6483"
+                "reference": "4856872c03c281bfa67012d2fdf2fb9c14cde350"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/pmmp/Language/zipball/113c115a3b8976917eb22b74dccab464831b6483",
-                "reference": "113c115a3b8976917eb22b74dccab464831b6483",
+                "url": "https://api.github.com/repos/pmmp/Language/zipball/4856872c03c281bfa67012d2fdf2fb9c14cde350",
+                "reference": "4856872c03c281bfa67012d2fdf2fb9c14cde350",
                 "shasum": ""
             },
             "type": "library",
@@ -610,9 +610,9 @@
             "description": "Language resources used by PocketMine-MP",
             "support": {
                 "issues": "https://github.com/pmmp/Language/issues",
-                "source": "https://github.com/pmmp/Language/tree/2.8.3"
+                "source": "https://github.com/pmmp/Language/tree/2.8.5"
             },
-            "time": "2022-05-11T13:51:37+00:00"
+            "time": "2022-08-17T13:43:08+00:00"
         },
         {
             "name": "pocketmine/log",
@@ -1793,16 +1793,16 @@
         },
         {
             "name": "phpstan/phpstan",
-            "version": "1.8.0",
+            "version": "1.8.2",
             "source": {
                 "type": "git",
                 "url": "https://github.com/phpstan/phpstan.git",
-                "reference": "b7648d4ee9321665acaf112e49da9fd93df8fbd5"
+                "reference": "c53312ecc575caf07b0e90dee43883fdf90ca67c"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/phpstan/phpstan/zipball/b7648d4ee9321665acaf112e49da9fd93df8fbd5",
-                "reference": "b7648d4ee9321665acaf112e49da9fd93df8fbd5",
+                "url": "https://api.github.com/repos/phpstan/phpstan/zipball/c53312ecc575caf07b0e90dee43883fdf90ca67c",
+                "reference": "c53312ecc575caf07b0e90dee43883fdf90ca67c",
                 "shasum": ""
             },
             "require": {
@@ -1828,7 +1828,7 @@
             "description": "PHPStan - PHP Static Analysis Tool",
             "support": {
                 "issues": "https://github.com/phpstan/phpstan/issues",
-                "source": "https://github.com/phpstan/phpstan/tree/1.8.0"
+                "source": "https://github.com/phpstan/phpstan/tree/1.8.2"
             },
             "funding": [
                 {
@@ -1848,7 +1848,7 @@
                     "type": "tidelift"
                 }
             ],
-            "time": "2022-06-29T08:53:31+00:00"
+            "time": "2022-07-20T09:57:31+00:00"
         },
         {
             "name": "phpstan/phpstan-phpunit",
@@ -3427,5 +3427,5 @@
     "platform-overrides": {
         "php": "8.0.0"
     },
-    "plugin-api-version": "2.3.0"
+    "plugin-api-version": "2.0.0"
 }

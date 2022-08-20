@@ -34,6 +34,7 @@ use pocketmine\network\mcpe\protocol\ProtocolInfo;
 use pocketmine\network\mcpe\protocol\serializer\ItemTypeDictionary;
 use pocketmine\utils\AssumptionFailedError;
 use pocketmine\utils\SingletonTrait;
+use pocketmine\world\format\io\GlobalBlockStateHandlers;
 use pocketmine\world\format\io\GlobalItemDataHandlers;
 
 /**
@@ -144,6 +145,9 @@ final class ItemTranslator{
 			$blockStateData = $this->getBlockStateDictionary($protocolId)->getDataFromStateId($networkBlockRuntimeId);
 			if($blockStateData === null){
 				throw new TypeConversionException("Blockstate runtimeID $networkBlockRuntimeId does not correspond to any known blockstate");
+			}
+			if($protocolId < ProtocolInfo::CURRENT_PROTOCOL){
+				$blockStateData = GlobalBlockStateHandlers::getUpgrader()->getBlockStateUpgrader()->upgrade($blockStateData);
 			}
 		}
 

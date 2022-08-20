@@ -23,6 +23,7 @@ declare(strict_types=1);
 
 namespace pocketmine\network\mcpe;
 
+use pocketmine\block\tile\Spawnable;
 use pocketmine\data\bedrock\EffectIdMap;
 use pocketmine\entity\Attribute;
 use pocketmine\entity\effect\EffectInstance;
@@ -60,6 +61,7 @@ use pocketmine\network\mcpe\handler\ResourcePacksPacketHandler;
 use pocketmine\network\mcpe\handler\SpawnResponsePacketHandler;
 use pocketmine\network\mcpe\protocol\AdventureSettingsPacket;
 use pocketmine\network\mcpe\protocol\AvailableCommandsPacket;
+use pocketmine\network\mcpe\protocol\BlockActorDataPacket;
 use pocketmine\network\mcpe\protocol\ChunkRadiusUpdatedPacket;
 use pocketmine\network\mcpe\protocol\ClientboundPacket;
 use pocketmine\network\mcpe\protocol\ClientCacheMissResponsePacket;
@@ -103,7 +105,10 @@ use pocketmine\network\mcpe\protocol\types\entity\Attribute as NetworkAttribute;
 use pocketmine\network\mcpe\protocol\types\entity\MetadataProperty;
 use pocketmine\network\mcpe\protocol\types\inventory\ContainerIds;
 use pocketmine\network\mcpe\protocol\types\inventory\ItemStackWrapper;
+use pocketmine\network\mcpe\protocol\types\PlayerListAdditionEntries;
+use pocketmine\network\mcpe\protocol\types\PlayerListAdditionEntry;
 use pocketmine\network\mcpe\protocol\types\PlayerListEntry;
+use pocketmine\network\mcpe\protocol\types\PlayerListRemovalEntries;
 use pocketmine\network\mcpe\protocol\types\PlayerPermissions;
 use pocketmine\network\mcpe\protocol\types\UpdateAbilitiesPacketLayer;
 use pocketmine\network\mcpe\protocol\UpdateAbilitiesPacket;
@@ -1058,6 +1063,24 @@ class NetworkSession{
 				try{
 					$this->queueCompressed($compressBatchPromise);
 					$onCompletion();
+
+					if($this->getProtocolId() === ProtocolInfo::PROTOCOL_1_19_10){
+						//TODO: HACK! we send the full tile data here, due to a bug in 1.19.10 which causes items in tiles
+						//(item frames, lecterns) to not load properly when they are sent in a chunk via the classic chunk
+						//sending mechanism. We workaround this bug by sending only bare essential data in LevelChunkPacket
+						//(enough to create the tiles, since BlockActorDataPacket can't create tiles by itself) and then
+						//send the actual tile properties here.
+						//TODO: maybe we can stuff these packets inside the cached batch alongside LevelChunkPacket?
+						$chunk = $currentWorld->getChunk($chunkX, $chunkZ);
+						if($chunk !== null){
+							foreach($chunk->getTiles() as $tile){
+								if(!($tile instanceof Spawnable)){
+									continue;
+								}
+								$this->sendDataPacket(BlockActorDataPacket::create(BlockPosition::fromVector3($tile->getPosition()), $tile->getSerializedSpawnCompound()));
+							}
+						}
+					}
 				}finally{
 					$world->timings->syncChunkSend->stopTiming();
 				}
@@ -1126,18 +1149,18 @@ class NetworkSession{
 	 * @param Player[] $players
 	 */
 	public function syncPlayerList(array $players) : void{
-		$this->sendDataPacket(PlayerListPacket::add(array_map(function(Player $player) : PlayerListEntry{
-			return PlayerListEntry::createAdditionEntry($player->getUniqueId(), $player->getId(), $player->getDisplayName(), SkinAdapterSingleton::get()->toSkinData($player->getSkin()), $player->getXuid());
-		}, $players)));
+		$this->sendDataPacket(PlayerListPacket::create(new PlayerListAdditionEntries(array_map(function(Player $player) : PlayerListAdditionEntry{
+			return new PlayerListAdditionEntry($player->getUniqueId(), $player->getId(), $player->getDisplayName(), SkinAdapterSingleton::get()->toSkinData($player->getSkin()), $player->getXuid());
+		}, $players))));
 	}
 
 	public function onPlayerAdded(Player $p) : void{
-		$this->sendDataPacket(PlayerListPacket::add([PlayerListEntry::createAdditionEntry($p->getUniqueId(), $p->getId(), $p->getDisplayName(), SkinAdapterSingleton::get()->toSkinData($p->getSkin()), $p->getXuid())]));
+		$this->sendDataPacket(PlayerListPacket::create(new PlayerListAdditionEntries([new PlayerListAdditionEntry($p->getUniqueId(), $p->getId(), $p->getDisplayName(), SkinAdapterSingleton::get()->toSkinData($p->getSkin()), $p->getXuid())])));
 	}
 
 	public function onPlayerRemoved(Player $p) : void{
 		if($p !== $this->player){
-			$this->sendDataPacket(PlayerListPacket::remove([PlayerListEntry::createRemovalEntry($p->getUniqueId())]));
+			$this->sendDataPacket(PlayerListPacket::create(new PlayerListRemovalEntries([$p->getUniqueId()])));
 		}
 	}
 
