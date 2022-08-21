@@ -36,6 +36,7 @@ use pocketmine\network\mcpe\protocol\serializer\NetworkNbtSerializer;
 use pocketmine\network\mcpe\protocol\serializer\PacketSerializer;
 use pocketmine\network\mcpe\protocol\serializer\PacketSerializerContext;
 use pocketmine\network\mcpe\protocol\types\DimensionIds;
+use pocketmine\utils\AssumptionFailedError;
 use pocketmine\utils\Binary;
 use pocketmine\utils\BinaryStream;
 use pocketmine\world\format\Chunk;
@@ -76,9 +77,18 @@ final class ChunkSerializer{
 
 		$subChunkCount = self::getSubChunkCount($chunk);
 		$subChunks = [];
+		$maxHeight = match($dimensionId = $chunk->getDimensionId()){
+			DimensionIds::NETHER => 127,
+			DimensionIds::THE_END => 255,
+			DimensionIds::OVERWORLD => 320,
+			default => throw new AssumptionFailedError("Unknown DimensionId " . $dimensionId)
+		};
 		for($y = Chunk::MIN_SUBCHUNK_INDEX, $writtenCount = 0; $writtenCount < $subChunkCount; ++$y, ++$writtenCount){
-			if($y < 0 && ($mappingProtocol < ProtocolInfo::PROTOCOL_1_18_0 || $chunk->getDimensionId() !== DimensionIds::OVERWORLD)){
+			if($y < 0 && ($mappingProtocol < ProtocolInfo::PROTOCOL_1_18_0 || $dimensionId !== DimensionIds::OVERWORLD)){
 				continue;
+			}
+			if($y > ($maxHeight >> 4)){
+				break;
 			}
 
 			$subChunkStream = clone $stream;
@@ -107,7 +117,12 @@ final class ChunkSerializer{
 		if($stream->getProtocolId() >= ProtocolInfo::PROTOCOL_1_18_0){
 			//TODO: right now we don't support 3D natively, so we just 3Dify our 2D biomes so they fill the column
 			$encodedBiomePalette = self::serializeBiomesAsPalette($chunk);
-			$stream->put(str_repeat($encodedBiomePalette, $stream->getProtocolId() >= ProtocolInfo::PROTOCOL_1_18_30 ? 24 : 25));
+			$stream->put(str_repeat($encodedBiomePalette, $stream->getProtocolId() >= ProtocolInfo::PROTOCOL_1_18_30 ? match($dimensionId = $chunk->getDimensionId()){
+				DimensionIds::NETHER => 8,
+				DimensionIds::THE_END => 16,
+				DimensionIds::OVERWORLD => 24,
+				default => throw new AssumptionFailedError("Unknown DimensionId " . $dimensionId)
+			} : 25));
 		}else{
 			$stream->put($chunk->getBiomeIdArray());
 		}
