@@ -37,7 +37,7 @@
       "pocketmine/bedrock-block-upgrade-schema": "dev-master@dev",
       "pocketmine/bedrock-item-upgrade-schema": "dev-master",
       "nethergamesmc/bedrock-data": "dev-modern-world-support@dev",
-      "nethergamesmc/bedrock-protocol": "dev-master",
+      "nethergamesmc/bedrock-protocol": "dev-next-major@dev",
       "pocketmine/binaryutils": "^0.2.1",
       "pocketmine/callback-validator": "^1.0.2",
       "pocketmine/classloader": "^0.2.0",
