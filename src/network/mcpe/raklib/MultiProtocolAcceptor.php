@@ -21,28 +21,22 @@
 
 declare(strict_types=1);
 
-namespace pocketmine\utils;
+namespace pocketmine\network\mcpe\raklib;
 
-trait SingletonTrait{
-	/** @var self|null */
-	private static $instance = null;
+use raklib\server\ProtocolAcceptor;
+use function in_array;
 
-	private static function make() : self{
-		return new self();
+class MultiProtocolAcceptor implements ProtocolAcceptor{
+	/**
+	 * @param int[] $protocolVersions
+	 */
+	public function __construct(private int $primaryVersion, private array $protocolVersions){}
+
+	public function accepts(int $protocolVersion) : bool{
+		return in_array($protocolVersion, $this->protocolVersions, true);
 	}
 
-	public static function getInstance() : self{
-		if(self::$instance === null){
-			self::$instance = self::make();
-		}
-		return self::$instance;
-	}
-
-	public static function setInstance(self $instance) : void{
-		self::$instance = $instance;
-	}
-
-	public static function reset() : void{
-		self::$instance = null;
+	public function getPrimaryVersion() : int{
+		return $this->primaryVersion;
 	}
 }

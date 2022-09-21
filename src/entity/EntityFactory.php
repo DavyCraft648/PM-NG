@@ -229,7 +229,7 @@ final class EntityFactory{
 	 */
 	public function createFromData(World $world, CompoundTag $nbt) : ?Entity{
 		try{
-			$saveId = $nbt->getTag("id") ?? $nbt->getTag("identifier");
+			$saveId = $nbt->getTag("identifier") ?? $nbt->getTag("id");
 			$func = null;
 			if($saveId instanceof StringTag){
 				$func = $this->creationFuncs[$saveId->getValue()] ?? null;
@@ -250,7 +250,7 @@ final class EntityFactory{
 
 	public function injectSaveId(string $class, CompoundTag $saveData) : void{
 		if(isset($this->saveNames[$class])){
-			$saveData->setTag("id", new StringTag($this->saveNames[$class]));
+			$saveData->setTag("identifier", new StringTag($this->saveNames[$class]));
 		}else{
 			throw new \InvalidArgumentException("Entity $class is not registered");
 		}

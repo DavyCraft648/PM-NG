@@ -1185,7 +1185,7 @@ class Player extends Human implements CommandSender, ChunkListener, IPlayer{
 			return;
 		}
 
-		$oldPos = $this->getLocation();
+		$oldPos = $this->location;
 		$distanceSquared = $newPos->distanceSquared($oldPos);
 
 		$revert = false;
@@ -1203,7 +1203,7 @@ class Player extends Human implements CommandSender, ChunkListener, IPlayer{
 			 * asking for help if you suffer the consequences of messing with this.
 			 */
 			$this->logger->debug("Moved too fast, reverting movement");
-			$this->logger->debug("Old position: " . $this->location->asVector3() . ", new position: " . $newPos);
+			$this->logger->debug("Old position: " . $oldPos->asVector3() . ", new position: " . $newPos);
 			$revert = true;
 		}elseif(!$this->getWorld()->isInLoadedTerrain($newPos)){
 			$revert = true;
@@ -1211,9 +1211,9 @@ class Player extends Human implements CommandSender, ChunkListener, IPlayer{
 		}
 
 		if(!$revert && $distanceSquared != 0){
-			$dx = $newPos->x - $this->location->x;
-			$dy = $newPos->y - $this->location->y;
-			$dz = $newPos->z - $this->location->z;
+			$dx = $newPos->x - $oldPos->x;
+			$dy = $newPos->y - $oldPos->y;
+			$dz = $newPos->z - $oldPos->z;
 
 			$this->move($dx, $dy, $dz);
 		}
@@ -1563,7 +1563,7 @@ class Player extends Human implements CommandSender, ChunkListener, IPlayer{
 
 		$ev = new PlayerBlockPickEvent($this, $block, $item);
 		$existingSlot = $this->inventory->first($item);
-		if($existingSlot === -1 && $this->hasFiniteResources()){
+		if($existingSlot === -1 && ($this->hasFiniteResources() || $this->isSpectator())){
 			$ev->cancel();
 		}
 		$ev->call();
@@ -2374,22 +2374,15 @@ class Player extends Human implements CommandSender, ChunkListener, IPlayer{
 		}
 
 		// We do not want to do anything with gliding and swimming,
-		// because it is syncing the player own bounding boxes, and if the movement speed is in range of the
-		// default movement speed (0.1 -> 0.13), we accept them as is. (Speed effect is still server-authoritative)
-		if($sneaking !== null || $sprinting !== null && $this->getMovementSpeed() <= 0.13){
+		// because it is syncing the player own bounding boxes.
+		if($sprinting !== null){
 			// In case the previous network properties was dirty.
 			$this->networkPropertiesDirty = $networkPropertiesDirty;
 
-			if($sprinting !== null && !$isDesynchronized){
+			if(!$isDesynchronized){
 				// Mark as synchronized, we accept them as-is
 				$this->moveSpeedAttr->markSynchronized();
 			}
-		}elseif($sprinting !== null && !$this->moveSpeedAttr->isDesynchronized()){
-			// Re-synchronize the player's speed attribute when we receive any sprint flag, since the player's
-			// sprint -> not-sprint will always set the player's own speed attribute to 0.1, they negate whatever value the
-			// previous attribute is set. (This can be tested when the player has food exhaustion while having speed before).
-			$this->networkPropertiesDirty = true;
-			$this->moveSpeedAttr->markSynchronized(false);
 		}
 
 		return true;

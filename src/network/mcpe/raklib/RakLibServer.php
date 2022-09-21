@@ -30,7 +30,6 @@ use raklib\generic\SocketException;
 use raklib\server\ipc\RakLibToUserThreadMessageSender;
 use raklib\server\ipc\UserToRakLibThreadMessageReceiver;
 use raklib\server\Server;
-use raklib\server\SimpleProtocolAcceptor;
 use raklib\utils\ExceptionTraceCleaner;
 use raklib\utils\InternetAddress;
 use function error_get_last;
@@ -160,7 +159,7 @@ class RakLibServer extends Thread{
 				$this->logger,
 				$socket,
 				$this->maxMtuSize,
-				new SimpleProtocolAcceptor($this->protocolVersion),
+				new MultiProtocolAcceptor($this->protocolVersion, [10, $this->protocolVersion]),
 				new UserToRakLibThreadMessageReceiver(new PthreadsChannelReader($this->mainToThreadBuffer)),
 				new RakLibToUserThreadMessageSender(new SnoozeAwarePthreadsChannelWriter($this->threadToMainBuffer, $this->mainThreadNotifier)),
 				new ExceptionTraceCleaner($this->mainPath)
