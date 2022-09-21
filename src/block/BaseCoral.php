@@ -27,6 +27,7 @@ use pocketmine\block\utils\CoralType;
 use pocketmine\block\utils\CoralTypeTrait;
 use pocketmine\block\utils\SupportType;
 use pocketmine\item\Item;
+use function mt_rand;
 
 abstract class BaseCoral extends Transparent{
 	use CoralTypeTrait;
@@ -38,11 +39,13 @@ abstract class BaseCoral extends Transparent{
 
 	public function onNearbyBlockChange() : void{
 		if(!$this->dead){
-			$world = $this->position->getWorld();
+			$this->position->getWorld()->scheduleDelayedBlockUpdate($this->position, mt_rand(40, 200));
+		}
+	}
 
-			if(!$this->isWaterlogged()){
-				$world->setBlockLayer($this->position, $this->setDead(true), 0);
-			}
+	public function onScheduledUpdate() : void{
+		if(!$this->dead && !$this->isCoveredWithWater()){
+			$this->position->getWorld()->setBlock($this->position, $this->setDead(true));
 		}
 	}
 
@@ -55,6 +58,10 @@ abstract class BaseCoral extends Transparent{
 	}
 
 	public function isSolid() : bool{ return false; }
+
+	protected function isCoveredWithWater() : bool{
+		return $this->isWaterlogged();
+	}
 
 	protected function recalculateCollisionBoxes() : array{ return []; }
 
