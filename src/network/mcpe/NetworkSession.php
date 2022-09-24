@@ -108,7 +108,6 @@ use pocketmine\network\mcpe\protocol\types\inventory\ContainerIds;
 use pocketmine\network\mcpe\protocol\types\inventory\ItemStackWrapper;
 use pocketmine\network\mcpe\protocol\types\PlayerListAdditionEntries;
 use pocketmine\network\mcpe\protocol\types\PlayerListAdditionEntry;
-use pocketmine\network\mcpe\protocol\types\PlayerListEntry;
 use pocketmine\network\mcpe\protocol\types\PlayerListRemovalEntries;
 use pocketmine\network\mcpe\protocol\types\PlayerPermissions;
 use pocketmine\network\mcpe\protocol\types\UpdateAbilitiesPacketLayer;
@@ -175,6 +174,7 @@ class NetworkSession{
 	/** @var string[] */
 	private array $chunkCacheBlobs = [];
 	private bool $chunkCacheEnabled = false;
+	private bool $isFirstPacket = true;
 
 	/**
 	 * @var \SplQueue|CompressBatchPromise[]
@@ -183,7 +183,7 @@ class NetworkSession{
 	private \SplQueue $compressedQueue;
 	private bool $forceAsyncCompression = true;
 	private ?int $protocolId = null;
-	private bool $enableCompression = false; //disabled until handshake completed
+	private bool $enableCompression = true;
 
 	private PacketSerializerContext $packetSerializerContext;
 
@@ -402,8 +402,21 @@ class NetworkSession{
 			try{
 				$decompressed = $this->compressor->decompress($payload);
 			}catch(DecompressionException $e){
-				$this->logger->debug("Failed to decompress packet: " . base64_encode($payload));
-				throw PacketHandlingException::wrap($e, "Compressed packet batch decode error");
+				if($this->isFirstPacket){
+					$this->logger->debug("Failed to decompress packet, assuming client is using the new compression method");
+
+					$this->enableCompression = false;
+					$this->setHandler(new SessionStartPacketHandler(
+						$this->server,
+						$this,
+						fn() => $this->onSessionStartSuccess()
+					));
+
+					$decompressed = $payload;
+				}else{
+					$this->logger->debug("Failed to decompress packet: " . base64_encode($payload));
+					throw PacketHandlingException::wrap($e, "Compressed packet batch decode error");
+				}
 			}finally{
 				Timings::$playerNetworkReceiveDecompress->stopTiming();
 			}
@@ -429,6 +442,8 @@ class NetworkSession{
 				$this->logger->logException($e);
 			}
 			throw PacketHandlingException::wrap($e, "Packet batch decode error");
+		}finally{
+			$this->isFirstPacket = false;
 		}
 	}
 

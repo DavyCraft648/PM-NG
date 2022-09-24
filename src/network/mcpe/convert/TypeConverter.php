@@ -165,7 +165,7 @@ class TypeConverter{
 			}
 		}
 		$result = ItemTranslator::getInstance()->fromNetworkId(
-			GlobalItemTypeDictionary::getInstance()->getDictionary()->fromStringId($stringId),
+			GlobalItemTypeDictionary::getInstance()->getDictionary($dictionaryProtocol)->fromStringId($stringId),
 			$meta,
 			$blockRuntimeId ?? ItemTranslator::NO_BLOCK_RUNTIME_ID
 		, $dictionaryProtocol);
