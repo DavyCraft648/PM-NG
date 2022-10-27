@@ -35,14 +35,12 @@ use pocketmine\entity\Location;
 use pocketmine\event\entity\ProjectileHitBlockEvent;
 use pocketmine\event\entity\ProjectileHitEntityEvent;
 use pocketmine\event\entity\ProjectileHitEvent;
-use pocketmine\item\Potion;
 use pocketmine\item\PotionType;
 use pocketmine\nbt\tag\CompoundTag;
 use pocketmine\network\mcpe\protocol\types\entity\EntityIds;
 use pocketmine\network\mcpe\protocol\types\entity\EntityMetadataCollection;
 use pocketmine\network\mcpe\protocol\types\entity\EntityMetadataFlags;
 use pocketmine\network\mcpe\protocol\types\entity\EntityMetadataProperties;
-use pocketmine\player\Player;
 use pocketmine\world\particle\PotionSplashParticle;
 use pocketmine\world\sound\PotionSplashSound;
 use function count;
@@ -99,12 +97,8 @@ class SplashPotion extends Throwable{
 
 		if($hasEffects){
 			if(!$this->willLinger()){
-				foreach($this->getWorld()->getNearbyEntities($this->boundingBox->expandedCopy(4.125, 2.125, 4.125), $this) as $entity){
-					if($entity instanceof Player && $entity->isSpectator()){
-						return;
-					}
-
-					if($entity instanceof Living && $entity->isAlive()){
+				foreach($this->getWorld()->getCollidingEntities($this->boundingBox->expandedCopy(4.125, 2.125, 4.125), $this) as $entity){
+					if($entity instanceof Living){
 						$distanceSquared = $entity->getEyePos()->distanceSquared($this->location);
 						if($distanceSquared > 16){ //4 blocks
 							continue;
