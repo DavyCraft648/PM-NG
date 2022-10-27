@@ -21,21 +21,15 @@
 
 declare(strict_types=1);
 
-namespace pocketmine\block;
+namespace pocketmine\world\sound;
 
-use pocketmine\item\Item;
-use pocketmine\item\VanillaItems;
-use function mt_rand;
+use pocketmine\math\Vector3;
+use pocketmine\network\mcpe\protocol\LevelSoundEventPacket;
+use pocketmine\network\mcpe\protocol\types\LevelSoundEvent;
 
-class Melon extends Opaque{
+class BurpSound implements Sound{
 
-	public function getDropsForCompatibleTool(Item $item) : array{
-		return [
-			VanillaItems::MELON()->setCount(mt_rand(3, 7))
-		];
-	}
-
-	public function isAffectedBySilkTouch() : bool{
-		return true;
+	public function encode(Vector3 $pos) : array{
+		return [LevelSoundEventPacket::nonActorSound(LevelSoundEvent::BURP, $pos, false)];
 	}
 }

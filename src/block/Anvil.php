@@ -96,10 +96,6 @@ class Anvil extends Transparent implements Fallable{
 		return parent::place($tx, $item, $blockReplace, $blockClicked, $face, $clickVector, $player);
 	}
 
-	public function tickFalling() : ?Block{
-		return null;
-	}
-
 	public function getWaterloggingLevel() : int{
 		return 1;
 	}

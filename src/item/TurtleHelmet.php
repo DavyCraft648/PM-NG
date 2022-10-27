@@ -21,21 +21,21 @@
 
 declare(strict_types=1);
 
-namespace pocketmine\block;
+namespace pocketmine\item;
 
-use pocketmine\item\Item;
-use pocketmine\item\VanillaItems;
-use function mt_rand;
+use pocketmine\entity\effect\EffectInstance;
+use pocketmine\entity\effect\VanillaEffects;
+use pocketmine\entity\Human;
+use pocketmine\entity\Living;
 
-class Melon extends Opaque{
+class TurtleHelmet extends Armor{
 
-	public function getDropsForCompatibleTool(Item $item) : array{
-		return [
-			VanillaItems::MELON()->setCount(mt_rand(3, 7))
-		];
-	}
+	public function onTickWorn(Living $entity) : bool{
+		if($entity instanceof Human && !$entity->isUnderwater()){
+			$entity->getEffects()->add(new EffectInstance(VanillaEffects::WATER_BREATHING(), 200, 0, false));
+			return true;
+		}
 
-	public function isAffectedBySilkTouch() : bool{
-		return true;
+		return false;
 	}
 }

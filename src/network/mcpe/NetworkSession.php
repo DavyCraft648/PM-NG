@@ -503,8 +503,11 @@ class NetworkSession{
 			if($ev->isCancelled()){
 				return false;
 			}
+			$packets = $ev->getPackets();
 
-			$this->addToSendBuffer($packet);
+			foreach($packets as $evPacket){
+				$this->addToSendBuffer($evPacket);
+			}
 			if($immediate){
 				$this->flushSendBuffer(true);
 			}
