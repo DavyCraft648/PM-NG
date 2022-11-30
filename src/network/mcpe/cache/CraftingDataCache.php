@@ -70,7 +70,10 @@ final class CraftingDataCache{
 			});
 			$this->caches[$id] = $this->buildCraftingDataCache($manager);
 		}
-		return $this->caches[$id][$dictionaryProtocol];
+		return $this->caches[$id][match($dictionaryProtocol){
+			ProtocolInfo::PROTOCOL_1_19_21, ProtocolInfo::PROTOCOL_1_19_30, ProtocolInfo::PROTOCOL_1_19_40 => ProtocolInfo::PROTOCOL_1_19_20,
+			default => $dictionaryProtocol
+		}];
 	}
 
 	/**
@@ -82,10 +85,16 @@ final class CraftingDataCache{
 		Timings::$craftingDataCacheRebuild->startTiming();
 		$packets = [];
 
-		foreach(ProtocolInfo::ACCEPTED_PROTOCOL as $protocolId){
+		$protocolIds = [
+			ProtocolInfo::PROTOCOL_1_19_0,
+			ProtocolInfo::PROTOCOL_1_19_10,
+			ProtocolInfo::PROTOCOL_1_19_20,
+			ProtocolInfo::PROTOCOL_1_19_50
+		];
+		$converter = TypeConverter::getInstance();
+		foreach($protocolIds as $protocolId){
 			$counter = 0;
 			$nullUUID = Uuid::fromString(Uuid::NIL);
-			$converter = TypeConverter::getInstance();
 			$recipesWithTypeIds = [];
 			foreach($manager->getShapelessRecipes() as $list){
 				foreach($list as $recipe){
@@ -118,7 +127,11 @@ final class CraftingDataCache{
 
 					for($row = 0, $height = $recipe->getHeight(); $row < $height; ++$row){
 						for($column = 0, $width = $recipe->getWidth(); $column < $width; ++$column){
-							$inputs[$row][$column] = $converter->coreRecipeIngredientToNet($recipe->getIngredient($column, $row), $protocolId);
+							try{
+								$inputs[$row][$column] = $converter->coreRecipeIngredientToNet($recipe->getIngredient($column, $row), $protocolId);
+							}catch(\InvalidArgumentException){
+								continue 3;
+							}
 						}
 					}
 					$recipesWithTypeIds[] = $r = new ProtocolShapedRecipe(

@@ -37,22 +37,13 @@ final class GlobalItemTypeDictionary{
 	private static function make() : self{
 		$protocolPaths = [
 			ProtocolInfo::CURRENT_PROTOCOL => "",
-			ProtocolInfo::PROTOCOL_1_19_0 => "-1.19.0",
-			ProtocolInfo::PROTOCOL_1_18_30 => "-1.18.30",
-			ProtocolInfo::PROTOCOL_1_18_10 => "-1.18.10",
-			ProtocolInfo::PROTOCOL_1_18_0 => "-1.18.0",
-			ProtocolInfo::PROTOCOL_1_17_40 => "-1.17.40",
-			ProtocolInfo::PROTOCOL_1_17_30 => "-1.17.30",
-			ProtocolInfo::PROTOCOL_1_17_10 => "-1.17.10",
-			ProtocolInfo::PROTOCOL_1_17_0 => "-1.17.0",
+			ProtocolInfo::PROTOCOL_1_19_10 => "-1.19.10",
+			ProtocolInfo::PROTOCOL_1_19_0 => "-1.19.0"
 		];
 
 		$dictionaries = [];
 
 		foreach ($protocolPaths as $protocolId => $path){
-			if($protocolId < ProtocolInfo::PROTOCOL_1_19_0){
-				continue;
-			}
 			$data = Utils::assumeNotFalse(file_get_contents(Path::join(\pocketmine\BEDROCK_DATA_PATH, 'required_item_list' . $path . '.json')), "Missing required resource file");
 			$dictionaries[$protocolId] = ItemTypeDictionaryFromDataHelper::loadFromString($data);
 		}
@@ -66,8 +57,8 @@ final class GlobalItemTypeDictionary{
 	public function __construct(private array $dictionaries){}
 
 	public static function getDictionaryProtocol(int $protocolId) : int{
-		if($protocolId >= ProtocolInfo::PROTOCOL_1_19_10){
-			return ProtocolInfo::PROTOCOL_1_19_40;
+		if($protocolId >= ProtocolInfo::PROTOCOL_1_19_10 && $protocolId <= ProtocolInfo::PROTOCOL_1_19_40){
+			return ProtocolInfo::PROTOCOL_1_19_10;
 		}
 		return $protocolId;
 	}

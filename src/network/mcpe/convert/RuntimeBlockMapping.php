@@ -62,46 +62,19 @@ final class RuntimeBlockMapping{
 				self::BLOCK_PALETTE_PATH => '',
 				self::META_MAP_PATH => '',
 			],
+			ProtocolInfo::PROTOCOL_1_19_20 => [
+				self::BLOCK_PALETTE_PATH => '-1.19.20',
+				self::META_MAP_PATH => '-1.19.20',
+			],
 			ProtocolInfo::PROTOCOL_1_19_0 => [
 				self::BLOCK_PALETTE_PATH => '-1.19.0',
 				self::META_MAP_PATH => '-1.19.0',
-			]/*,
-			ProtocolInfo::PROTOCOL_1_18_30 => [
-				self::BLOCK_PALETTE_PATH => '-1.18.30',
-				self::META_MAP_PATH => '-1.18.30',
-			],
-			ProtocolInfo::PROTOCOL_1_18_10 => [
-				self::BLOCK_PALETTE_PATH => '-1.18.10',
-				self::META_MAP_PATH => '-1.18.10',
-			],
-			ProtocolInfo::PROTOCOL_1_18_0 => [
-				self::BLOCK_PALETTE_PATH => '-1.18.0',
-				self::META_MAP_PATH => '-1.18.0',
-			],
-			ProtocolInfo::PROTOCOL_1_17_40 => [ // 1.18.0 has negative chunk hacks
-				self::BLOCK_PALETTE_PATH => '-1.18.0',
-				self::META_MAP_PATH => '-1.18.0',
-			],
-			ProtocolInfo::PROTOCOL_1_17_30 => [
-				self::BLOCK_PALETTE_PATH => '-1.17.30',
-				self::META_MAP_PATH => '-1.18.0',
-			],
-			ProtocolInfo::PROTOCOL_1_17_10 => [
-				self::BLOCK_PALETTE_PATH => '-1.17.10',
-				self::META_MAP_PATH => '-1.17.10',
-			],
-			ProtocolInfo::PROTOCOL_1_17_0 => [
-				self::BLOCK_PALETTE_PATH => '-1.17.0',
-				self::META_MAP_PATH => '-1.17.10',
-			]*/
+			]
 		];
 
 		$blockStateDictionaries = [];
 
 		foreach($protocolPaths as $mappingProtocol => $paths){
-			if($mappingProtocol < ProtocolInfo::PROTOCOL_1_19_0){
-				continue;
-			}
 			$canonicalBlockStatesFile = Path::join(\pocketmine\BEDROCK_DATA_PATH, "canonical_block_states" . $paths[self::BLOCK_PALETTE_PATH] . ".nbt");
 			$canonicalBlockStatesRaw = Utils::assumeNotFalse(file_get_contents($canonicalBlockStatesFile), "Missing required resource file");
 
@@ -171,11 +144,11 @@ final class RuntimeBlockMapping{
 	public function getFallbackStateData(int $mappingProtocol) : BlockStateData{ return $this->fallbackStateData[$mappingProtocol]; }
 
 	public static function getMappingProtocol(int $protocolId) : int{
-		if($protocolId === ProtocolInfo::PROTOCOL_1_19_10){
+		if($protocolId <= ProtocolInfo::PROTOCOL_1_19_10){
 			return ProtocolInfo::PROTOCOL_1_19_0;
 		}
-		if($protocolId >= ProtocolInfo::PROTOCOL_1_19_20){
-			return ProtocolInfo::PROTOCOL_1_19_40;
+		if($protocolId <= ProtocolInfo::PROTOCOL_1_19_40){
+			return ProtocolInfo::PROTOCOL_1_19_20;
 		}
 		return $protocolId;
 	}
