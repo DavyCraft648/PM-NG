@@ -31,6 +31,7 @@ use pocketmine\network\mcpe\convert\GlobalItemTypeDictionary;
 use pocketmine\network\mcpe\convert\ItemTranslator;
 use pocketmine\network\mcpe\convert\TypeConverter;
 use pocketmine\network\mcpe\protocol\CraftingDataPacket;
+use pocketmine\network\mcpe\protocol\ProtocolInfo;
 use pocketmine\network\mcpe\protocol\types\inventory\ItemStack;
 use pocketmine\network\mcpe\protocol\types\recipe\CraftingRecipeBlockName;
 use pocketmine\network\mcpe\protocol\types\recipe\FurnaceRecipe as ProtocolFurnaceRecipe;
@@ -57,7 +58,7 @@ final class CraftingDataCache{
 	 */
 	private array $caches = [];
 
-	public function getCache(int $dictionaryProtocol, CraftingManager $manager) : CraftingDataPacket{
+	public function getCache(int $protocolId, CraftingManager $manager) : CraftingDataPacket{
 		$id = spl_object_id($manager);
 		if(!isset($this->caches[$id])){
 			$manager->getDestructorCallbacks()->add(function() use ($id) : void{
@@ -68,7 +69,10 @@ final class CraftingDataCache{
 			});
 			$this->caches[$id] = $this->buildCraftingDataCache($manager);
 		}
-		return $this->caches[$id][$dictionaryProtocol];
+		return $this->caches[$id][match($protocolId){
+			ProtocolInfo::PROTOCOL_1_19_20, ProtocolInfo::PROTOCOL_1_19_21, ProtocolInfo::PROTOCOL_1_19_30 => ProtocolInfo::PROTOCOL_1_19_40,
+			default => $protocolId
+		}];
 	}
 
 	/**
@@ -80,10 +84,24 @@ final class CraftingDataCache{
 		Timings::$craftingDataCacheRebuild->startTiming();
 		$packets = [];
 
-		foreach(GlobalItemTypeDictionary::getInstance()->getDictionaries() as $dictionaryProtocol => $unused){
+		$nullUUID = Uuid::fromString(Uuid::NIL);
+		$converter = TypeConverter::getInstance();
+		$protocolIds = [
+			ProtocolInfo::PROTOCOL_1_19_50,
+			ProtocolInfo::PROTOCOL_1_19_40,
+			ProtocolInfo::PROTOCOL_1_19_10,
+			ProtocolInfo::PROTOCOL_1_19_0,
+			ProtocolInfo::PROTOCOL_1_18_30,
+			ProtocolInfo::PROTOCOL_1_18_10,
+			ProtocolInfo::PROTOCOL_1_18_0,
+			ProtocolInfo::PROTOCOL_1_17_40,
+			ProtocolInfo::PROTOCOL_1_17_30,
+			ProtocolInfo::PROTOCOL_1_17_10,
+			ProtocolInfo::PROTOCOL_1_17_0,
+		];
+		foreach($protocolIds as $protocolId){
+			$dictionaryProtocol = GlobalItemTypeDictionary::getDictionaryProtocol($protocolId);
 			$counter = 0;
-			$nullUUID = Uuid::fromString(Uuid::NIL);
-			$converter = TypeConverter::getInstance();
 			$recipesWithTypeIds = [];
 			foreach($manager->getShapelessRecipes() as $list){
 				foreach($list as $recipe){
@@ -98,8 +116,8 @@ final class CraftingDataCache{
 						array_map(function(Item $item) use ($dictionaryProtocol, $converter) : RecipeIngredient{
 							return $converter->coreItemStackToRecipeIngredient($dictionaryProtocol, $item);
 						}, $recipe->getIngredientList()),
-						array_map(function(Item $item) use ($dictionaryProtocol, $converter) : ItemStack{
-							return $converter->coreItemStackToNet($dictionaryProtocol, $item);
+						array_map(function(Item $item) use ($protocolId, $converter) : ItemStack{
+							return $converter->coreItemStackToNet($protocolId, $item);
 						}, $recipe->getResults()),
 						$nullUUID,
 						$typeTag,
@@ -121,8 +139,8 @@ final class CraftingDataCache{
 						CraftingDataPacket::ENTRY_SHAPED,
 						Binary::writeInt(++$counter),
 						$inputs,
-						array_map(function(Item $item) use ($dictionaryProtocol, $converter) : ItemStack{
-							return $converter->coreItemStackToNet($dictionaryProtocol, $item);
+						array_map(function(Item $item) use ($protocolId, $converter) : ItemStack{
+							return $converter->coreItemStackToNet($protocolId, $item);
 						}, $recipe->getResults()),
 						$nullUUID,
 						CraftingRecipeBlockName::CRAFTING_TABLE,
@@ -140,12 +158,12 @@ final class CraftingDataCache{
 					default => throw new AssumptionFailedError("Unreachable"),
 				};
 				foreach($manager->getFurnaceRecipeManager($furnaceType)->getAll() as $recipe){
-					$input = $converter->coreItemStackToNet($dictionaryProtocol, $recipe->getInput());
+					$input = $converter->coreItemStackToNet($protocolId, $recipe->getInput());
 					$recipesWithTypeIds[] = new ProtocolFurnaceRecipe(
 						CraftingDataPacket::ENTRY_FURNACE_DATA,
 						$input->getId(),
 						$input->getMeta(),
-						$converter->coreItemStackToNet($dictionaryProtocol, $recipe->getResult()),
+						$converter->coreItemStackToNet($protocolId, $recipe->getResult()),
 						$typeTag
 					);
 				}
@@ -154,9 +172,9 @@ final class CraftingDataCache{
 			$potionTypeRecipes = [];
 			foreach($manager->getPotionTypeRecipes() as $recipes){
 				foreach($recipes as $recipe){
-					$input = $converter->coreItemStackToNet($dictionaryProtocol, $recipe->getInput());
-					$ingredient = $converter->coreItemStackToNet($dictionaryProtocol, $recipe->getIngredient());
-					$output = $converter->coreItemStackToNet($dictionaryProtocol, $recipe->getOutput());
+					$input = $converter->coreItemStackToNet($protocolId, $recipe->getInput());
+					$ingredient = $converter->coreItemStackToNet($protocolId, $recipe->getIngredient());
+					$output = $converter->coreItemStackToNet($protocolId, $recipe->getOutput());
 					$potionTypeRecipes[] = new ProtocolPotionTypeRecipe(
 						$input->getId(),
 						$input->getMeta(),
@@ -183,7 +201,7 @@ final class CraftingDataCache{
 				}
 			}
 
-			$packets[$dictionaryProtocol] = CraftingDataPacket::create($recipesWithTypeIds, $potionTypeRecipes, $potionContainerChangeRecipes, [], true);
+			$packets[$protocolId] = CraftingDataPacket::create($recipesWithTypeIds, $potionTypeRecipes, $potionContainerChangeRecipes, [], true);
 		}
 
 		Timings::$craftingDataCacheRebuild->stopTiming();
