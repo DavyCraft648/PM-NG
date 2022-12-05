@@ -30,7 +30,7 @@ use pocketmine\player\Player;
 use pocketmine\utils\AssumptionFailedError;
 use pocketmine\utils\SingletonTrait;
 use pocketmine\utils\Utils;
-use Webmozart\PathUtil\Path;
+use Symfony\Component\Filesystem\Path;
 use function file_get_contents;
 use function is_array;
 use function is_bool;
@@ -44,6 +44,7 @@ final class GlobalItemTypeDictionary{
 	private static function make() : self{
 		$protocolPaths = [
 			ProtocolInfo::CURRENT_PROTOCOL => "",
+			ProtocolInfo::PROTOCOL_1_19_40 => "-1.19.40",
 			ProtocolInfo::PROTOCOL_1_19_0 => "-1.19.0",
 			ProtocolInfo::PROTOCOL_1_18_30 => "-1.18.30",
 			ProtocolInfo::PROTOCOL_1_18_10 => "-1.18.10",
@@ -83,7 +84,7 @@ final class GlobalItemTypeDictionary{
 	public function __construct(private array $dictionaries){}
 
 	public static function getDictionaryProtocol(int $protocolId) : int{
-		if($protocolId >= ProtocolInfo::PROTOCOL_1_19_10){
+		if($protocolId >= ProtocolInfo::PROTOCOL_1_19_10 && $protocolId < ProtocolInfo::PROTOCOL_1_19_40){
 			return ProtocolInfo::PROTOCOL_1_19_40;
 		}
 

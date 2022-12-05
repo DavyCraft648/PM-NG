@@ -26,6 +26,7 @@ namespace pocketmine\block;
 use pocketmine\block\utils\CoralType;
 use pocketmine\block\utils\CoralTypeTrait;
 use pocketmine\block\utils\SupportType;
+use pocketmine\event\block\BlockDeathEvent;
 use pocketmine\item\Item;
 
 abstract class BaseCoral extends Transparent{
@@ -41,7 +42,11 @@ abstract class BaseCoral extends Transparent{
 			$world = $this->position->getWorld();
 
 			if(!$this->isWaterlogged()){
-				$world->setBlockLayer($this->position, $this->setDead(true), 0);
+				$ev = new BlockDeathEvent($this, $this->setDead(true));
+				$ev->call();
+				if(!$ev->isCancelled()){
+					$world->setBlockLayer($this->position, $ev->getNewState(), 0);
+				}
 			}
 		}
 	}
