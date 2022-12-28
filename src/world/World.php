@@ -52,7 +52,9 @@ use pocketmine\event\world\ChunkLoadEvent;
 use pocketmine\event\world\ChunkPopulateEvent;
 use pocketmine\event\world\ChunkUnloadEvent;
 use pocketmine\event\world\SpawnChangeEvent;
+use pocketmine\event\world\WorldParticleEvent;
 use pocketmine\event\world\WorldSaveEvent;
+use pocketmine\event\world\WorldSoundEvent;
 use pocketmine\item\Item;
 use pocketmine\item\ItemUseResult;
 use pocketmine\item\LegacyStringToItemParser;
@@ -684,7 +686,17 @@ class World implements ChunkManager{
 			foreach(RuntimeBlockMapping::sortByProtocol($players) as $mappingProtocol => $pl){
 				$sound->setMappingProtocol($mappingProtocol);
 
-				$pk = $sound->encode($pos);
+				$players ??= $this->getViewersForPosition($pos);
+		$ev = new WorldSoundEvent($this, $sound, $pos, $players);
+
+		$ev->call();
+
+		if($ev->isCancelled()){
+			return;
+		}
+
+		$pk = $ev->getSound()->encode($pos);
+		$players = $ev->getRecipients();
 
 				if(count($pk) > 0){
 					$this->server->broadcastPackets($pl, $pk);
@@ -694,7 +706,7 @@ class World implements ChunkManager{
 			$pk = $sound->encode($pos);
 
 			if(count($pk) > 0){
-				if($players === null){
+				if($players === $this->getViewersForPosition($pos)){
 					foreach($pk as $e){
 						$this->broadcastPacketToViewers($pos, $e);
 					}
@@ -720,7 +732,16 @@ class World implements ChunkManager{
 			foreach(RuntimeBlockMapping::sortByProtocol($players) as $mappingProtocol => $pl){
 				$particle->setMappingProtocol($mappingProtocol);
 
-				$pk = $particle->encode($pos);
+				$players ??= $this->getViewersForPosition($pos);
+		$ev = new WorldParticleEvent($this, $particle, $pos, $players);
+
+		$ev->call();
+
+		if($ev->isCancelled()){
+			return;
+		}
+
+		$pk = $ev->getParticle()->encode($pos);
 
 				if(count($pk) > 0){
 					$this->server->broadcastPackets($pl, $pk);
@@ -746,13 +767,13 @@ class World implements ChunkManager{
 		}else{
 			$pk = $particle->encode($pos);
 
-			if(count($pk) > 0){
-				if($players === null){
+			$players = $ev->getRecipients();if(count($pk) > 0){
+				if($players === $this->getViewersForPosition($pos)){
 					foreach($pk as $e){
 						$this->broadcastPacketToViewers($pos, $e);
 					}
 				}else{
-					$this->server->broadcastPackets($this->filterViewersForPosition($pos, $players), $pk);
+					$this->server->broadcastPackets($this->filterViewersForPosition($pos, $ev->getRecipients()), $pk);
 				}
 			}
 		}
@@ -1217,6 +1238,8 @@ class World implements ChunkManager{
 		/** @var bool[] $chunkTickList chunkhash => dummy */
 		$chunkTickList = [];
 
+		$chunkTickableCache = [];
+
 		$centerChunks = [];
 
 		$selector = new ChunkSelector();
@@ -1236,7 +1259,7 @@ class World implements ChunkManager{
 				$centerChunkZ
 			) as $hash){
 				World::getXZ($hash, $chunkX, $chunkZ);
-				if(!isset($chunkTickList[$hash]) && isset($this->chunks[$hash]) && $this->isChunkTickable($chunkX, $chunkZ)){
+				if(!isset($chunkTickList[$hash]) && isset($this->chunks[$hash]) && $this->isChunkTickable($chunkX, $chunkZ, $chunkTickableCache)){
 					$chunkTickList[$hash] = true;
 				}
 			}
@@ -1251,14 +1274,29 @@ class World implements ChunkManager{
 		}
 	}
 
-	private function isChunkTickable(int $chunkX, int $chunkZ) : bool{
+	/**
+	 * @param bool[] &$cache
+	 *
+	 * @phpstan-param array<int, bool> $cache
+	 * @phpstan-param-out array<int, bool> $cache
+	 */
+	private function isChunkTickable(int $chunkX, int $chunkZ, array &$cache) : bool{
 		for($cx = -1; $cx <= 1; ++$cx){
 			for($cz = -1; $cz <= 1; ++$cz){
+				$chunkHash = World::chunkHash($chunkX + $cx, $chunkZ + $cz);
+				if(isset($cache[$chunkHash])){
+					if(!$cache[$chunkHash]){
+						return false;
+					}
+					continue;
+				}
 				if($this->isChunkLocked($chunkX + $cx, $chunkZ + $cz)){
+					$cache[$chunkHash] = false;
 					return false;
 				}
 				$adjacentChunk = $this->getChunk($chunkX + $cx, $chunkZ + $cz);
 				if($adjacentChunk === null || !$adjacentChunk->isPopulated()){
+					$cache[$chunkHash] = false;
 					return false;
 				}
 				$lightPopulatedState = $adjacentChunk->isLightPopulated();
@@ -1266,8 +1304,11 @@ class World implements ChunkManager{
 					if($lightPopulatedState === false){
 						$this->orderLightPopulation($chunkX + $cx, $chunkZ + $cz);
 					}
+					$cache[$chunkHash] = false;
 					return false;
 				}
+
+				$cache[$chunkHash] = true;
 			}
 		}
 
@@ -1310,7 +1351,8 @@ class World implements ChunkManager{
 	private function tickChunk(int $chunkX, int $chunkZ) : void{
 		$chunk = $this->getChunk($chunkX, $chunkZ);
 		if($chunk === null){
-			throw new \InvalidArgumentException("Chunk is not loaded");
+			//the chunk may have been unloaded during a previous chunk's update (e.g. during BlockGrowEvent)
+			return;
 		}
 		foreach($this->getChunkEntities($chunkX, $chunkZ) as $entity){
 			$entity->onRandomUpdate();
@@ -1918,7 +1960,7 @@ class World implements ChunkManager{
 	 * Tries to break a block using a item, including Player time checks if available
 	 * It'll try to lower the durability if Item is a tool, and set it to Air if broken.
 	 *
-	 * @param Item   &$item reference parameter (if null, can break anything)
+	 * @param Item   &$item          reference parameter (if null, can break anything)
 	 * @param Item[] &$returnedItems Items to be added to the target's inventory (or dropped, if the inventory is full)
 	 * @phpstan-param-out Item $item
 	 */

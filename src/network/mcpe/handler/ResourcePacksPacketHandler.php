@@ -23,7 +23,7 @@ declare(strict_types=1);
 
 namespace pocketmine\network\mcpe\handler;
 
-use pocketmine\lang\KnownTranslationKeys;
+use pocketmine\lang\KnownTranslationFactory;
 use pocketmine\network\mcpe\NetworkSession;
 use pocketmine\network\mcpe\protocol\ProtocolInfo;
 use pocketmine\network\mcpe\protocol\ResourcePackChunkDataPacket;
@@ -88,7 +88,7 @@ class ResourcePacksPacketHandler extends ChunkRequestPacketHandler{
 
 	private function disconnectWithError(string $error) : void{
 		$this->session->getLogger()->error("Error downloading resource packs: " . $error);
-		$this->session->disconnect(KnownTranslationKeys::DISCONNECTIONSCREEN_RESOURCEPACK);
+		$this->session->disconnectWithError(KnownTranslationFactory::disconnectionScreen_resourcePack());
 	}
 
 	public function handleResourcePackClientResponse(ResourcePackClientResponsePacket $packet) : bool{

@@ -43,10 +43,14 @@ use pocketmine\network\mcpe\protocol\types\entity\EntityIds;
 use pocketmine\network\mcpe\protocol\types\entity\EntityMetadataProperties;
 use pocketmine\player\Player;
 use pocketmine\world\format\io\GlobalBlockStateHandlers;
+use pocketmine\world\sound\BlockBreakSound;
 use function abs;
 
 class FallingBlock extends Entity{
 	private const TAG_FALLING_BLOCK = "FallingBlock"; //TAG_Compound
+	private const TAG_TILE_ID = "TileID"; //TAG_Int
+	private const TAG_TILE = "Tile"; //TAG_Byte
+	private const TAG_DATA = "Data"; //TAG_Byte
 
 	public static function getNetworkTypeId() : string{ return EntityIds::FALLING_BLOCK; }
 
@@ -70,14 +74,14 @@ class FallingBlock extends Entity{
 		if(($fallingBlockTag = $nbt->getCompoundTag(self::TAG_FALLING_BLOCK)) !== null){
 			$blockStateData = $blockDataUpgrader->upgradeBlockStateNbt($fallingBlockTag);
 		}else{
-			if(($tileIdTag = $nbt->getTag("TileID")) instanceof IntTag){
+			if(($tileIdTag = $nbt->getTag(self::TAG_TILE_ID)) instanceof IntTag){
 				$blockId = $tileIdTag->getValue();
-			}elseif(($tileTag = $nbt->getTag("Tile")) instanceof ByteTag){
+			}elseif(($tileTag = $nbt->getTag(self::TAG_TILE)) instanceof ByteTag){
 				$blockId = $tileTag->getValue();
 			}else{
 				throw new SavedDataLoadingException("Missing legacy falling block info");
 			}
-			$damage = $nbt->getByte("Data", 0);
+			$damage = $nbt->getByte(self::TAG_DATA, 0);
 
 			$blockStateData = $blockDataUpgrader->upgradeIntIdMeta($blockId, $damage);
 		}
@@ -129,17 +133,22 @@ class FallingBlock extends Entity{
 			if($this->onGround || $blockTarget !== null){
 				$this->flagForDespawn();
 
+				$blockResult = $blockTarget ?? $this->block;
 				$block = $world->getBlock($pos);
 				if(!$block->canBeReplaced() || !$world->isInWorld($pos->getFloorX(), $pos->getFloorY(), $pos->getFloorZ()) || ($this->onGround && abs($this->location->y - $this->location->getFloorY()) > 0.001)){
 					$world->dropItem($this->location, $this->block->asItem());
+					$world->addSound($pos->add(0.5, 0.5, 0.5), new BlockBreakSound($blockResult));
 				}else{
-					$ev = new EntityBlockChangeEvent($this, $block, $blockTarget ?? $this->block);
+					$ev = new EntityBlockChangeEvent($this, $block, $blockResult);
 					$ev->call();
 					if(!$ev->isCancelled()){
-						$to = $ev->getTo();
-						$world->setBlock($pos, $to);
-						if($block instanceof Water && $to->canWaterlogged($block)){
+						$b = $ev->getTo();
+						$world->setBlock($pos, $b);
+						if($block instanceof Water && $b->canWaterlogged($block)){
 							$world->setBlockLayer($pos, $block, 1);
+						}
+						if($this->onGround && $b instanceof Fallable && ($sound = $b->getLandSound()) !== null){
+							$world->addSound($pos->add(0.5, 0.5, 0.5), $sound);
 						}
 					}
 				}
@@ -148,6 +157,13 @@ class FallingBlock extends Entity{
 		}
 
 		return $hasUpdate;
+	}
+
+	protected function onHitGround() : ?float{
+		if($this->block instanceof Fallable && !$this->block->onHitGround($this)){
+			$this->flagForDespawn();
+		}
+		return null;
 	}
 
 	public function getBlock() : Block{
