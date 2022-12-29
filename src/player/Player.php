@@ -2021,11 +2021,6 @@ class Player extends Human implements CommandSender, ChunkListener, IPlayer{
 			return;
 		}
 
-		if($message instanceof Translatable){
-			$this->sendTranslation($message->getText(), $message->getParameters());
-			return;
-		}
-
 		$this->getNetworkSession()->onChatMessage($message);
 	}
 
