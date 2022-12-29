@@ -25,8 +25,10 @@ namespace pocketmine\network\mcpe\cache;
 
 use pocketmine\crafting\CraftingManager;
 use pocketmine\crafting\FurnaceType;
+use pocketmine\crafting\MetaWildcardRecipeIngredient;
 use pocketmine\crafting\RecipeIngredient;
 use pocketmine\crafting\ShapelessRecipeType;
+use pocketmine\data\bedrock\ItemTagToIdMap;
 use pocketmine\item\Item;
 use pocketmine\network\mcpe\convert\GlobalItemTypeDictionary;
 use pocketmine\network\mcpe\convert\TypeConverter;
@@ -42,13 +44,16 @@ use pocketmine\network\mcpe\protocol\types\recipe\PotionTypeRecipe as ProtocolPo
 use pocketmine\network\mcpe\protocol\types\recipe\RecipeIngredient as ProtocolRecipeIngredient;
 use pocketmine\network\mcpe\protocol\types\recipe\ShapedRecipe as ProtocolShapedRecipe;
 use pocketmine\network\mcpe\protocol\types\recipe\ShapelessRecipe as ProtocolShapelessRecipe;
+use pocketmine\network\mcpe\protocol\types\recipe\TagItemDescriptor;
 use pocketmine\timings\Timings;
 use pocketmine\utils\AssumptionFailedError;
 use pocketmine\utils\Binary;
 use pocketmine\utils\SingletonTrait;
 use Ramsey\Uuid\Uuid;
 use function array_map;
+use function count;
 use function spl_object_id;
+use function var_dump;
 
 final class CraftingDataCache{
 	use SingletonTrait;
@@ -71,7 +76,7 @@ final class CraftingDataCache{
 			$this->caches[$id] = $this->buildCraftingDataCache($manager);
 		}
 		return $this->caches[$id][match($dictionaryProtocol){
-			ProtocolInfo::PROTOCOL_1_19_21, ProtocolInfo::PROTOCOL_1_19_30, ProtocolInfo::PROTOCOL_1_19_40 => ProtocolInfo::PROTOCOL_1_19_20,
+			ProtocolInfo::PROTOCOL_1_19_21, ProtocolInfo::PROTOCOL_1_19_30 => ProtocolInfo::PROTOCOL_1_19_20,
 			default => $dictionaryProtocol
 		}];
 	}
@@ -85,16 +90,17 @@ final class CraftingDataCache{
 		Timings::$craftingDataCacheRebuild->startTiming();
 		$packets = [];
 
+		$nullUUID = Uuid::fromString(Uuid::NIL);
+		$converter = TypeConverter::getInstance();
 		$protocolIds = [
 			ProtocolInfo::PROTOCOL_1_19_0,
 			ProtocolInfo::PROTOCOL_1_19_10,
 			ProtocolInfo::PROTOCOL_1_19_20,
+			ProtocolInfo::PROTOCOL_1_19_40,
 			ProtocolInfo::PROTOCOL_1_19_50
 		];
-		$converter = TypeConverter::getInstance();
 		foreach($protocolIds as $protocolId){
 			$counter = 0;
-			$nullUUID = Uuid::fromString(Uuid::NIL);
 			$recipesWithTypeIds = [];
 			foreach($manager->getShapelessRecipes() as $list){
 				foreach($list as $recipe){
@@ -124,17 +130,50 @@ final class CraftingDataCache{
 			foreach($manager->getShapedRecipes() as $list){
 				foreach($list as $recipe){
 					$inputs = [];
+					$tagItems = [];
 
 					for($row = 0, $height = $recipe->getHeight(); $row < $height; ++$row){
 						for($column = 0, $width = $recipe->getWidth(); $column < $width; ++$column){
 							try{
-								$inputs[$row][$column] = $converter->coreRecipeIngredientToNet($recipe->getIngredient($column, $row), $protocolId);
+								$input = $converter->coreRecipeIngredientToNet($recipe->getIngredient($column, $row), $protocolId);
+								if($input->getDescriptor() instanceof TagItemDescriptor && $protocolId < ProtocolInfo::PROTOCOL_1_19_40){
+									foreach(ItemTagToIdMap::getInstance()->getIdsForTag($input->getDescriptor()->getTag()) as $name){
+										$tagItems[$name][$row][$column] = $converter->coreRecipeIngredientToNet(new MetaWildcardRecipeIngredient($name), $protocolId);
+									}
+									continue;
+								}
+								$inputs[$row][$column] = $input;
 							}catch(\InvalidArgumentException){
 								continue 3;
 							}
 						}
 					}
-					$recipesWithTypeIds[] = $r = new ProtocolShapedRecipe(
+					if($protocolId < ProtocolInfo::PROTOCOL_1_19_40 && count($tagItems) > 0){
+						$tagInputs = [];
+						foreach($tagItems as $name => $items){
+							for($row = 0, $height = $recipe->getHeight(); $row < $height; ++$row){
+								for($column = 0, $width = $recipe->getWidth(); $column < $width; ++$column){
+									$tagInputs[$name][$row][$column] = $items[$row][$column] ?? $inputs[$row][$column] ?? new ProtocolRecipeIngredient(null, 0);
+								}
+							}
+						}
+						foreach($tagInputs as $tagInput){
+							$recipesWithTypeIds[] = new ProtocolShapedRecipe(
+								CraftingDataPacket::ENTRY_SHAPED,
+								Binary::writeInt(++$counter),
+								$tagInput,
+								array_map(function(Item $item) use ($protocolId, $converter) : ItemStack{
+									return $converter->coreItemStackToNet($item, $protocolId);
+								}, $recipe->getResults()),
+								$nullUUID,
+								CraftingRecipeBlockName::CRAFTING_TABLE,
+								50,
+								$counter
+							);
+						}
+						continue;
+					}
+					$recipesWithTypeIds[] = new ProtocolShapedRecipe(
 						CraftingDataPacket::ENTRY_SHAPED,
 						Binary::writeInt(++$counter),
 						$inputs,
