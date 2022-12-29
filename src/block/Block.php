@@ -64,7 +64,7 @@ class Block{
 	protected int $layer = 0;
 
 	/**
-	 * @param string          $name English name of the block type (TODO: implement translations)
+	 * @param string $name English name of the block type (TODO: implement translations)
 	 */
 	public function __construct(BlockIdentifier $idInfo, string $name, BlockBreakInfo $breakInfo){
 		if(($idInfo->getVariant() & $this->getStateBitmask()) !== 0){

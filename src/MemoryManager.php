@@ -113,20 +113,12 @@ class MemoryManager{
 			if($m <= 0){
 				$defaultMemory = 0;
 			}else{
-				switch(mb_strtoupper($matches[2])){
-					case "K":
-						$defaultMemory = intdiv($m, 1024);
-						break;
-					case "M":
-						$defaultMemory = $m;
-						break;
-					case "G":
-						$defaultMemory = $m * 1024;
-						break;
-					default:
-						$defaultMemory = $m;
-						break;
-				}
+				$defaultMemory = match(mb_strtoupper($matches[2])){
+					"K" => intdiv($m, 1024),
+					"M" => $m,
+					"G" => $m * 1024,
+					default => $m,
+				};
 			}
 		}
 
@@ -286,7 +278,7 @@ class MemoryManager{
 	/**
 	 * Static memory dumper accessible from any thread.
 	 *
-	 * @param mixed   $startingObject
+	 * @param mixed $startingObject
 	 */
 	public static function dumpMemory($startingObject, string $outputFolder, int $maxNesting, int $maxStringSize, \Logger $logger) : void{
 		$hardLimit = Utils::assumeNotFalse(ini_get('memory_limit'), "memory_limit INI directive should always exist");
@@ -480,7 +472,7 @@ class MemoryManager{
 
 	/**
 	 * @param mixed    $from
-	 * @param object[] $objects reference parameter
+	 * @param object[] $objects   reference parameter
 	 * @param int[]    $refCounts reference parameter
 	 *
 	 * @phpstan-param array<string, object> $objects
