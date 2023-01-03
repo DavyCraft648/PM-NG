@@ -411,7 +411,6 @@ class NetworkSession{
 
 					$this->enableCompression = false;
 					$this->setHandler(new SessionStartPacketHandler(
-						$this->server,
 						$this,
 						fn() => $this->onSessionStartSuccess()
 					));
