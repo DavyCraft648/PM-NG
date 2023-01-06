@@ -686,25 +686,30 @@ class World implements ChunkManager{
 			foreach(RuntimeBlockMapping::sortByProtocol($players) as $mappingProtocol => $pl){
 				$sound->setMappingProtocol($mappingProtocol);
 
-				$players ??= $this->getViewersForPosition($pos);
-		$ev = new WorldSoundEvent($this, $sound, $pos, $players);
+				$ev = new WorldSoundEvent($this, $sound, $pos, $pl);
+				$ev->call();
+				if($ev->isCancelled()){
+					return;
+				}
 
-		$ev->call();
-
-		if($ev->isCancelled()){
-			return;
-		}
-
-		$pk = $ev->getSound()->encode($pos);
-		$players = $ev->getRecipients();
+				$pk = $ev->getSound()->encode($pos);
 
 				if(count($pk) > 0){
-					$this->server->broadcastPackets($pl, $pk);
+					$this->server->broadcastPackets($ev->getRecipients(), $pk);
 				}
 			}
 		}else{
-			$pk = $sound->encode($pos);
+			$players ??= $this->getViewersForPosition($pos);
+			$ev = new WorldSoundEvent($this, $sound, $pos, $players);
 
+			$ev->call();
+
+			if($ev->isCancelled()){
+				return;
+			}
+
+			$pk = $ev->getSound()->encode($pos);
+			$players = $ev->getRecipients();
 			if(count($pk) > 0){
 				if($players === $this->getViewersForPosition($pos)){
 					foreach($pk as $e){
@@ -732,19 +737,16 @@ class World implements ChunkManager{
 			foreach(RuntimeBlockMapping::sortByProtocol($players) as $mappingProtocol => $pl){
 				$particle->setMappingProtocol($mappingProtocol);
 
-				$players ??= $this->getViewersForPosition($pos);
-		$ev = new WorldParticleEvent($this, $particle, $pos, $players);
+				$ev = new WorldParticleEvent($this, $particle, $pos, $pl);
+				$ev->call();
+				if($ev->isCancelled()){
+					return;
+				}
 
-		$ev->call();
-
-		if($ev->isCancelled()){
-			return;
-		}
-
-		$pk = $ev->getParticle()->encode($pos);
+				$pk = $ev->getParticle()->encode($pos);
 
 				if(count($pk) > 0){
-					$this->server->broadcastPackets($pl, $pk);
+					$this->server->broadcastPackets($ev->getRecipients(), $pk);
 				}
 			}
 		}elseif($particle instanceof ProtocolParticle){
@@ -758,16 +760,31 @@ class World implements ChunkManager{
 			foreach(ProtocolParticle::sortByProtocol($players) as $particleProtocol => $pl){
 				$particle->setParticleProtocol($particleProtocol);
 
-				$pk = $particle->encode($pos);
+				$ev = new WorldParticleEvent($this, $particle, $pos, $pl);
+				$ev->call();
+				if($ev->isCancelled()){
+					return;
+				}
+
+				$pk = $ev->getParticle()->encode($pos);
 
 				if(count($pk) > 0){
-					$this->server->broadcastPackets($pl, $pk);
+					$this->server->broadcastPackets($ev->getRecipients(), $pk);
 				}
 			}
 		}else{
-			$pk = $particle->encode($pos);
+			$players ??= $this->getViewersForPosition($pos);
+			$ev = new WorldParticleEvent($this, $particle, $pos, $players);
 
-			$players = $ev->getRecipients();if(count($pk) > 0){
+			$ev->call();
+
+			if($ev->isCancelled()){
+				return;
+			}
+
+			$pk = $ev->getParticle()->encode($pos);
+			$players = $ev->getRecipients();
+			if(count($pk) > 0){
 				if($players === $this->getViewersForPosition($pos)){
 					foreach($pk as $e){
 						$this->broadcastPacketToViewers($pos, $e);
