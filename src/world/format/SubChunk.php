@@ -40,6 +40,7 @@ class SubChunk{
 	public function __construct(
 		private int $emptyBlockId,
 		private array $blockLayers,
+		private PalettedBlockArray $biomes,
 		private ?LightArray $skyLight = null,
 		private ?LightArray $blockLight = null
 	){}
@@ -111,6 +112,8 @@ class SubChunk{
 		return null; //highest block not in this subchunk
 	}
 
+	public function getBiomeArray() : PalettedBlockArray{ return $this->biomes; }
+
 	public function getBlockSkyLightArray() : LightArray{
 		return $this->skyLight ??= LightArray::fill(0);
 	}
@@ -146,6 +149,7 @@ class SubChunk{
 			unset($this->blockLayers[$k]);
 		}
 		$this->blockLayers = array_values($this->blockLayers);
+		$this->biomes->collectGarbage();
 
 		if($this->skyLight !== null && $this->skyLight->isUniform(0)){
 			$this->skyLight = null;
@@ -159,6 +163,7 @@ class SubChunk{
 		$this->blockLayers = array_map(function(PalettedBlockArray $array) : PalettedBlockArray{
 			return clone $array;
 		}, $this->blockLayers);
+		$this->biomes = clone $this->biomes;
 
 		if($this->skyLight !== null){
 			$this->skyLight = clone $this->skyLight;

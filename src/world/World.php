@@ -62,6 +62,7 @@ use pocketmine\item\StringToItemParser;
 use pocketmine\item\VanillaItems;
 use pocketmine\lang\KnownTranslationFactory;
 use pocketmine\math\AxisAlignedBB;
+use pocketmine\math\Facing;
 use pocketmine\math\Vector3;
 use pocketmine\nbt\tag\IntTag;
 use pocketmine\nbt\tag\StringTag;
@@ -1467,7 +1468,9 @@ class World implements ChunkManager{
 
 	/**
 	 * Notify the blocks at and around the position that the block at the position may have changed.
-	 * This will cause onNeighbourBlockUpdate() to be called for these blocks.
+	 * This will cause onNearbyBlockChange() to be called for these blocks.
+	 *
+	 * @see Block::onNearbyBlockChange()
 	 */
 	public function notifyNeighbourBlockUpdate(Vector3 $pos) : void{
 		$this->tryAddToNeighbourUpdateQueue($pos);
@@ -1920,10 +1923,7 @@ class World implements ChunkManager{
 
 		if($update){
 			$this->updateAllLight($x, $y, $z);
-			$this->tryAddToNeighbourUpdateQueue($pos);
-			foreach($pos->sides() as $side){
-				$this->tryAddToNeighbourUpdateQueue($side);
-			}
+			$this->notifyNeighbourBlockUpdate($pos);
 		}
 
 		$this->timings->setBlock->stopTiming();
@@ -2140,6 +2140,10 @@ class World implements ChunkManager{
 
 		if($blockClicked->getStateId() !== BlockTypeIds::AIR && $hand->canBePlacedAt($blockClicked, $clickVector, $face, true)){
 			$blockReplace = $blockClicked;
+			//TODO: while this mimics the vanilla behaviour with replaceable blocks, we should really pass some other
+			//value like NULL and let place() deal with it. This will look like a bug to anyone who doesn't know about
+			//the vanilla behaviour.
+			$face = Facing::UP;
 			$hand->position($this, $blockReplace->getPosition()->x, $blockReplace->getPosition()->y, $blockReplace->getPosition()->z);
 		}elseif(!$hand->canBePlacedAt($blockReplace, $clickVector, $face, false)){
 			return false;
@@ -2350,23 +2354,23 @@ class World implements ChunkManager{
 		return ($chunk = $this->loadChunk($x >> Chunk::COORD_BIT_SIZE, $z >> Chunk::COORD_BIT_SIZE)) !== null ? $chunk->getTile($x & Chunk::COORD_MASK, $y, $z & Chunk::COORD_MASK) : null;
 	}
 
-	public function getBiomeId(int $x, int $z) : int{
+	public function getBiomeId(int $x, int $y, int $z) : int{
 		if(($chunk = $this->loadChunk($x >> Chunk::COORD_BIT_SIZE, $z >> Chunk::COORD_BIT_SIZE)) !== null){
-			return $chunk->getBiomeId($x & Chunk::COORD_MASK, $z & Chunk::COORD_MASK);
+			return $chunk->getBiomeId($x & Chunk::COORD_MASK, $y & Chunk::COORD_MASK, $z & Chunk::COORD_MASK);
 		}
 		return BiomeIds::OCEAN; //TODO: this should probably throw instead (terrain not generated yet)
 	}
 
-	public function getBiome(int $x, int $z) : Biome{
-		return BiomeRegistry::getInstance()->getBiome($this->getBiomeId($x, $z));
+	public function getBiome(int $x, int $y, int $z) : Biome{
+		return BiomeRegistry::getInstance()->getBiome($this->getBiomeId($x, $y, $z));
 	}
 
-	public function setBiomeId(int $x, int $z, int $biomeId) : void{
+	public function setBiomeId(int $x, int $y, int $z, int $biomeId) : void{
 		$chunkX = $x >> Chunk::COORD_BIT_SIZE;
 		$chunkZ = $z >> Chunk::COORD_BIT_SIZE;
 		$this->unlockChunk($chunkX, $chunkZ, null);
 		if(($chunk = $this->loadChunk($chunkX, $chunkZ)) !== null){
-			$chunk->setBiomeId($x & Chunk::COORD_MASK, $z & Chunk::COORD_MASK, $biomeId);
+			$chunk->setBiomeId($x & Chunk::COORD_MASK, $y & Chunk::COORD_MASK, $z & Chunk::COORD_MASK, $biomeId);
 		}else{
 			//if we allowed this, the modifications would be lost when the chunk is created
 			throw new WorldException("Cannot set biome in a non-generated chunk");
@@ -2955,6 +2959,36 @@ class World implements ChunkManager{
 	}
 
 	/**
+	 * Requests a safe spawn position near the given position, or near the world's spawn position if not provided.
+	 * Terrain near the position will be loaded or generated as needed.
+	 *
+	 * @return Promise Resolved to a Position object, or rejected if the world is unloaded.
+	 * @phpstan-return Promise<Position>
+	 */
+	public function requestSafeSpawn(?Vector3 $spawn = null) : Promise{
+		$resolver = new PromiseResolver();
+		$spawn ??= $this->getSpawnLocation();
+		/*
+		 * TODO: this relies on the assumption that getSafeSpawn() will only alter the Y coordinate of the provided
+		 * position, which is currently OK, but might be a problem in the future.
+		 */
+		$this->requestChunkPopulation($spawn->getFloorX() >> Chunk::COORD_BIT_SIZE, $spawn->getFloorZ() >> Chunk::COORD_BIT_SIZE, null)->onCompletion(
+			function() use ($spawn, $resolver) : void{
+				$spawn = $this->getSafeSpawn($spawn);
+				$resolver->resolve($spawn);
+			},
+			function() use ($resolver) : void{
+				$resolver->reject();
+			}
+		);
+
+		return $resolver->getPromise();
+	}
+
+	/**
+	 * Returns a safe spawn position near the given position, or near the world's spawn position if not provided.
+	 * This function will throw an exception if the terrain is not already generated in advance.
+	 *
 	 * @throws WorldException if the terrain is not generated
 	 */
 	public function getSafeSpawn(?Vector3 $spawn = null) : Position{

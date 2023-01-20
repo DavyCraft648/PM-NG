@@ -43,6 +43,7 @@ use pocketmine\block\tile\DaylightSensor as TileDaylightSensor;
 use pocketmine\block\tile\EnchantTable as TileEnchantingTable;
 use pocketmine\block\tile\EnderChest as TileEnderChest;
 use pocketmine\block\tile\FlowerPot as TileFlowerPot;
+use pocketmine\block\tile\GlowingItemFrame as TileGlowingItemFrame;
 use pocketmine\block\tile\Hopper as TileHopper;
 use pocketmine\block\tile\ItemFrame as TileItemFrame;
 use pocketmine\block\tile\Jukebox as TileJukebox;
@@ -409,6 +410,7 @@ use function mb_strtolower;
  * @method static Glass GLASS()
  * @method static GlassPane GLASS_PANE()
  * @method static GlazedTerracotta GLAZED_TERRACOTTA()
+ * @method static ItemFrame GLOWING_ITEM_FRAME()
  * @method static GlowingObsidian GLOWING_OBSIDIAN()
  * @method static Glowstone GLOWSTONE()
  * @method static Opaque GOLD()
@@ -629,6 +631,7 @@ use function mb_strtolower;
  * @method static Slab SANDSTONE_SLAB()
  * @method static Stair SANDSTONE_STAIRS()
  * @method static Wall SANDSTONE_WALL()
+ * @method static Sculk SCULK()
  * @method static SeaLantern SEA_LANTERN()
  * @method static SeaPickle SEA_PICKLE()
  * @method static Opaque SHROOMLIGHT()
@@ -885,7 +888,11 @@ final class VanillaBlocks{
 		$ironDoorBreakInfo = new Info(BreakInfo::pickaxe(5.0, ToolTier::WOOD(), 25.0));
 		self::register("iron_door", new Door(new BID(Ids::IRON_DOOR), "Iron Door", $ironDoorBreakInfo));
 		self::register("iron_trapdoor", new Trapdoor(new BID(Ids::IRON_TRAPDOOR), "Iron Trapdoor", $ironDoorBreakInfo));
-		self::register("item_frame", new ItemFrame(new BID(Ids::ITEM_FRAME, TileItemFrame::class), "Item Frame", new Info(new BreakInfo(0.25))));
+
+		$itemFrameInfo = new Info(new BreakInfo(0.25));
+		self::register("item_frame", new ItemFrame(new BID(Ids::ITEM_FRAME, TileItemFrame::class), "Item Frame", $itemFrameInfo));
+		self::register("glowing_item_frame", new ItemFrame(new BID(Ids::GLOWING_ITEM_FRAME, TileGlowingItemFrame::class), "Glow Item Frame", $itemFrameInfo));
+
 		self::register("jukebox", new Jukebox(new BID(Ids::JUKEBOX, TileJukebox::class), "Jukebox", new Info(BreakInfo::axe(0.8)))); //TODO: in PC the hardness is 2.0, not 0.8, unsure if this is a MCPE bug or not
 		self::register("ladder", new Ladder(new BID(Ids::LADDER), "Ladder", new Info(BreakInfo::axe(0.4))));
 
@@ -1186,6 +1193,7 @@ final class VanillaBlocks{
 		self::register("mangrove_roots", new MangroveRoots(new BID(Ids::MANGROVE_ROOTS), "Mangrove Roots", new Info(BreakInfo::axe(0.7))));
 		self::register("muddy_mangrove_roots", new SimplePillar(new BID(Ids::MUDDY_MANGROVE_ROOTS), "Muddy Mangrove Roots", new Info(BreakInfo::shovel(0.7), [Tags::MUD])));
 		self::register("froglight", new Froglight(new BID(Ids::FROGLIGHT), "Froglight", new Info(new BreakInfo(0.3))));
+		self::register("sculk", new Sculk(new BID(Ids::SCULK), "Sculk", new Info(new BreakInfo(0.6, ToolType::HOE))));
 
 		self::registerBlocksR13();
 		self::registerBlocksR14();
