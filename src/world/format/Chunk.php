@@ -81,7 +81,11 @@ class Chunk{
 		$this->terrainPopulated = $terrainPopulated;
 
 		// TODO: Hack! There's no way to cleanly do this without diverging from pmmp too much, so this is the best workaround for that
-		$this->dimensionId = DimensionIds::OVERWORLD;
+		$this->dimensionId = match($this->getBiomeId(0, 0, 0)) {
+			BiomeIds::HELL, BiomeIds::BASALT_DELTAS, BiomeIds::SOULSAND_VALLEY, BiomeIds::CRIMSON_FOREST, BiomeIds::WARPED_FOREST => DimensionIds::NETHER,
+			BiomeIds::THE_END => DimensionIds::THE_END,
+			default => DimensionIds::OVERWORLD
+		};
 	}
 
 	/**

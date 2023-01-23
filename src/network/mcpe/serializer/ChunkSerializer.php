@@ -42,7 +42,6 @@ use pocketmine\utils\BinaryStream;
 use pocketmine\world\format\Chunk;
 use pocketmine\world\format\PalettedBlockArray;
 use pocketmine\world\format\SubChunk;
-use function chr;
 use function count;
 use function get_class;
 use function str_repeat;
@@ -77,18 +76,18 @@ final class ChunkSerializer{
 
 		$subChunkCount = self::getSubChunkCount($chunk);
 		$subChunks = [];
-		$maxHeight = match($dimensionId = $chunk->getDimensionId()){
-			DimensionIds::NETHER => 127,
-			DimensionIds::THE_END => 255,
-			DimensionIds::OVERWORLD => 320,
+		$maxSubChunkIndex = match($dimensionId = $chunk->getDimensionId()){
+			DimensionIds::NETHER => 7,
+			DimensionIds::THE_END => 15,
+			DimensionIds::OVERWORLD => Chunk::MAX_SUBCHUNK_INDEX,
 			default => throw new AssumptionFailedError("Unknown DimensionId " . $dimensionId)
 		};
 		$writtenCount = 0;
 		for($y = Chunk::MIN_SUBCHUNK_INDEX; $writtenCount < $subChunkCount; ++$y, ++$writtenCount){
-			if($y < 0 && ($mappingProtocol < ProtocolInfo::PROTOCOL_1_18_0 || $dimensionId !== DimensionIds::OVERWORLD)){
+			if($y < 0 && $dimensionId !== DimensionIds::OVERWORLD){
 				continue;
 			}
-			if($y > ($maxHeight >> 4)){
+			if($y > $maxSubChunkIndex){
 				break;
 			}
 
@@ -115,14 +114,15 @@ final class ChunkSerializer{
 	}
 
 	public static function serializeBiomes(Chunk $chunk, PacketSerializer $stream) : void{
-		if($stream->getProtocolId() >= ProtocolInfo::PROTOCOL_1_18_0){
-			$biomeIdMap = LegacyBiomeIdToStringIdMap::getInstance();
-			//all biomes must always be written :(
-			for($y = Chunk::MIN_SUBCHUNK_INDEX; $y <= Chunk::MAX_SUBCHUNK_INDEX; ++$y){
-				self::serializeBiomePalette($chunk->getSubChunk($y)->getBiomeArray(), $biomeIdMap, $stream);
-			}
-		}else{
-			$stream->put($chunk->getBiomeIdArray());
+		$biomeIdMap = LegacyBiomeIdToStringIdMap::getInstance();
+		//all biomes must always be written :(
+		for($y = ($dimensionId = $chunk->getDimensionId()) === DimensionIds::OVERWORLD ? Chunk::MIN_SUBCHUNK_INDEX : 0; $y <= match ($dimensionId) {
+			DimensionIds::NETHER => 7,
+			DimensionIds::THE_END => 15,
+			DimensionIds::OVERWORLD => Chunk::MAX_SUBCHUNK_INDEX,
+			default => throw new AssumptionFailedError("Unknown DimensionId " . $dimensionId)
+		}; ++$y){
+			self::serializeBiomePalette($chunk->getSubChunk($y)->getBiomeArray(), $biomeIdMap, $stream);
 		}
 	}
 

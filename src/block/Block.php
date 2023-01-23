@@ -668,17 +668,6 @@ class Block{
 	}
 
 	/**
-	 * @return Block[]|\Generator
-	 * @phpstan-return \Generator<int, Block, void, void>
-	 */
-	public function getHorizontalSidesLayer(int $layer = 0) : \Generator{
-		$world = $this->position->getWorld();
-		foreach($this->position->sidesAroundAxis(Axis::Y) as $vector3){
-			yield $world->getBlockLayer($vector3, $layer);
-		}
-	}
-
-	/**
 	 * Returns the six blocks around this block.
 	 *
 	 * @return Block[]|\Generator
@@ -688,17 +677,6 @@ class Block{
 		$world = $this->position->getWorld();
 		foreach($this->position->sides() as $vector3){
 			yield $world->getBlock($vector3);
-		}
-	}
-
-	/**
-	 * @return Block[]|\Generator
-	 * @phpstan-return \Generator<int, Block, void, void>
-	 */
-	public function getAllSidesLayer(int $layer = 0) : \Generator{
-		$world = $this->position->getWorld();
-		foreach($this->position->sides() as $vector3){
-			yield $world->getBlockLayer($vector3, $layer);
 		}
 	}
 

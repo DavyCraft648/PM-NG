@@ -53,7 +53,6 @@ use Ramsey\Uuid\Uuid;
 use function array_map;
 use function count;
 use function spl_object_id;
-use function var_dump;
 
 final class CraftingDataCache{
 	use SingletonTrait;
