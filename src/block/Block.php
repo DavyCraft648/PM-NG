@@ -42,6 +42,7 @@ use pocketmine\math\RayTraceResult;
 use pocketmine\math\Vector3;
 use pocketmine\nbt\tag\CompoundTag;
 use pocketmine\player\Player;
+use pocketmine\utils\AssumptionFailedError;
 use pocketmine\world\BlockTransaction;
 use pocketmine\world\format\Chunk;
 use pocketmine\world\Position;
@@ -99,7 +100,7 @@ class Block{
 	 * Returns the full blockstate ID of this block. This is a compact way of representing a blockstate used to store
 	 * blocks in chunks at runtime.
 	 *
-	 * This ID can be used to later obtain a copy of this block using {@link BlockFactory::fromStateId()}.
+	 * This ID can be used to later obtain a copy of this block using {@link RuntimeBlockStateRegistry::fromStateId()}.
 	 */
 	public function getStateId() : int{
 		return ($this->getTypeId() << self::INTERNAL_STATE_DATA_BITS) | $this->computeStateData();
@@ -218,7 +219,11 @@ class Block{
 	 */
 	public function writeStateToWorld() : void{
 		$world = $this->position->getWorld();
-		$world->getOrLoadChunkAtPosition($this->position)->setFullBlock($this->position->x & Chunk::COORD_MASK, $this->position->y, $this->position->z & Chunk::COORD_MASK, $this->getStateId(), $this->layer);
+		$chunk = $world->getOrLoadChunkAtPosition($this->position);
+		if($chunk === null){
+			throw new AssumptionFailedError("World::setBlock() should have loaded the chunk before calling this method");
+		}
+		$chunk->setBlockStateId($this->position->x & Chunk::COORD_MASK, $this->position->y, $this->position->z & Chunk::COORD_MASK, $this->getStateId(), $this->layer);
 
 		if($this->layer !== 0){
 			return;

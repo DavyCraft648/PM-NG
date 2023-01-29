@@ -28,8 +28,8 @@ namespace pocketmine\world;
 
 use pocketmine\block\Air;
 use pocketmine\block\Block;
-use pocketmine\block\BlockFactory;
 use pocketmine\block\BlockTypeIds;
+use pocketmine\block\RuntimeBlockStateRegistry;
 use pocketmine\block\tile\Spawnable;
 use pocketmine\block\tile\Tile;
 use pocketmine\block\tile\TileFactory;
@@ -537,7 +537,7 @@ class World implements ChunkManager{
 				if($blockStateData === null){
 					continue;
 				}
-				$block = BlockFactory::getInstance()->fromStateId(GlobalBlockStateHandlers::getDeserializer()->deserialize($blockStateData));
+				$block = RuntimeBlockStateRegistry::getInstance()->fromStateId(GlobalBlockStateHandlers::getDeserializer()->deserialize($blockStateData));
 			}else{
 				//TODO: we probably ought to log an error here
 				continue;
@@ -548,7 +548,7 @@ class World implements ChunkManager{
 			}
 		}
 
-		foreach(BlockFactory::getInstance()->getAllKnownStates() as $state){
+		foreach(RuntimeBlockStateRegistry::getInstance()->getAllKnownStates() as $state){
 			$dontTickName = $dontTickBlocks[$state->getTypeId()] ?? null;
 			if($dontTickName === null && $state->ticksRandomly()){
 				$this->randomTickBlocks[$state->getStateId()] = true;
@@ -1376,7 +1376,7 @@ class World implements ChunkManager{
 			$entity->onRandomUpdate();
 		}
 
-		$blockFactory = BlockFactory::getInstance();
+		$blockFactory = RuntimeBlockStateRegistry::getInstance();
 		foreach($chunk->getSubChunks() as $Y => $subChunk){
 			if(!$subChunk->isEmptyFast()){
 				$k = 0;
@@ -1390,7 +1390,7 @@ class World implements ChunkManager{
 					$z = ($k >> (SubChunk::COORD_BIT_SIZE * 2)) & SubChunk::COORD_MASK;
 					$k >>= (SubChunk::COORD_BIT_SIZE * 3);
 
-					$state = $subChunk->getFullBlock($x, $y, $z);
+					$state = $subChunk->getBlockStateId($x, $y, $z);
 
 					if(isset($this->randomTickBlocks[$state])){
 						$block = $blockFactory->fromStateId($state);
@@ -1696,7 +1696,7 @@ class World implements ChunkManager{
 			return;
 		}
 
-		$blockFactory = BlockFactory::getInstance();
+		$blockFactory = RuntimeBlockStateRegistry::getInstance();
 		$this->timings->doBlockSkyLightUpdates->startTiming();
 		if($this->skyLightUpdate === null){
 			$this->skyLightUpdate = new SkyLightUpdate(new SubChunkExplorer($this), $blockFactory->lightFilter, $blockFactory->blocksDirectSkyLight);
@@ -1827,7 +1827,7 @@ class World implements ChunkManager{
 
 			$chunk = $this->chunks[$chunkHash] ?? null;
 			if($chunk !== null){
-				$block = BlockFactory::getInstance()->fromStateId($chunk->getFullBlock($x & Chunk::COORD_MASK, $y, $z & Chunk::COORD_MASK, $layer));
+				$block = RuntimeBlockStateRegistry::getInstance()->fromStateId($chunk->getBlockStateId($x & Chunk::COORD_MASK, $y, $z & Chunk::COORD_MASK, $layer));
 			}else{
 				$addToCache = false;
 				$block = VanillaBlocks::AIR();
@@ -2164,7 +2164,7 @@ class World implements ChunkManager{
 		}
 
 		if($player !== null){
-			$ev = new BlockPlaceEvent($player, $hand, $blockReplace, $blockClicked, $item);
+			$ev = new BlockPlaceEvent($player, $tx, $blockClicked, $item);
 			if($player->isSpectator()){
 				$ev->cancel();
 			}
@@ -2484,7 +2484,7 @@ class World implements ChunkManager{
 				$localY = $tilePosition->getFloorY();
 				$localZ = $tilePosition->getFloorZ() & Chunk::COORD_MASK;
 
-				$newBlock = BlockFactory::getInstance()->fromStateId($chunk->getFullBlock($localX, $localY, $localZ));
+				$newBlock = RuntimeBlockStateRegistry::getInstance()->fromStateId($chunk->getBlockStateId($localX, $localY, $localZ));
 				$expectedTileClass = $newBlock->getIdInfo()->getTileClass();
 				if(
 					$expectedTileClass === null || //new block doesn't expect a tile

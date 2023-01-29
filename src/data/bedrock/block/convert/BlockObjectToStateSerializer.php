@@ -32,7 +32,6 @@ use pocketmine\block\Bed;
 use pocketmine\block\Beetroot;
 use pocketmine\block\Bell;
 use pocketmine\block\Block;
-use pocketmine\block\BlockFactory;
 use pocketmine\block\BoneBlock;
 use pocketmine\block\BrewingStand;
 use pocketmine\block\BrownMushroomBlock;
@@ -107,6 +106,7 @@ use pocketmine\block\RedstoneOre;
 use pocketmine\block\RedstoneRepeater;
 use pocketmine\block\RedstoneTorch;
 use pocketmine\block\RedstoneWire;
+use pocketmine\block\RuntimeBlockStateRegistry;
 use pocketmine\block\Sapling;
 use pocketmine\block\SeaPickle;
 use pocketmine\block\SimplePillar;
@@ -197,7 +197,7 @@ final class BlockObjectToStateSerializer implements BlockStateSerializer{
 	public function serialize(int $stateId) : BlockStateData{
 		//TODO: singleton usage not ideal
 		//TODO: we may want to deduplicate cache entries to avoid wasting memory
-		return $this->cache[$stateId] ??= $this->serializeBlock(BlockFactory::getInstance()->fromStateId($stateId));
+		return $this->cache[$stateId] ??= $this->serializeBlock(RuntimeBlockStateRegistry::getInstance()->fromStateId($stateId));
 	}
 
 	/**
@@ -605,6 +605,7 @@ final class BlockObjectToStateSerializer implements BlockStateSerializer{
 					default => throw new BlockStateSerializeException("Invalid Anvil damage {$damage}"),
 				});
 		});
+		$this->map(Blocks::AZALEA_LEAVES(), fn(Leaves $block) => Helper::encodeLeaves($block, new Writer(Ids::AZALEA_LEAVES)));
 		$this->map(Blocks::AZURE_BLUET(), fn() => Helper::encodeRedFlower(StringValues::FLOWER_TYPE_HOUSTONIA));
 		$this->map(Blocks::BAMBOO(), function(Bamboo $block) : Writer{
 			return Writer::create(Ids::BAMBOO)
@@ -950,6 +951,7 @@ final class BlockObjectToStateSerializer implements BlockStateSerializer{
 			return Writer::create(Ids::FLOWER_POT)
 				->writeBool(StateNames::UPDATE_BIT, false); //to keep MCPE happy
 		});
+		$this->map(Blocks::FLOWERING_AZALEA_LEAVES(), fn(Leaves $block) => Helper::encodeLeaves($block, new Writer(Ids::AZALEA_LEAVES_FLOWERED)));
 		$this->map(Blocks::FROGLIGHT(), function(Froglight $block){
 			return Writer::create(match($block->getFroglightType()){
 				FroglightType::OCHRE() => Ids::OCHRE_FROGLIGHT,
@@ -1086,6 +1088,7 @@ final class BlockObjectToStateSerializer implements BlockStateSerializer{
 		$this->map(Blocks::MANGROVE_BUTTON(), fn(Button $block) => Helper::encodeButton($block, new Writer(Ids::MANGROVE_BUTTON)));
 		$this->map(Blocks::MANGROVE_DOOR(), fn(Door $block) => Helper::encodeDoor($block, new Writer(Ids::MANGROVE_DOOR)));
 		$this->map(Blocks::MANGROVE_FENCE_GATE(), fn(FenceGate $block) => Helper::encodeFenceGate($block, new Writer(Ids::MANGROVE_FENCE_GATE)));
+		$this->map(Blocks::MANGROVE_LEAVES(), fn(Leaves $block) => Helper::encodeLeaves($block, new Writer(Ids::MANGROVE_LEAVES)));
 		$this->map(Blocks::MANGROVE_LOG(), fn(Wood $block) => Helper::encodeNewLog($block, Ids::MANGROVE_LOG, Ids::STRIPPED_MANGROVE_LOG));
 		$this->map(Blocks::MANGROVE_PRESSURE_PLATE(), fn(SimplePressurePlate $block) => Helper::encodeSimplePressurePlate($block, new Writer(Ids::MANGROVE_PRESSURE_PLATE)));
 		$this->map(Blocks::MANGROVE_SIGN(), fn(FloorSign $block) => Helper::encodeFloorSign($block, new Writer(Ids::MANGROVE_STANDING_SIGN)));

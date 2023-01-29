@@ -104,15 +104,15 @@ class Chunk{
 	 *
 	 * @return int bitmap, (id << 4) | meta
 	 */
-	public function getFullBlock(int $x, int $y, int $z, int $layer = 0) : int{
-		return $this->getSubChunk($y >> SubChunk::COORD_BIT_SIZE)->getFullBlock($x, $y & SubChunk::COORD_MASK, $z, $layer);
+	public function getBlockStateId(int $x, int $y, int $z, int $layer = 0) : int{
+		return $this->getSubChunk($y >> SubChunk::COORD_BIT_SIZE)->getBlockStateId($x, $y & SubChunk::COORD_MASK, $z, $layer);
 	}
 
 	/**
 	 * Sets the blockstate at the given coordinate by internal ID.
 	 */
-	public function setFullBlock(int $x, int $y, int $z, int $block, int $layer = 0) : void{
-		$this->getSubChunk($y >> SubChunk::COORD_BIT_SIZE)->setFullBlock($x, $y & SubChunk::COORD_MASK, $z, $block, $layer);
+	public function setBlockStateId(int $x, int $y, int $z, int $block, int $layer = 0) : void{
+		$this->getSubChunk($y >> SubChunk::COORD_BIT_SIZE)->setBlockStateId($x, $y & SubChunk::COORD_MASK, $z, $block, $layer);
 		$this->terrainDirtyFlags |= self::DIRTY_FLAG_BLOCKS;
 	}
 

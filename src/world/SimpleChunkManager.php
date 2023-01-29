@@ -24,7 +24,7 @@ declare(strict_types=1);
 namespace pocketmine\world;
 
 use pocketmine\block\Block;
-use pocketmine\block\BlockFactory;
+use pocketmine\block\RuntimeBlockStateRegistry;
 use pocketmine\block\VanillaBlocks;
 use pocketmine\utils\Limits;
 use pocketmine\world\format\Chunk;
@@ -45,7 +45,7 @@ class SimpleChunkManager implements ChunkManager{
 
 	public function getBlockAtLayer(int $x, int $y, int $z, int $layer = 0) : Block{
 		if($this->isInWorld($x, $y, $z) && ($chunk = $this->getChunk($x >> Chunk::COORD_BIT_SIZE, $z >> Chunk::COORD_BIT_SIZE)) !== null){
-			return BlockFactory::getInstance()->fromStateId($chunk->getFullBlock($x & Chunk::COORD_MASK, $y, $z & Chunk::COORD_MASK, $layer));
+			return RuntimeBlockStateRegistry::getInstance()->fromStateId($chunk->getBlockStateId($x & Chunk::COORD_MASK, $y, $z & Chunk::COORD_MASK, $layer));
 		}
 		return VanillaBlocks::AIR();
 	}
@@ -56,7 +56,7 @@ class SimpleChunkManager implements ChunkManager{
 
 	public function setBlockAtLayer(int $x, int $y, int $z, Block $block, int $layer = 0) : void{
 		if(($chunk = $this->getChunk($x >> Chunk::COORD_BIT_SIZE, $z >> Chunk::COORD_BIT_SIZE)) !== null){
-			$chunk->setFullBlock($x & Chunk::COORD_MASK, $y, $z & Chunk::COORD_MASK, $block->getStateId(), $layer);
+			$chunk->setBlockStateId($x & Chunk::COORD_MASK, $y, $z & Chunk::COORD_MASK, $block->getStateId(), $layer);
 		}else{
 			throw new \InvalidArgumentException("Cannot set block at coordinates x=$x,y=$y,z=$z, terrain is not loaded or out of bounds");
 		}
