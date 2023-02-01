@@ -116,7 +116,6 @@ use function array_push;
 use function base64_encode;
 use function count;
 use function fmod;
-use function implode;
 use function in_array;
 use function is_bool;
 use function is_infinite;
@@ -126,12 +125,9 @@ use function json_encode;
 use function max;
 use function mb_strlen;
 use function microtime;
-use function preg_match;
 use function sprintf;
 use function strlen;
 use function strpos;
-use function substr;
-use function trim;
 use const JSON_THROW_ON_ERROR;
 
 /**
@@ -173,8 +169,47 @@ class InGamePacketHandler extends ChunkRequestPacketHandler{
 	}
 
 	public function handleMovePlayer(MovePlayerPacket $packet) : bool{
-		//The client sends this every time it lands on the ground, even when using PlayerAuthInputPacket.
-		//Silence the debug spam that this causes.
+		if($this->session->getProtocolId() >= ProtocolInfo::PROTOCOL_1_13_0) {
+			//The client sends this every time it lands on the ground, even when using PlayerAuthInputPacket.
+			//Silence the debug spam that this causes.
+			return true;
+		}
+
+		$rawPos = $packet->position;
+		$rawYaw = $packet->yaw;
+		$rawPitch = $packet->pitch;
+		foreach([$rawPos->x, $rawPos->y, $rawPos->z, $rawYaw, $packet->headYaw, $rawPitch] as $float){
+			if(is_infinite($float) || is_nan($float)){
+				$this->session->getLogger()->debug("Invalid movement received, contains NAN/INF components");
+				return false;
+			}
+		}
+
+		$hasMoved = $this->lastPlayerAuthInputPosition === null || !$this->lastPlayerAuthInputPosition->equals($rawPos);
+		$newPos = $rawPos->round(4)->subtract(0, 1.62, 0);
+
+		if($this->forceMoveSync && $hasMoved){
+			$curPos = $this->player->getLocation();
+
+			if($newPos->distanceSquared($curPos) > 1){  //Tolerate up to 1 block to avoid problems with client-sided physics when spawning in blocks
+				$this->session->getLogger()->debug("Got outdated pre-teleport movement, received " . $newPos . ", expected " . $curPos);
+				//Still getting movements from before teleport, ignore them
+				return false;
+			}
+
+			// Once we get a movement within a reasonable distance, treat it as a teleport ACK and remove position lock
+			$this->forceMoveSync = false;
+		}
+
+		$yaw = fmod($rawYaw, 360);
+		$pitch = fmod($rawPitch, 360);
+		if($yaw < 0){
+			$yaw += 360;
+		}
+
+		$this->lastPlayerAuthInputPosition = $rawPos;
+		$this->player->setRotation($yaw, $pitch);
+		$this->player->handleMovement($newPos);
 		return true;
 	}
 
@@ -258,18 +293,11 @@ class InGamePacketHandler extends ChunkRequestPacketHandler{
 
 		$packetHandled = true;
 
-		$useItemTransaction = $packet->getItemInteractionData();
-		if($useItemTransaction !== null){
-			if(!$this->handleUseItemTransaction($useItemTransaction->getTransactionData())){
-				$packetHandled = false;
-				$this->session->getLogger()->debug("Unhandled transaction in PlayerAuthInputPacket (type " . $useItemTransaction->getTransactionData()->getActionType() . ")");
-			}else{
-				$this->inventoryManager->syncMismatchedPredictedSlotChanges();
-			}
-		}
-
 		$blockActions = $packet->getBlockActions();
 		if($blockActions !== null){
+			if(count($blockActions) > 100){
+				throw new PacketHandlingException("Too many block actions in PlayerAuthInputPacket");
+			}
 			foreach($blockActions as $k => $blockAction){
 				$actionHandled = false;
 				if($blockAction instanceof PlayerBlockActionStopBreak){
@@ -282,6 +310,20 @@ class InGamePacketHandler extends ChunkRequestPacketHandler{
 					$packetHandled = false;
 					$this->session->getLogger()->debug("Unhandled player block action at offset $k in PlayerAuthInputPacket");
 				}
+			}
+		}
+
+		$useItemTransaction = $packet->getItemInteractionData();
+		if($useItemTransaction !== null){
+			if(count($useItemTransaction->getTransactionData()->getActions()) > 100){
+				throw new PacketHandlingException("Too many actions in item use transaction");
+			}
+			$this->inventoryManager->addPredictedSlotChanges($useItemTransaction->getTransactionData()->getActions());
+			if(!$this->handleUseItemTransaction($useItemTransaction->getTransactionData())){
+				$packetHandled = false;
+				$this->session->getLogger()->debug("Unhandled transaction in PlayerAuthInputPacket (type " . $useItemTransaction->getTransactionData()->getActionType() . ")");
+			}else{
+				$this->inventoryManager->syncMismatchedPredictedSlotChanges();
 			}
 		}
 
@@ -316,6 +358,10 @@ class InGamePacketHandler extends ChunkRequestPacketHandler{
 	public function handleInventoryTransaction(InventoryTransactionPacket $packet) : bool{
 		$result = true;
 
+		if(count($packet->trData->getActions()) > 100){
+			throw new PacketHandlingException("Too many actions in inventory transaction");
+		}
+
 		$this->inventoryManager->addPredictedSlotChanges($packet->trData->getActions());
 
 		if($packet->trData instanceof NormalTransactionData){
@@ -346,7 +392,8 @@ class InGamePacketHandler extends ChunkRequestPacketHandler{
 		$converter = TypeConverter::getInstance();
 		foreach($data->getActions() as $networkInventoryAction){
 			if(
-				$networkInventoryAction->sourceType === NetworkInventoryAction::SOURCE_TODO || (
+				$networkInventoryAction->sourceType === NetworkInventoryAction::SOURCE_TODO ||
+				$networkInventoryAction->sourceType === NetworkInventoryAction::SOURCE_CRAFT_SLOT || (
 					$this->craftingTransaction !== null &&
 					!$networkInventoryAction->oldItem->getItemStack()->equals($networkInventoryAction->newItem->getItemStack()) &&
 					$networkInventoryAction->sourceType === NetworkInventoryAction::SOURCE_CONTAINER &&
@@ -614,6 +661,25 @@ class InGamePacketHandler extends ChunkRequestPacketHandler{
 			case PlayerAction::CREATIVE_PLAYER_DESTROY_BLOCK:
 				//TODO: do we need to handle this?
 				break;
+			case PlayerAction::START_SNEAK:
+			case PlayerAction::STOP_SNEAK:
+				$this->player->syncPlayerActions($action === PlayerAction::START_SNEAK, null, null, null);
+				break;
+			case PlayerAction::START_SPRINT:
+			case PlayerAction::STOP_SPRINT:
+				$this->player->syncPlayerActions(null, $action === PlayerAction::START_SPRINT, null, null);
+				break;
+			case PlayerAction::START_SWIMMING:
+			case PlayerAction::STOP_SWIMMING:
+				$this->player->syncPlayerActions(null, null, $action === PlayerAction::START_SWIMMING, null);
+				break;
+			case PlayerAction::START_GLIDE:
+			case PlayerAction::STOP_GLIDE:
+				$this->player->syncPlayerActions(null, null, null, $action === PlayerAction::START_GLIDE);
+				break;
+			case PlayerAction::JUMP:
+				$this->player->jump();
+				break;
 			case PlayerAction::START_ITEM_USE_ON:
 			case PlayerAction::STOP_ITEM_USE_ON:
 				//TODO: this has no obvious use and seems only used for analytics in vanilla - ignore it
@@ -623,7 +689,13 @@ class InGamePacketHandler extends ChunkRequestPacketHandler{
 				return false;
 		}
 
-		$this->player->setUsingItem(false);
+		// TODO: garbage hack for older versions:
+		// PlayerAuthInputPacket would've accounted for this, but older versions this isn't the case.
+		if($this->session->getProtocolId() >= ProtocolInfo::PROTOCOL_1_16_210){
+			if($action === PlayerAction::STOP_BREAK || PlayerBlockActionWithBlockInfo::isValidActionType($action)){
+				$this->player->setUsingItem(false);
+			}
+		}
 
 		return true;
 	}
@@ -894,57 +966,14 @@ class InGamePacketHandler extends ChunkRequestPacketHandler{
 			//TODO: make APIs for this to allow plugins to use this information
 			return $this->player->onFormSubmit($packet->formId, null);
 		}elseif($packet->formData !== null){
-			return $this->player->onFormSubmit($packet->formId, self::stupid_json_decode($packet->formData, true));
+			try{
+				$responseData = json_decode($packet->formData, true, self::MAX_FORM_RESPONSE_DEPTH, JSON_THROW_ON_ERROR);
+			}catch(\JsonException $e){
+				throw PacketHandlingException::wrap($e, "Failed to decode form response data");
+			}
+			return $this->player->onFormSubmit($packet->formId, $responseData);
 		}else{
 			throw new PacketHandlingException("Expected either formData or cancelReason to be set in ModalFormResponsePacket");
-		}
-	}
-
-	/**
-	 * Hack to work around a stupid bug in Minecraft W10 which causes empty strings to be sent unquoted in form responses.
-	 *
-	 * @return mixed
-	 * @throws PacketHandlingException
-	 */
-	private static function stupid_json_decode(string $json, bool $assoc = false){
-		if(preg_match('/^\[(.+)\]$/s', $json, $matches) > 0){
-			$raw = $matches[1];
-			$lastComma = -1;
-			$newParts = [];
-			$inQuotes = false;
-			for($i = 0, $len = strlen($raw); $i <= $len; ++$i){
-				if($i === $len || ($raw[$i] === "," && !$inQuotes)){
-					$part = substr($raw, $lastComma + 1, $i - ($lastComma + 1));
-					if(trim($part) === ""){ //regular parts will have quotes or something else that makes them non-empty
-						$part = '""';
-					}
-					$newParts[] = $part;
-					$lastComma = $i;
-				}elseif($raw[$i] === '"'){
-					if(!$inQuotes){
-						$inQuotes = true;
-					}else{
-						$backslashes = 0;
-						for(; $backslashes < $i && $raw[$i - $backslashes - 1] === "\\"; ++$backslashes){}
-						if(($backslashes % 2) === 0){ //unescaped quote
-							$inQuotes = false;
-						}
-					}
-				}
-			}
-
-			$fixed = "[" . implode(",", $newParts) . "]";
-			try{
-				return json_decode($fixed, $assoc, self::MAX_FORM_RESPONSE_DEPTH, JSON_THROW_ON_ERROR);
-			}catch(\JsonException $e){
-				throw PacketHandlingException::wrap($e, "Failed to fix JSON (original: $json, modified: $fixed)");
-			}
-		}
-
-		try{
-			return json_decode($json, $assoc, self::MAX_FORM_RESPONSE_DEPTH, JSON_THROW_ON_ERROR);
-		}catch(\JsonException $e){
-			throw PacketHandlingException::wrap($e);
 		}
 	}
 

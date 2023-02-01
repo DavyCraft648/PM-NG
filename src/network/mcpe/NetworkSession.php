@@ -45,6 +45,7 @@ use pocketmine\network\mcpe\cache\ChunkCache;
 use pocketmine\network\mcpe\compression\CompressBatchPromise;
 use pocketmine\network\mcpe\compression\Compressor;
 use pocketmine\network\mcpe\compression\DecompressionException;
+use pocketmine\network\mcpe\compression\ZlibCompressor;
 use pocketmine\network\mcpe\convert\GlobalItemTypeDictionary;
 use pocketmine\network\mcpe\convert\SkinAdapterSingleton;
 use pocketmine\network\mcpe\convert\TypeConverter;
@@ -138,10 +139,14 @@ use function array_values;
 use function base64_encode;
 use function bin2hex;
 use function count;
+use function function_exists;
 use function get_class;
+use function hrtime;
 use function in_array;
+use function intdiv;
 use function json_encode;
 use function ksort;
+use function min;
 use function strcasecmp;
 use function strlen;
 use function strpos;
@@ -149,10 +154,25 @@ use function strtolower;
 use function substr;
 use function time;
 use function ucfirst;
+use function xdebug_is_debugger_active;
 use const JSON_THROW_ON_ERROR;
 use const SORT_NUMERIC;
 
 class NetworkSession{
+	private const INCOMING_PACKET_BATCH_PER_TICK = 2; //usually max 1 per tick, but transactions may arrive separately
+	private const INCOMING_PACKET_BATCH_MAX_BUDGET = 100 * self::INCOMING_PACKET_BATCH_PER_TICK; //enough to account for a 5-second lag spike
+
+	/**
+	 * At most this many more packets can be received. If this reaches zero, any additional packets received will cause
+	 * the player to be kicked from the server.
+	 * This number is increased every tick up to a maximum limit.
+	 *
+	 * @see self::INCOMING_PACKET_BATCH_PER_TICK
+	 * @see self::INCOMING_PACKET_BATCH_MAX_BUDGET
+	 */
+	private int $incomingPacketBatchBudget = self::INCOMING_PACKET_BATCH_MAX_BUDGET;
+	private int $lastPacketBudgetUpdateTimeNs;
+
 	private \PrefixedLogger $logger;
 	private ?Player $player = null;
 	protected ?PlayerInfo $info = null;
@@ -215,6 +235,7 @@ class NetworkSession{
 		$this->disposeHooks = new ObjectSet();
 
 		$this->connectTime = time();
+		$this->lastPacketBudgetUpdateTimeNs = hrtime(true);
 
 		$this->setHandler(new LoginPacketHandler(
 			$this->server,
@@ -378,6 +399,9 @@ class NetworkSession{
 		$this->protocolId = $protocolId;
 
 		$this->broadcaster = RakLibInterface::getBroadcaster($this->server, $protocolId);
+		if($this->compressor instanceof ZlibCompressor) {
+			$this->compressor = $this->compressor->copy($protocolId >= ProtocolInfo::PROTOCOL_1_16_0);
+		}
 		$this->packetSerializerContext = new PacketSerializerContext(GlobalItemTypeDictionary::getInstance()->getDictionary(GlobalItemTypeDictionary::getDictionaryProtocol($protocolId)));
 	}
 
@@ -392,6 +416,17 @@ class NetworkSession{
 		if(!$this->connected){
 			return;
 		}
+
+		if($this->incomingPacketBatchBudget <= 0){
+			if(!function_exists('xdebug_is_debugger_active') || !xdebug_is_debugger_active()){
+				throw new PacketHandlingException("Receiving packets too fast");
+			}else{
+				//when a debugging session is active, the server may halt at any point for an indefinite length of time,
+				//in which time the client will continue to send packets
+				$this->incomingPacketBatchBudget = self::INCOMING_PACKET_BATCH_MAX_BUDGET;
+			}
+		}
+		$this->incomingPacketBatchBudget--;
 
 		if($this->cipher !== null){
 			Timings::$playerNetworkReceiveDecrypt->startTiming();
@@ -433,7 +468,7 @@ class NetworkSession{
 		}
 
 		try{
-			foreach((new PacketBatch($decompressed))->getPackets($this->packetPool, $this->packetSerializerContext, 500) as [$packet, $buffer]){
+			foreach((new PacketBatch($decompressed))->getPackets($this->packetPool, $this->packetSerializerContext, 1300) as [$packet, $buffer]){
 				if($packet === null){
 					$this->logger->debug("Unknown packet: " . base64_encode($buffer));
 					throw new PacketHandlingException("Unknown packet received");
@@ -775,7 +810,11 @@ class NetworkSession{
 				}
 				$this->sendDataPacket(ServerToClientHandshakePacket::create($handshakeJwt), true); //make sure this gets sent before encryption is enabled
 
-				$this->cipher = EncryptionContext::fakeGCM($encryptionKey);
+				if($this->protocolId >= ProtocolInfo::PROTOCOL_1_16_220){
+					$this->cipher = EncryptionContext::fakeGCM($encryptionKey);
+				}else{
+					$this->cipher = EncryptionContext::cfb8($encryptionKey);
+				}
 
 				$this->setHandler(new HandshakePacketHandler(function() : void{
 					$this->onServerLoginSuccess();
@@ -1277,6 +1316,17 @@ class NetworkSession{
 		}
 
 		$this->flushSendBuffer();
+
+		$nowNs = hrtime(true);
+		$timeSinceLastUpdateNs = $nowNs - $this->lastPacketBudgetUpdateTimeNs;
+		if($timeSinceLastUpdateNs > 50_000_000){
+			$ticksSinceLastUpdate = intdiv($timeSinceLastUpdateNs, 50_000_000);
+			$this->incomingPacketBatchBudget = min(
+				$this->incomingPacketBatchBudget + (self::INCOMING_PACKET_BATCH_PER_TICK * 2 * $ticksSinceLastUpdate),
+				self::INCOMING_PACKET_BATCH_MAX_BUDGET
+			);
+			$this->lastPacketBudgetUpdateTimeNs = $nowNs;
+		}
 	}
 
 	private function flushChunkCache() : void{

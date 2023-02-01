@@ -61,6 +61,7 @@ use pocketmine\item\StringToItemParser;
 use pocketmine\item\VanillaItems;
 use pocketmine\lang\KnownTranslationFactory;
 use pocketmine\math\AxisAlignedBB;
+use pocketmine\math\Facing;
 use pocketmine\math\Vector3;
 use pocketmine\nbt\tag\IntTag;
 use pocketmine\nbt\tag\StringTag;
@@ -1439,7 +1440,9 @@ class World implements ChunkManager{
 
 	/**
 	 * Notify the blocks at and around the position that the block at the position may have changed.
-	 * This will cause onNeighbourBlockUpdate() to be called for these blocks.
+	 * This will cause onNearbyBlockChange() to be called for these blocks.
+	 *
+	 * @see Block::onNearbyBlockChange()
 	 */
 	public function notifyNeighbourBlockUpdate(Vector3 $pos) : void{
 		$this->tryAddToNeighbourUpdateQueue($pos);
@@ -2103,6 +2106,10 @@ class World implements ChunkManager{
 
 		if($blockClicked->getId() !== BlockLegacyIds::AIR && $hand->canBePlacedAt($blockClicked, $clickVector, $face, true)){
 			$blockReplace = $blockClicked;
+			//TODO: while this mimics the vanilla behaviour with replaceable blocks, we should really pass some other
+			//value like NULL and let place() deal with it. This will look like a bug to anyone who doesn't know about
+			//the vanilla behaviour.
+			$face = Facing::UP;
 			$hand->position($this, $blockReplace->getPosition()->x, $blockReplace->getPosition()->y, $blockReplace->getPosition()->z);
 		}elseif(!$hand->canBePlacedAt($blockReplace, $clickVector, $face, false)){
 			return false;
