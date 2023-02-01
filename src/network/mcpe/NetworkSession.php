@@ -1072,16 +1072,13 @@ class NetworkSession{
 
 	public function onChatMessage(Translatable|string $message) : void{
 		if($message instanceof Translatable){
-			//we can't send nested translations to the client, so make sure they are always pre-translated by the server
 			$language = $this->player->getLanguage();
-			$parameters = array_map(fn(string|Translatable $p) => $p instanceof Translatable ? $language->translate($p) : $p, $message->getParameters());
 			if(!$this->server->isLanguageForced()){
-				foreach($parameters as $i => $p){
-					$parameters[$i] = $language->translateString($p, [], "pocketmine.");
-				}
+				//we can't send nested translations to the client, so make sure they are always pre-translated by the server
+				$parameters = array_map(fn(string|Translatable $p) => $p instanceof Translatable ? $language->translate($p) : $p, $message->getParameters());
 				$this->sendDataPacket(TextPacket::translation($language->translateString($message->getText(), $parameters, "pocketmine."), $parameters));
 			}else{
-				$this->sendDataPacket(TextPacket::raw($language->translateString($message->getText(), $parameters)));
+				$this->sendDataPacket(TextPacket::raw($language->translate($message)));
 			}
 		}else{
 			$this->sendDataPacket(TextPacket::raw($message));

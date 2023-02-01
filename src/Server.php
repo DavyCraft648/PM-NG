@@ -107,17 +107,18 @@ use pocketmine\utils\SignalHandler;
 use pocketmine\utils\Terminal;
 use pocketmine\utils\TextFormat;
 use pocketmine\utils\Utils;
-use pocketmine\world\format\Chunk;
 use pocketmine\world\format\io\WorldProviderManager;
 use pocketmine\world\format\io\WritableWorldProviderManagerEntry;
 use pocketmine\world\generator\Generator;
 use pocketmine\world\generator\GeneratorManager;
 use pocketmine\world\generator\InvalidGeneratorOptionsException;
+use pocketmine\world\Position;
 use pocketmine\world\World;
 use pocketmine\world\WorldCreationOptions;
 use pocketmine\world\WorldManager;
 use Ramsey\Uuid\UuidInterface;
 use Symfony\Component\Filesystem\Path;
+use function array_fill;
 use function array_sum;
 use function base64_encode;
 use function cli_set_process_title;
@@ -182,6 +183,27 @@ class Server{
 	public const DEFAULT_PORT_IPV6 = 19133;
 	public const DEFAULT_MAX_VIEW_DISTANCE = 16;
 
+	/**
+	 * Worlds, network, commands and most other things are polled this many times per second on average.
+	 * Between ticks, the server will sleep to ensure that the average tick rate is maintained.
+	 * It may wake up between ticks if a Snooze notification source is triggered (e.g. to process network packets).
+	 */
+	public const TARGET_TICKS_PER_SECOND = 20;
+	/**
+	 * The average time between ticks, in seconds.
+	 */
+	public const TARGET_SECONDS_PER_TICK = 1 / self::TARGET_TICKS_PER_SECOND;
+	public const TARGET_NANOSECONDS_PER_TICK = 1_000_000_000 / self::TARGET_TICKS_PER_SECOND;
+
+	/**
+	 * The TPS threshold below which the server will generate log warnings.
+	 */
+	private const TPS_OVERLOAD_WARNING_THRESHOLD = self::TARGET_TICKS_PER_SECOND * 0.6;
+
+	private const TICKS_PER_WORLD_CACHE_CLEAR = 5 * self::TARGET_TICKS_PER_SECOND;
+	private const TICKS_PER_TPS_OVERLOAD_WARNING = 5 * self::TARGET_TICKS_PER_SECOND;
+	private const TICKS_PER_STATS_REPORT = 300 * self::TARGET_TICKS_PER_SECOND;
+
 	private static ?Server $instance = null;
 
 	private TimeTrackingSleeperHandler $tickSleeper;
@@ -201,7 +223,7 @@ class Server{
 
 	private PluginManager $pluginManager;
 
-	private float $profilingTickRate = 20;
+	private float $profilingTickRate = self::TARGET_TICKS_PER_SECOND;
 
 	private UpdateChecker $updater;
 
@@ -211,10 +233,10 @@ class Server{
 	private int $tickCounter = 0;
 	private float $nextTick = 0;
 	/** @var float[] */
-	private array $tickAverage = [20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20];
+	private array $tickAverage;
 	/** @var float[] */
-	private array $useAverage = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0];
-	private float $currentTPS = 20;
+	private array $useAverage;
+	private float $currentTPS = self::TARGET_TICKS_PER_SECOND;
 	private float $currentUse = 0;
 	private float $startTime;
 
@@ -539,7 +561,7 @@ class Server{
 		if($offlinePlayerData !== null && ($world = $this->worldManager->getWorldByName($offlinePlayerData->getString(Player::TAG_LEVEL, ""))) !== null){
 			try{
 				$playerPos = EntityDataHelper::parseLocation($offlinePlayerData, $world);
-				$spawn = $playerPos->asVector3();
+
 			}catch(SavedDataLoadingException){
 				$playerPos = null;
 				$spawn = null;
@@ -551,42 +573,39 @@ class Server{
 				throw new AssumptionFailedError("Default world should always be loaded");
 			}
 			$playerPos = null;
-			$spawn = $world->getSpawnLocation();
 		}
 		/** @phpstan-var PromiseResolver<Player> $playerPromiseResolver */
 		$playerPromiseResolver = new PromiseResolver();
-		$world->requestChunkPopulation($spawn->getFloorX() >> Chunk::COORD_BIT_SIZE, $spawn->getFloorZ() >> Chunk::COORD_BIT_SIZE, null)->onCompletion(
-			function() use ($playerPromiseResolver, $class, $session, $playerInfo, $authenticated, $world, $playerPos, $spawn, $offlinePlayerData) : void{
-				if(!$session->isConnected()){
-					$playerPromiseResolver->reject();
-					return;
-				}
 
-				/* Stick with the original spawn at the time of generation request, even if it changed since then.
-				 * This is because we know for sure that that chunk will be generated, but the one at the new location
-				 * might not be, and it would be much more complex to go back and redo the whole thing.
-				 *
-				 * TODO: this relies on the assumption that getSafeSpawn() will only alter the Y coordinate of the
-				 * provided position. If this assumption is broken, we'll start seeing crashes in here.
-				 */
-
-				/**
-				 * @see Player::__construct()
-				 * @var Player $player
-				 */
-				$player = new $class($this, $session, $playerInfo, $authenticated, $playerPos ?? Location::fromObject($world->getSafeSpawn($spawn), $world), $offlinePlayerData);
-				if(!$player->hasPlayedBefore()){
-					$player->onGround = true;  //TODO: this hack is needed for new players in-air ticks - they don't get detected as on-ground until they move
-				}
-				$playerPromiseResolver->resolve($player);
-			},
-			static function() use ($playerPromiseResolver, $session) : void{
-				if($session->isConnected()){
-					$session->disconnect("Spawn terrain generation failed");
-				}
-				$playerPromiseResolver->reject();
+		$createPlayer = function(Location $location) use ($playerPromiseResolver, $class, $session, $playerInfo, $authenticated, $offlinePlayerData) : void{
+			$player = new $class($this, $session, $playerInfo, $authenticated, $location, $offlinePlayerData);
+			if(!$player->hasPlayedBefore()){
+				$player->onGround = true; //TODO: this hack is needed for new players in-air ticks - they don't get detected as on-ground until they move
 			}
-		);
+			$playerPromiseResolver->resolve($player);
+		};
+
+		if($playerPos === null){ //new player or no valid position due to world not being loaded
+			$world->requestSafeSpawn()->onCompletion(
+				function(Position $spawn) use ($createPlayer, $playerPromiseResolver, $session, $world) : void{
+					if(!$session->isConnected()){
+						$playerPromiseResolver->reject();
+						return;
+					}
+					$createPlayer(Location::fromObject($spawn, $world));
+				},
+				function() use ($playerPromiseResolver, $session) : void{
+					if($session->isConnected()){
+						//TODO: this needs to be localized - this might be reached if the spawn world was unloaded while the player was logging in
+						$session->disconnect("Failed to find a safe spawn location");
+					}
+					$playerPromiseResolver->reject();
+				}
+			);
+		}else{ //returning player with a valid position - safe spawn not required
+			$createPlayer($playerPos);
+		}
+
 		return $playerPromiseResolver->getPromise();
 	}
 
@@ -762,6 +781,8 @@ class Server{
 		}
 		self::$instance = $this;
 		$this->startTime = microtime(true);
+		$this->tickAverage = array_fill(0, self::TARGET_TICKS_PER_SECOND, self::TARGET_TICKS_PER_SECOND);
+		$this->useAverage = array_fill(0, self::TARGET_TICKS_PER_SECOND, 0);
 
 		Timings::init();
 		$this->tickSleeper = new TimeTrackingSleeperHandler(Timings::$serverInterrupts);
@@ -951,7 +972,7 @@ class Server{
 			$this->logger->info($this->getLanguage()->translate(KnownTranslationFactory::pocketmine_server_license($this->getName())));
 
 			TimingsHandler::setEnabled($this->configGroup->getPropertyBool("settings.enable-profiling", false));
-			$this->profilingTickRate = $this->configGroup->getPropertyInt("settings.profile-report-trigger", 20);
+			$this->profilingTickRate = $this->configGroup->getPropertyInt("settings.profile-report-trigger", self::TARGET_TICKS_PER_SECOND);
 
 			DefaultPermissions::registerCorePermissions();
 
@@ -989,7 +1010,7 @@ class Server{
 
 			$this->worldManager = new WorldManager($this, Path::join($this->dataPath, "worlds"), $providerManager);
 			$this->worldManager->setAutoSave($this->configGroup->getConfigBool("auto-save", $this->worldManager->getAutoSave()));
-			$this->worldManager->setAutoSaveInterval($this->configGroup->getPropertyInt("ticks-per.autosave", 6000));
+			$this->worldManager->setAutoSaveInterval($this->configGroup->getPropertyInt("ticks-per.autosave", $this->worldManager->getAutoSaveInterval()));
 
 			$this->updater = new UpdateChecker($this, $this->configGroup->getPropertyString("auto-updater.host", "update.pmmp.io"));
 
@@ -1029,7 +1050,7 @@ class Server{
 			}
 
 			if($this->configGroup->getPropertyBool("anonymous-statistics.enabled", true)){
-				$this->sendUsageTicker = 6000;
+				$this->sendUsageTicker = self::TICKS_PER_STATS_REPORT;
 				$this->sendUsage(SendUsageTask::TYPE_OPEN);
 			}
 
@@ -1812,11 +1833,11 @@ class Server{
 		$this->network->tick();
 		Timings::$connection->stopTiming();
 
-		if(($this->tickCounter % 20) === 0){
+		if(($this->tickCounter % self::TARGET_TICKS_PER_SECOND) === 0){
 			if($this->doTitleTick){
 				$this->titleTick();
 			}
-			$this->currentTPS = 20;
+			$this->currentTPS = self::TARGET_TICKS_PER_SECOND;
 			$this->currentUse = 0;
 
 			$queryRegenerateEvent = new QueryRegenerateEvent(new QueryInfo($this));
@@ -1828,18 +1849,18 @@ class Server{
 		}
 
 		if($this->sendUsageTicker > 0 && --$this->sendUsageTicker === 0){
-			$this->sendUsageTicker = 6000;
+			$this->sendUsageTicker = self::TICKS_PER_STATS_REPORT;
 			$this->sendUsage(SendUsageTask::TYPE_STATUS);
 		}
 
-		if(($this->tickCounter % 100) === 0){
+		if(($this->tickCounter % self::TICKS_PER_WORLD_CACHE_CLEAR) === 0){
 			foreach($this->worldManager->getWorlds() as $world){
 				$world->clearCache();
 			}
+		}
 
-			if($this->getTicksPerSecondAverage() < 12){
-				$this->logger->warning($this->getLanguage()->translate(KnownTranslationFactory::pocketmine_server_tickOverload()));
-			}
+		if(($this->tickCounter % self::TICKS_PER_TPS_OVERLOAD_WARNING) === 0 && $this->getTicksPerSecondAverage() < self::TPS_OVERLOAD_WARNING_THRESHOLD){
+			$this->logger->warning($this->getLanguage()->translate(KnownTranslationFactory::pocketmine_server_tickOverload()));
 		}
 
 		$this->getMemoryManager()->check();
@@ -1857,12 +1878,12 @@ class Server{
 
 		$now = microtime(true);
 		$totalTickTimeSeconds = $now - $tickTime + ($this->tickSleeper->getNotificationProcessingTime() / 1_000_000_000);
-		$this->currentTPS = min(20, 1 / max(0.001, $totalTickTimeSeconds));
-		$this->currentUse = min(1, $totalTickTimeSeconds / 0.05);
+		$this->currentTPS = min(self::TARGET_TICKS_PER_SECOND, 1 / max(0.001, $totalTickTimeSeconds));
+		$this->currentUse = min(1, $totalTickTimeSeconds / self::TARGET_SECONDS_PER_TICK);
 
 		TimingsHandler::tick($this->currentTPS <= $this->profilingTickRate);
 
-		$idx = $this->tickCounter % 20;
+		$idx = $this->tickCounter % self::TARGET_TICKS_PER_SECOND;
 		$this->tickAverage[$idx] = $this->currentTPS;
 		$this->useAverage[$idx] = $this->currentUse;
 		$this->tickSleeper->resetNotificationProcessingTime();
@@ -1870,7 +1891,7 @@ class Server{
 		if(($this->nextTick - $tickTime) < -1){
 			$this->nextTick = $tickTime;
 		}else{
-			$this->nextTick += 0.05;
+			$this->nextTick += self::TARGET_SECONDS_PER_TICK;
 		}
 	}
 }
