@@ -52,7 +52,7 @@ final class BlockDataUpgrader{
 			if($blockStateData === null){
 				//unknown block, invalid ID
 				\GlobalLogger::get()->warning("Unknown block $id:$data");
-				$blockStateData = new BlockStateData(BlockTypeNames::INFO_UPDATE, [], BlockStateData::CURRENT_VERSION);
+				$blockStateData = BlockStateData::current(BlockTypeNames::INFO_UPDATE, []);
 			}
 		}else{
 			//Modern (post-1.13) blockstate
