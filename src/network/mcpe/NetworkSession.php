@@ -978,7 +978,7 @@ class NetworkSession{
 					//TODO: dynamic flying speed! FINALLY!!!!!!!!!!!!!!!!!
 					new AbilitiesLayer(AbilitiesLayer::LAYER_BASE, $boolAbilities, 0.05, 0.1),
 				]
-			);
+			));
 		}else{
 			$pk = AdventureSettingsPacket::create(
 				0,
@@ -997,7 +997,7 @@ class NetworkSession{
 			$pk->setFlag(AdventureSettingsPacket::FLYING, $for->isFlying());
 		}
 
-		$this->sendDataPacket($pk));
+		$this->sendDataPacket($pk);
 	}
 
 	public function syncAdventureSettings() : void{

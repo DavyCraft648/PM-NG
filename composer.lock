@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "1c17d88d85b92da9187295aab036ade7",
+    "content-hash": "f38400b7a4cc0a5e8fa0e06281eff0ee",
     "packages": [
         {
             "name": "adhocore/json-comment",
@@ -203,12 +203,12 @@
             "source": {
                 "type": "git",
                 "url": "https://github.com/DavyCraft648/BedrockData.git",
-                "reference": "a73825ec4a9bac8a479bb48c71c570cbe99ff93d"
+                "reference": "481fbcc722519a738a56abfa13e2c8652080f73c"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/DavyCraft648/BedrockData/zipball/a73825ec4a9bac8a479bb48c71c570cbe99ff93d",
-                "reference": "a73825ec4a9bac8a479bb48c71c570cbe99ff93d",
+                "url": "https://api.github.com/repos/DavyCraft648/BedrockData/zipball/481fbcc722519a738a56abfa13e2c8652080f73c",
+                "reference": "481fbcc722519a738a56abfa13e2c8652080f73c",
                 "shasum": ""
             },
             "type": "library",
@@ -219,7 +219,7 @@
             "support": {
                 "source": "https://github.com/DavyCraft648/BedrockData/tree/modern-world-support"
             },
-            "time": "2022-12-04T06:58:43+00:00"
+            "time": "2023-02-09T16:57:57+00:00"
         },
         {
             "name": "nethergamesmc/bedrock-protocol",
@@ -227,12 +227,12 @@
             "source": {
                 "type": "git",
                 "url": "https://github.com/DavyCraft648/BedrockProtocol.git",
-                "reference": "ba5e7b973c3ee418fe2114a89e7d977527db5baa"
+                "reference": "13e091adf6a787aee1ce1373fdfc3eb8c4afd9bb"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/DavyCraft648/BedrockProtocol/zipball/ba5e7b973c3ee418fe2114a89e7d977527db5baa",
-                "reference": "ba5e7b973c3ee418fe2114a89e7d977527db5baa",
+                "url": "https://api.github.com/repos/DavyCraft648/BedrockProtocol/zipball/13e091adf6a787aee1ce1373fdfc3eb8c4afd9bb",
+                "reference": "13e091adf6a787aee1ce1373fdfc3eb8c4afd9bb",
                 "shasum": ""
             },
             "require": {
@@ -246,7 +246,7 @@
                 "ramsey/uuid": "^4.1"
             },
             "require-dev": {
-                "phpstan/phpstan": "1.9.4",
+                "phpstan/phpstan": "1.9.13",
                 "phpstan/phpstan-phpunit": "^1.0.0",
                 "phpstan/phpstan-strict-rules": "^1.0.0",
                 "phpunit/phpunit": "^9.5"
@@ -274,7 +274,7 @@
             "support": {
                 "source": "https://github.com/DavyCraft648/BedrockProtocol/tree/next-major"
             },
-            "time": "2023-01-03T09:49:56+00:00"
+            "time": "2023-02-09T16:27:53+00:00"
         },
         {
             "name": "netresearch/jsonmapper",
@@ -333,12 +333,12 @@
             "source": {
                 "type": "git",
                 "url": "https://github.com/pmmp/BedrockBlockUpgradeSchema.git",
-                "reference": "63f5f5e02e952ffa196a4c0671d7fcf8b8cdd9a4"
+                "reference": "b0cc441e029cf5a6de5b05dd0f5657208855232b"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/pmmp/BedrockBlockUpgradeSchema/zipball/63f5f5e02e952ffa196a4c0671d7fcf8b8cdd9a4",
-                "reference": "63f5f5e02e952ffa196a4c0671d7fcf8b8cdd9a4",
+                "url": "https://api.github.com/repos/pmmp/BedrockBlockUpgradeSchema/zipball/b0cc441e029cf5a6de5b05dd0f5657208855232b",
+                "reference": "b0cc441e029cf5a6de5b05dd0f5657208855232b",
                 "shasum": ""
             },
             "default-branch": true,
@@ -352,7 +352,7 @@
                 "issues": "https://github.com/pmmp/BedrockBlockUpgradeSchema/issues",
                 "source": "https://github.com/pmmp/BedrockBlockUpgradeSchema/tree/master"
             },
-            "time": "2022-08-07T19:29:31+00:00"
+            "time": "2023-02-01T21:11:39+00:00"
         },
         {
             "name": "pocketmine/bedrock-item-upgrade-schema",
@@ -360,12 +360,12 @@
             "source": {
                 "type": "git",
                 "url": "https://github.com/pmmp/BedrockItemUpgradeSchema.git",
-                "reference": "d984d2ee7283bc52e8733e7c7da1d0f6b6dc501f"
+                "reference": "7e53f77ea34ba30b1f94d3c24e64e19d3c4296e7"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/pmmp/BedrockItemUpgradeSchema/zipball/d984d2ee7283bc52e8733e7c7da1d0f6b6dc501f",
-                "reference": "d984d2ee7283bc52e8733e7c7da1d0f6b6dc501f",
+                "url": "https://api.github.com/repos/pmmp/BedrockItemUpgradeSchema/zipball/7e53f77ea34ba30b1f94d3c24e64e19d3c4296e7",
+                "reference": "7e53f77ea34ba30b1f94d3c24e64e19d3c4296e7",
                 "shasum": ""
             },
             "default-branch": true,
@@ -377,9 +377,9 @@
             "description": "JSON schemas for upgrading items found in older Minecraft: Bedrock world saves",
             "support": {
                 "issues": "https://github.com/pmmp/BedrockItemUpgradeSchema/issues",
-                "source": "https://github.com/pmmp/BedrockItemUpgradeSchema/tree/master"
+                "source": "https://github.com/pmmp/BedrockItemUpgradeSchema/tree/1.0.0"
             },
-            "time": "2022-06-08T13:47:48+00:00"
+            "time": "2023-02-01T22:50:02+00:00"
         },
         {
             "name": "pocketmine/binaryutils",
@@ -1783,16 +1783,16 @@
         },
         {
             "name": "phpstan/phpstan",
-            "version": "1.9.13",
+            "version": "1.9.16",
             "source": {
                 "type": "git",
                 "url": "https://github.com/phpstan/phpstan.git",
-                "reference": "a0922426da3a7d0d9334e99a363f7f9f6e23e84f"
+                "reference": "922e2689bb180575d0f57de0443c431a5a698e8f"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/phpstan/phpstan/zipball/a0922426da3a7d0d9334e99a363f7f9f6e23e84f",
-                "reference": "a0922426da3a7d0d9334e99a363f7f9f6e23e84f",
+                "url": "https://api.github.com/repos/phpstan/phpstan/zipball/922e2689bb180575d0f57de0443c431a5a698e8f",
+                "reference": "922e2689bb180575d0f57de0443c431a5a698e8f",
                 "shasum": ""
             },
             "require": {
@@ -1822,7 +1822,7 @@
             ],
             "support": {
                 "issues": "https://github.com/phpstan/phpstan/issues",
-                "source": "https://github.com/phpstan/phpstan/tree/1.9.13"
+                "source": "https://github.com/phpstan/phpstan/tree/1.9.16"
             },
             "funding": [
                 {
@@ -1838,20 +1838,20 @@
                     "type": "tidelift"
                 }
             ],
-            "time": "2023-01-18T15:26:53+00:00"
+            "time": "2023-02-07T10:42:21+00:00"
         },
         {
             "name": "phpstan/phpstan-phpunit",
-            "version": "1.3.3",
+            "version": "1.3.4",
             "source": {
                 "type": "git",
                 "url": "https://github.com/phpstan/phpstan-phpunit.git",
-                "reference": "54a24bd23e9e80ee918cdc24f909d376c2e273f7"
+                "reference": "d77af96c1aaec28f7c0293677132eaaad079e01b"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/phpstan/phpstan-phpunit/zipball/54a24bd23e9e80ee918cdc24f909d376c2e273f7",
-                "reference": "54a24bd23e9e80ee918cdc24f909d376c2e273f7",
+                "url": "https://api.github.com/repos/phpstan/phpstan-phpunit/zipball/d77af96c1aaec28f7c0293677132eaaad079e01b",
+                "reference": "d77af96c1aaec28f7c0293677132eaaad079e01b",
                 "shasum": ""
             },
             "require": {
@@ -1888,9 +1888,9 @@
             "description": "PHPUnit extensions and rules for PHPStan",
             "support": {
                 "issues": "https://github.com/phpstan/phpstan-phpunit/issues",
-                "source": "https://github.com/phpstan/phpstan-phpunit/tree/1.3.3"
+                "source": "https://github.com/phpstan/phpstan-phpunit/tree/1.3.4"
             },
-            "time": "2022-12-21T15:25:00+00:00"
+            "time": "2023-02-09T08:05:29+00:00"
         },
         {
             "name": "phpstan/phpstan-strict-rules",
@@ -2260,16 +2260,16 @@
         },
         {
             "name": "phpunit/phpunit",
-            "version": "9.5.28",
+            "version": "9.6.3",
             "source": {
                 "type": "git",
                 "url": "https://github.com/sebastianbergmann/phpunit.git",
-                "reference": "954ca3113a03bf780d22f07bf055d883ee04b65e"
+                "reference": "e7b1615e3e887d6c719121c6d4a44b0ab9645555"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/sebastianbergmann/phpunit/zipball/954ca3113a03bf780d22f07bf055d883ee04b65e",
-                "reference": "954ca3113a03bf780d22f07bf055d883ee04b65e",
+                "url": "https://api.github.com/repos/sebastianbergmann/phpunit/zipball/e7b1615e3e887d6c719121c6d4a44b0ab9645555",
+                "reference": "e7b1615e3e887d6c719121c6d4a44b0ab9645555",
                 "shasum": ""
             },
             "require": {
@@ -2311,7 +2311,7 @@
             "type": "library",
             "extra": {
                 "branch-alias": {
-                    "dev-master": "9.5-dev"
+                    "dev-master": "9.6-dev"
                 }
             },
             "autoload": {
@@ -2342,7 +2342,7 @@
             ],
             "support": {
                 "issues": "https://github.com/sebastianbergmann/phpunit/issues",
-                "source": "https://github.com/sebastianbergmann/phpunit/tree/9.5.28"
+                "source": "https://github.com/sebastianbergmann/phpunit/tree/9.6.3"
             },
             "funding": [
                 {
@@ -2358,7 +2358,7 @@
                     "type": "tidelift"
                 }
             ],
-            "time": "2023-01-14T12:32:24+00:00"
+            "time": "2023-02-04T13:37:15+00:00"
         },
         {
             "name": "sebastian/cli-parser",
@@ -2726,16 +2726,16 @@
         },
         {
             "name": "sebastian/environment",
-            "version": "5.1.4",
+            "version": "5.1.5",
             "source": {
                 "type": "git",
                 "url": "https://github.com/sebastianbergmann/environment.git",
-                "reference": "1b5dff7bb151a4db11d49d90e5408e4e938270f7"
+                "reference": "830c43a844f1f8d5b7a1f6d6076b784454d8b7ed"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/sebastianbergmann/environment/zipball/1b5dff7bb151a4db11d49d90e5408e4e938270f7",
-                "reference": "1b5dff7bb151a4db11d49d90e5408e4e938270f7",
+                "url": "https://api.github.com/repos/sebastianbergmann/environment/zipball/830c43a844f1f8d5b7a1f6d6076b784454d8b7ed",
+                "reference": "830c43a844f1f8d5b7a1f6d6076b784454d8b7ed",
                 "shasum": ""
             },
             "require": {
@@ -2777,7 +2777,7 @@
             ],
             "support": {
                 "issues": "https://github.com/sebastianbergmann/environment/issues",
-                "source": "https://github.com/sebastianbergmann/environment/tree/5.1.4"
+                "source": "https://github.com/sebastianbergmann/environment/tree/5.1.5"
             },
             "funding": [
                 {
@@ -2785,7 +2785,7 @@
                     "type": "github"
                 }
             ],
-            "time": "2022-04-03T09:37:03+00:00"
+            "time": "2023-02-03T06:03:51+00:00"
         },
         {
             "name": "sebastian/exporter",
@@ -3099,16 +3099,16 @@
         },
         {
             "name": "sebastian/recursion-context",
-            "version": "4.0.4",
+            "version": "4.0.5",
             "source": {
                 "type": "git",
                 "url": "https://github.com/sebastianbergmann/recursion-context.git",
-                "reference": "cd9d8cf3c5804de4341c283ed787f099f5506172"
+                "reference": "e75bd0f07204fec2a0af9b0f3cfe97d05f92efc1"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/sebastianbergmann/recursion-context/zipball/cd9d8cf3c5804de4341c283ed787f099f5506172",
-                "reference": "cd9d8cf3c5804de4341c283ed787f099f5506172",
+                "url": "https://api.github.com/repos/sebastianbergmann/recursion-context/zipball/e75bd0f07204fec2a0af9b0f3cfe97d05f92efc1",
+                "reference": "e75bd0f07204fec2a0af9b0f3cfe97d05f92efc1",
                 "shasum": ""
             },
             "require": {
@@ -3147,10 +3147,10 @@
                 }
             ],
             "description": "Provides functionality to recursively process PHP variables",
-            "homepage": "http://www.github.com/sebastianbergmann/recursion-context",
+            "homepage": "https://github.com/sebastianbergmann/recursion-context",
             "support": {
                 "issues": "https://github.com/sebastianbergmann/recursion-context/issues",
-                "source": "https://github.com/sebastianbergmann/recursion-context/tree/4.0.4"
+                "source": "https://github.com/sebastianbergmann/recursion-context/tree/4.0.5"
             },
             "funding": [
                 {
@@ -3158,7 +3158,7 @@
                     "type": "github"
                 }
             ],
-            "time": "2020-10-26T13:17:30+00:00"
+            "time": "2023-02-03T06:07:39+00:00"
         },
         {
             "name": "sebastian/resource-operations",
@@ -3217,16 +3217,16 @@
         },
         {
             "name": "sebastian/type",
-            "version": "3.2.0",
+            "version": "3.2.1",
             "source": {
                 "type": "git",
                 "url": "https://github.com/sebastianbergmann/type.git",
-                "reference": "fb3fe09c5f0bae6bc27ef3ce933a1e0ed9464b6e"
+                "reference": "75e2c2a32f5e0b3aef905b9ed0b179b953b3d7c7"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/sebastianbergmann/type/zipball/fb3fe09c5f0bae6bc27ef3ce933a1e0ed9464b6e",
-                "reference": "fb3fe09c5f0bae6bc27ef3ce933a1e0ed9464b6e",
+                "url": "https://api.github.com/repos/sebastianbergmann/type/zipball/75e2c2a32f5e0b3aef905b9ed0b179b953b3d7c7",
+                "reference": "75e2c2a32f5e0b3aef905b9ed0b179b953b3d7c7",
                 "shasum": ""
             },
             "require": {
@@ -3261,7 +3261,7 @@
             "homepage": "https://github.com/sebastianbergmann/type",
             "support": {
                 "issues": "https://github.com/sebastianbergmann/type/issues",
-                "source": "https://github.com/sebastianbergmann/type/tree/3.2.0"
+                "source": "https://github.com/sebastianbergmann/type/tree/3.2.1"
             },
             "funding": [
                 {
@@ -3269,7 +3269,7 @@
                     "type": "github"
                 }
             ],
-            "time": "2022-09-12T14:47:03+00:00"
+            "time": "2023-02-03T06:13:03+00:00"
         },
         {
             "name": "sebastian/version",

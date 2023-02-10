@@ -96,7 +96,8 @@ final class CraftingDataCache{
 			ProtocolInfo::PROTOCOL_1_19_10,
 			ProtocolInfo::PROTOCOL_1_19_20,
 			ProtocolInfo::PROTOCOL_1_19_40,
-			ProtocolInfo::PROTOCOL_1_19_50
+			ProtocolInfo::PROTOCOL_1_19_50,
+			ProtocolInfo::PROTOCOL_1_19_60
 		];
 		foreach($protocolIds as $protocolId){
 			$counter = 0;

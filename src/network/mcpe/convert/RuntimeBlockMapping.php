@@ -61,6 +61,10 @@ final class RuntimeBlockMapping{
 				self::BLOCK_PALETTE_PATH => '',
 				self::META_MAP_PATH => '',
 			],
+			ProtocolInfo::PROTOCOL_1_19_50 => [
+				self::BLOCK_PALETTE_PATH => '-1.19.50',
+				self::META_MAP_PATH => '-1.19.50',
+			],
 			ProtocolInfo::PROTOCOL_1_19_20 => [
 				self::BLOCK_PALETTE_PATH => '-1.19.20',
 				self::META_MAP_PATH => '-1.19.20',
