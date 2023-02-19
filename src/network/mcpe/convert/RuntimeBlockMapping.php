@@ -37,6 +37,7 @@ use pocketmine\utils\ProtocolSingletonTrait;
 use pocketmine\world\format\io\GlobalBlockStateHandlers;
 use Symfony\Component\Filesystem\Path;
 use const pocketmine\BEDROCK_BLOCK_UPGRADE_SCHEMA_PATH;
+use function file_get_contents;
 
 /**
  * @internal
@@ -113,7 +114,7 @@ final class RuntimeBlockMapping{
 		//lookup the state data from the dictionary to avoid keeping two copies of the same data around
 		$this->fallbackStateData = $this->blockStateDictionary->getDataFromStateId($this->fallbackStateId) ?? throw new AssumptionFailedError("We just looked up this state data, so it must exist");
 	}
-
+	
 	public function toRuntimeId(int $internalStateId) : int{
 		if(isset($this->networkIdCache[$internalStateId])){
 			return $this->networkIdCache[$internalStateId];
@@ -160,6 +161,8 @@ final class RuntimeBlockMapping{
 
 	public static function convertProtocol(int $protocolId) : int{
 		return match ($protocolId) {
+			ProtocolInfo::PROTOCOL_1_19_62 => ProtocolInfo::PROTOCOL_1_19_60,
+
 			ProtocolInfo::PROTOCOL_1_19_30,
 			ProtocolInfo::PROTOCOL_1_19_21,
 			ProtocolInfo::PROTOCOL_1_19_20 => ProtocolInfo::PROTOCOL_1_19_40,
