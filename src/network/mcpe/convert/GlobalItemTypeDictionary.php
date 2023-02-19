@@ -53,10 +53,9 @@ final class GlobalItemTypeDictionary{
 
 	public function getDictionary() : ItemTypeDictionary{ return $this->dictionary; }
 
-	public static function convertProtocol(int $protocolId) : int{
+	public static function convertProtool(int $protocolId) : int{
 		return match ($protocolId) {
 			ProtocolInfo::PROTOCOL_1_19_62 => ProtocolInfo::PROTOCOL_1_19_60,
-
 
 			ProtocolInfo::PROTOCOL_1_19_30,
 			ProtocolInfo::PROTOCOL_1_19_21,
