@@ -94,7 +94,7 @@ final class ItemTranslator{
 		$itemData = $this->itemSerializer->serializeType($item);
 
 		if($this->itemDataDowngrader !== null){
-			[$name, $meta] = $this->itemDataDowngrader->downgradeStringIdMeta($itemData->getName(), $itemData->getMeta());
+			[$name, $meta] = $this->itemDataDowngrader->downgrade($itemData->getName(), $itemData->getMeta());
 
 			try {
 				$numericId = $this->itemTypeDictionary->fromStringId($name);
@@ -157,7 +157,7 @@ final class ItemTranslator{
 			}
 		}
 
-		[$stringId, $networkMeta] = GlobalItemDataHandlers::getUpgrader()->getIdMetaUpgrader()->upgradeStringIdMeta($stringId, $networkMeta);
+		[$stringId, $networkMeta] = GlobalItemDataHandlers::getUpgrader()->getIdMetaUpgrader()->upgrade($stringId, $networkMeta);
 
 		try{
 			return $this->itemDeserializer->deserializeType(new SavedItemData($stringId, $networkMeta, $blockStateData));

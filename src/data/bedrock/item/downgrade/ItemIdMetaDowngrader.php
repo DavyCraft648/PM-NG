@@ -45,11 +45,11 @@ final class ItemIdMetaDowngrader{
 		array $idMetaDowngradeSchemas,
 	){
 		foreach($idMetaDowngradeSchemas as $schema){
-			$this->addIdMetaDowngradeSchema($schema);
+			$this->addSchema($schema);
 		}
 	}
 
-	public function addIdMetaDowngradeSchema(ItemIdMetaDowngradeSchema $schema) : void{
+	public function addSchema(ItemIdMetaDowngradeSchema $schema) : void{
 		if(isset($this->idMetaDowngradeSchemas[$schema->getSchemaId()])){
 			throw new \InvalidArgumentException("Already have a schema with priority " . $schema->getSchemaId());
 		}
@@ -60,7 +60,7 @@ final class ItemIdMetaDowngrader{
 	/**
 	 * @phpstan-return array{string, int}
 	 */
-	public function downgradeStringIdMeta(string $id, int $meta) : array{
+	public function downgrade(string $id, int $meta) : array{
 		$newId = $id;
 		$newMeta = $meta;
 		foreach($this->idMetaDowngradeSchemas as $schema){
