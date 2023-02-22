@@ -225,6 +225,14 @@ abstract class Timings{
 		);
 	}
 
+	public static function getEncodeDataPacketTimings(ClientboundPacket $pk) : TimingsHandler{
+		$pid = $pk->pid();
+		return self::$packetEncodeTimingMap[$pid] ??= new TimingsHandler(
+			self::INCLUDED_BY_OTHER_TIMINGS_PREFIX . "Encode - " . $pk->getName() . " [0x" . dechex($pid) . "]",
+			self::getSendDataPacketTimings($pk)
+		);
+	}
+
 	public static function getSendDataPacketTimings(ClientboundPacket $pk) : TimingsHandler{
 		self::init();
 		$pid = $pk->pid();
