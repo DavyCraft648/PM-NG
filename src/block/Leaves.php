@@ -25,8 +25,7 @@ namespace pocketmine\block;
 
 use pocketmine\block\utils\LeavesType;
 use pocketmine\block\utils\SupportType;
-use pocketmine\data\runtime\RuntimeDataReader;
-use pocketmine\data\runtime\RuntimeDataWriter;
+use pocketmine\data\runtime\RuntimeDataDescriber;
 use pocketmine\event\block\LeavesDecayEvent;
 use pocketmine\item\Item;
 use pocketmine\item\VanillaItems;
@@ -48,9 +47,7 @@ class Leaves extends Transparent{
 		$this->leavesType = $leavesType;
 	}
 
-	public function getRequiredStateDataBits() : int{ return 2; }
-
-	protected function describeState(RuntimeDataReader|RuntimeDataWriter $w) : void{
+	protected function describeState(RuntimeDataDescriber $w) : void{
 		$w->bool($this->noDecay);
 		$w->bool($this->checkDecay);
 	}

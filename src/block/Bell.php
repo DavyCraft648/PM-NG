@@ -27,8 +27,7 @@ use pocketmine\block\tile\Bell as TileBell;
 use pocketmine\block\utils\BellAttachmentType;
 use pocketmine\block\utils\HorizontalFacingTrait;
 use pocketmine\block\utils\SupportType;
-use pocketmine\data\runtime\RuntimeDataReader;
-use pocketmine\data\runtime\RuntimeDataWriter;
+use pocketmine\data\runtime\RuntimeDataDescriber;
 use pocketmine\entity\projectile\Projectile;
 use pocketmine\item\Item;
 use pocketmine\math\AxisAlignedBB;
@@ -49,9 +48,7 @@ final class Bell extends Transparent{
 		parent::__construct($idInfo, $name, $typeInfo);
 	}
 
-	public function getRequiredStateDataBits() : int{ return 4; }
-
-	protected function describeState(RuntimeDataReader|RuntimeDataWriter $w) : void{
+	protected function describeState(RuntimeDataDescriber $w) : void{
 		$w->bellAttachmentType($this->attachmentType);
 		$w->horizontalFacing($this->facing);
 	}
