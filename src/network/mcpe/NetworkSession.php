@@ -187,7 +187,7 @@ class NetworkSession{
 
 	private ?EncryptionContext $cipher = null;
 
-	/** @var ClientboundPacket[] */
+	/** @var string[] */
 	private array $sendBuffer = [];
 	/** @var string[] */
 	private array $chunkCacheBlobs = [];
@@ -305,23 +305,6 @@ class NetworkSession{
 		}
 
 		return null;
-	}
-
-	/**
-	 * @param ClientboundPacket[] $packets
-	 */
-	public static function encodePacketBatchTimed(int $protocolId, BinaryStream $stream, PacketSerializerContext $context, array $packets) : void{
-		PacketBatch::encodeRaw($stream, array_map(function(ClientboundPacket $packet) use ($protocolId, $context) : string{
-			$timings = Timings::getEncodeDataPacketTimings($packet);
-			$timings->startTiming();
-			try{
-				$stream = PacketSerializer::encoder($context, $protocolId);
-				$packet->encode($stream);
-				return $stream->getBuffer();
-			}finally{
-				$timings->stopTiming();
-			}
-		}, $packets));
 	}
 
 	private function onPlayerCreated(Player $player) : void{
@@ -574,7 +557,7 @@ class NetworkSession{
 			$packets = $ev->getPackets();
 
 			foreach($packets as $evPacket){
-				$this->addToSendBuffer($evPacket);
+				$this->addToSendBuffer(self::encodePacketTimed(PacketSerializer::encoder($this->packetSerializerContext, $this->getProtocolId()), $evPacket));
 			}
 			if($immediate){
 				$this->flushSendBuffer(true);
@@ -589,14 +572,22 @@ class NetworkSession{
 	/**
 	 * @internal
 	 */
-	public function addToSendBuffer(ClientboundPacket $packet) : void{
-		$timings = Timings::getSendDataPacketTimings($packet);
+	public static function encodePacketTimed(PacketSerializer $serializer, ClientboundPacket $packet) : string{
+		$timings = Timings::getEncodeDataPacketTimings($packet);
 		$timings->startTiming();
 		try{
-			$this->sendBuffer[] = $packet;
+			$packet->encode($serializer);
+			return $serializer->getBuffer();
 		}finally{
 			$timings->stopTiming();
 		}
+	}
+
+	/**
+	 * @internal
+	 */
+	public function addToSendBuffer(string $buffer) : void{
+		$this->sendBuffer[] = $buffer;
 	}
 
 	private function flushSendBuffer(bool $immediate = false) : void{
@@ -611,7 +602,7 @@ class NetworkSession{
 				}
 
 				$stream = new BinaryStream();
-				self::encodePacketBatchTimed($this->getProtocolId(), $stream, $this->packetSerializerContext, $this->sendBuffer);
+				PacketBatch::encodeRaw($stream, $this->sendBuffer);
 
 				if($this->enableCompression){
 					$promise = $this->server->prepareBatch(new PacketBatch($stream->getBuffer()), $this->compressor, $syncMode);
