@@ -23,12 +23,12 @@ declare(strict_types=1);
 
 namespace pocketmine\network\mcpe\convert;
 
+use pocketmine\data\bedrock\BedrockDataFiles;
 use pocketmine\network\mcpe\protocol\ProtocolInfo;
 use pocketmine\network\mcpe\protocol\serializer\ItemTypeDictionary;
 use pocketmine\player\Player;
 use pocketmine\utils\Filesystem;
 use pocketmine\utils\SingletonTrait;
-use Symfony\Component\Filesystem\Path;
 
 final class GlobalItemTypeDictionary{
 	use SingletonTrait;
@@ -44,7 +44,7 @@ final class GlobalItemTypeDictionary{
 		$dictionaries = [];
 
 		foreach ($protocolPaths as $protocolId => $path){
-			$data = Filesystem::fileGetContents(Path::join(\pocketmine\BEDROCK_DATA_PATH, 'required_item_list' . $path . '.json'));
+			$data = Filesystem::fileGetContents(BedrockDataFiles::REQUIRED_ITEM_LIST_JSON);
 			$dictionaries[$protocolId] = ItemTypeDictionaryFromDataHelper::loadFromString($data);
 		}
 

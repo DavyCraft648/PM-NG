@@ -45,11 +45,11 @@ final class ItemIdMetaUpgrader{
 		array $idMetaUpgradeSchemas,
 	){
 		foreach($idMetaUpgradeSchemas as $schema){
-			$this->addIdMetaUpgradeSchema($schema);
+			$this->addSchema($schema);
 		}
 	}
 
-	public function addIdMetaUpgradeSchema(ItemIdMetaUpgradeSchema $schema) : void{
+	public function addSchema(ItemIdMetaUpgradeSchema $schema) : void{
 		if(isset($this->idMetaUpgradeSchemas[$schema->getSchemaId()])){
 			throw new \InvalidArgumentException("Already have a schema with priority " . $schema->getSchemaId());
 		}
@@ -60,7 +60,7 @@ final class ItemIdMetaUpgrader{
 	/**
 	 * @phpstan-return array{string, int}
 	 */
-	public function upgradeStringIdMeta(string $id, int $meta) : array{
+	public function upgrade(string $id, int $meta) : array{
 		$newId = $id;
 		$newMeta = $meta;
 		foreach($this->idMetaUpgradeSchemas as $schema){

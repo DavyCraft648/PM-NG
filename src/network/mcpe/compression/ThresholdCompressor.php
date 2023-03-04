@@ -21,14 +21,11 @@
 
 declare(strict_types=1);
 
-namespace pocketmine\data\bedrock;
+namespace pocketmine\network\mcpe\compression;
 
-use pocketmine\utils\SingletonTrait;
-
-final class LegacyBiomeIdToStringIdMap extends LegacyToStringIdMap{
-	use SingletonTrait;
-
-	public function __construct(){
-		parent::__construct(BedrockDataFiles::BIOME_ID_MAP_JSON);
-	}
+interface ThresholdCompressor extends Compressor{
+	/**
+	 * Returns the minimum size of packet batch that will be compressed. Null means that no packets will be compressed.
+	 */
+	public function getCompressionThreshold() : ?int;
 }
