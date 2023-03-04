@@ -34,6 +34,7 @@ use pocketmine\network\mcpe\JwtUtils;
 use pocketmine\network\mcpe\NetworkSession;
 use pocketmine\network\mcpe\protocol\LoginPacket;
 use pocketmine\network\mcpe\protocol\PlayStatusPacket;
+use pocketmine\network\mcpe\protocol\ProtocolInfo;
 use pocketmine\network\mcpe\protocol\types\login\AuthenticationData;
 use pocketmine\network\mcpe\protocol\types\login\ClientData;
 use pocketmine\network\mcpe\protocol\types\login\ClientDataToSkinDataHelper;
@@ -91,16 +92,8 @@ class LoginPacketHandler extends ChunkRequestPacketHandler{
 		$major = (int) $matches[1];
 		$minor = (int) $matches[2];
 		$patch = (int) $matches[3];
-		if($major === 1 && $minor === 19 && $patch < 62){
-			$this->session->sendDataPacket(PlayStatusPacket::create(PlayStatusPacket::LOGIN_FAILED_CLIENT), true);
-
-			//This pocketmine disconnect message will only be seen by the console (PlayStatusPacket causes the messages to be shown for the client)
-			$this->session->disconnect(
-				KnownTranslationFactory::pocketmine_disconnect_incompatibleProtocol("$packet->protocol (< v1.19.62)"),
-				notify: false
-			);
-
-			return true;
+		if($major === 1 && $minor === 19 && $patch === 62){
+			$this->session->setProtocolId(ProtocolInfo::PROTOCOL_1_19_63);
 		}
 
 		try{

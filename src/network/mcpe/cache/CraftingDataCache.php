@@ -75,6 +75,7 @@ final class CraftingDataCache{
 			$this->caches[$id] = $this->buildCraftingDataCache($manager);
 		}
 		return $this->caches[$id][match($dictionaryProtocol){
+			ProtocolInfo::PROTOCOL_1_19_63 => ProtocolInfo::PROTOCOL_1_19_60,
 			ProtocolInfo::PROTOCOL_1_19_21, ProtocolInfo::PROTOCOL_1_19_30 => ProtocolInfo::PROTOCOL_1_19_20,
 			default => $dictionaryProtocol
 		}];

@@ -144,6 +144,9 @@ final class RuntimeBlockMapping{
 	public function getFallbackStateData(int $mappingProtocol) : BlockStateData{ return $this->fallbackStateData[$mappingProtocol]; }
 
 	public static function getMappingProtocol(int $protocolId) : int{
+		if($protocolId === ProtocolInfo::PROTOCOL_1_19_60){
+			return ProtocolInfo::PROTOCOL_1_19_63;
+		}
 		if($protocolId <= ProtocolInfo::PROTOCOL_1_19_10){
 			return ProtocolInfo::PROTOCOL_1_19_0;
 		}
