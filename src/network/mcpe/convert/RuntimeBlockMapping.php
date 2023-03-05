@@ -86,7 +86,6 @@ final class RuntimeBlockMapping{
 	private BlockStateData $fallbackStateData;
 	private int $fallbackStateId;
 
-
 	private static function make(int $protocolId) : self{
 		$canonicalBlockStatesRaw = Filesystem::fileGetContents(str_replace(".nbt", self::PATHS[$protocolId][self::CANONICAL_BLOCK_STATES_PATH] . ".nbt", BedrockDataFiles::CANONICAL_BLOCK_STATES_NBT));
 		$metaMappingRaw = Filesystem::fileGetContents(str_replace(".json", self::PATHS[$protocolId][self::BLOCK_STATE_META_MAP_PATH] . ".json", BedrockDataFiles::BLOCK_STATE_META_MAP_JSON));
@@ -175,8 +174,13 @@ final class RuntimeBlockMapping{
 
 	private static function getBlockStateSchemaId(int $protocolId) : ?int{
 		return match($protocolId){
+			ProtocolInfo::PROTOCOL_1_19_63,
 			ProtocolInfo::PROTOCOL_1_19_60 => null,
-			ProtocolInfo::PROTOCOL_1_19_50, ProtocolInfo::PROTOCOL_1_19_40, ProtocolInfo::PROTOCOL_1_19_10 => 161,
+			
+			ProtocolInfo::PROTOCOL_1_19_50,
+			ProtocolInfo::PROTOCOL_1_19_40,
+			ProtocolInfo::PROTOCOL_1_19_10 => 161,
+
 			ProtocolInfo::PROTOCOL_1_19_0 => 151,
 			ProtocolInfo::PROTOCOL_1_18_30 => 141,
 			ProtocolInfo::PROTOCOL_1_18_10 => 121,

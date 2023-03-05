@@ -23,11 +23,11 @@ declare(strict_types=1);
 
 namespace pocketmine\network\mcpe\convert;
 
-use pocketmine\network\mcpe\protocol\ProtocolInfo;
-use pocketmine\utils\ProtocolSingletonTrait;
 use pocketmine\data\bedrock\BedrockDataFiles;
+use pocketmine\network\mcpe\protocol\ProtocolInfo;
 use pocketmine\network\mcpe\protocol\serializer\ItemTypeDictionary;
 use pocketmine\utils\Filesystem;
+use pocketmine\utils\ProtocolSingletonTrait;
 use function str_replace;
 
 final class GlobalItemTypeDictionary{
