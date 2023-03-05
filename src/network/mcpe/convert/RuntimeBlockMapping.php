@@ -176,7 +176,7 @@ final class RuntimeBlockMapping{
 		return match($protocolId){
 			ProtocolInfo::PROTOCOL_1_19_63,
 			ProtocolInfo::PROTOCOL_1_19_60 => null,
-			
+
 			ProtocolInfo::PROTOCOL_1_19_50,
 			ProtocolInfo::PROTOCOL_1_19_40,
 			ProtocolInfo::PROTOCOL_1_19_10 => 161,
