@@ -23,6 +23,7 @@ declare(strict_types=1);
 
 namespace pocketmine\network\mcpe\convert;
 
+use pocketmine\data\bedrock\BedrockDataFiles;
 use pocketmine\data\bedrock\block\BlockStateData;
 use pocketmine\data\bedrock\block\BlockStateSerializeException;
 use pocketmine\data\bedrock\block\BlockStateSerializer;
@@ -36,6 +37,7 @@ use pocketmine\utils\Filesystem;
 use pocketmine\utils\ProtocolSingletonTrait;
 use pocketmine\world\format\io\GlobalBlockStateHandlers;
 use Symfony\Component\Filesystem\Path;
+use function str_replace;
 use const pocketmine\BEDROCK_BLOCK_UPGRADE_SCHEMA_PATH;
 
 /**
@@ -84,9 +86,10 @@ final class RuntimeBlockMapping{
 	private BlockStateData $fallbackStateData;
 	private int $fallbackStateId;
 
+
 	private static function make(int $protocolId) : self{
-		$canonicalBlockStatesRaw = Filesystem::fileGetContents(Path::join(\pocketmine\BEDROCK_DATA_PATH, "canonical_block_states" . self::PATHS[$protocolId][self::CANONICAL_BLOCK_STATES_PATH] . ".nbt"));
-		$metaMappingRaw = Filesystem::fileGetContents(Path::join(\pocketmine\BEDROCK_DATA_PATH, 'block_state_meta_map' . self::PATHS[$protocolId][self::BLOCK_STATE_META_MAP_PATH] . '.json'));
+		$canonicalBlockStatesRaw = Filesystem::fileGetContents(str_replace(".nbt", self::PATHS[$protocolId][self::CANONICAL_BLOCK_STATES_PATH] . ".nbt", BedrockDataFiles::CANONICAL_BLOCK_STATES_NBT));
+		$metaMappingRaw = Filesystem::fileGetContents(str_replace(".json", self::PATHS[$protocolId][self::BLOCK_STATE_META_MAP_PATH] . ".json", BedrockDataFiles::BLOCK_STATE_META_MAP_JSON));
 
 		if(($blockStateSchemaId = self::getBlockStateSchemaId($protocolId)) !== null){
 			$blockStateDowngrader = new BlockStateDowngrader(BlockStateDowngradeSchemaUtils::loadSchemas(
@@ -160,7 +163,7 @@ final class RuntimeBlockMapping{
 
 	public static function convertProtocol(int $protocolId) : int{
 		return match ($protocolId) {
-			ProtocolInfo::PROTOCOL_1_19_62 => ProtocolInfo::PROTOCOL_1_19_60,
+			ProtocolInfo::PROTOCOL_1_19_60 => ProtocolInfo::PROTOCOL_1_19_63,
 
 			ProtocolInfo::PROTOCOL_1_19_30,
 			ProtocolInfo::PROTOCOL_1_19_21,

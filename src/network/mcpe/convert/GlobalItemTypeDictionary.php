@@ -24,10 +24,11 @@ declare(strict_types=1);
 namespace pocketmine\network\mcpe\convert;
 
 use pocketmine\network\mcpe\protocol\ProtocolInfo;
+use pocketmine\utils\ProtocolSingletonTrait;
+use pocketmine\data\bedrock\BedrockDataFiles;
 use pocketmine\network\mcpe\protocol\serializer\ItemTypeDictionary;
 use pocketmine\utils\Filesystem;
-use pocketmine\utils\ProtocolSingletonTrait;
-use Symfony\Component\Filesystem\Path;
+use function str_replace;
 
 final class GlobalItemTypeDictionary{
 	use ProtocolSingletonTrait;
@@ -42,7 +43,7 @@ final class GlobalItemTypeDictionary{
 	];
 
 	private static function make(int $protocolId) : self{
-		$data = Filesystem::fileGetContents(Path::join(\pocketmine\BEDROCK_DATA_PATH, 'required_item_list' . self::PATHS[$protocolId] . '.json'));
+		$data = Filesystem::fileGetContents(str_replace(".json", self::PATHS[$protocolId] . ".json", BedrockDataFiles::REQUIRED_ITEM_LIST_JSON));
 		$dictionary = ItemTypeDictionaryFromDataHelper::loadFromString($data);
 		return new self($dictionary);
 	}
@@ -55,7 +56,7 @@ final class GlobalItemTypeDictionary{
 
 	public static function convertProtocol(int $protocolId) : int{
 		return match ($protocolId) {
-			ProtocolInfo::PROTOCOL_1_19_62 => ProtocolInfo::PROTOCOL_1_19_60,
+			ProtocolInfo::PROTOCOL_1_19_60 => ProtocolInfo::PROTOCOL_1_19_63,
 
 			ProtocolInfo::PROTOCOL_1_19_30,
 			ProtocolInfo::PROTOCOL_1_19_21,
