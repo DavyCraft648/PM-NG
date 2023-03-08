@@ -109,9 +109,7 @@ use pocketmine\network\mcpe\protocol\types\entity\MetadataProperty;
 use pocketmine\network\mcpe\protocol\types\entity\PropertySyncData;
 use pocketmine\network\mcpe\protocol\types\inventory\ContainerIds;
 use pocketmine\network\mcpe\protocol\types\inventory\ItemStackWrapper;
-use pocketmine\network\mcpe\protocol\types\PlayerListAdditionEntries;
-use pocketmine\network\mcpe\protocol\types\PlayerListAdditionEntry;
-use pocketmine\network\mcpe\protocol\types\PlayerListRemovalEntries;
+use pocketmine\network\mcpe\protocol\types\PlayerListEntry;
 use pocketmine\network\mcpe\protocol\types\PlayerPermissions;
 use pocketmine\network\mcpe\protocol\UpdateAbilitiesPacket;
 use pocketmine\network\mcpe\protocol\UpdateAdventureSettingsPacket;
@@ -151,7 +149,6 @@ use function min;
 use function random_bytes;
 use function strcasecmp;
 use function strlen;
-use function strpos;
 use function strtolower;
 use function substr;
 use function time;
@@ -231,16 +228,23 @@ class NetworkSession{
 		$this->compressedQueue = new \SplQueue();
 
 		//TODO: allow this to be injected
-		$this->packetSerializerContext = new PacketSerializerContext(GlobalItemTypeDictionary::getInstance()->getDictionary(ProtocolInfo::CURRENT_PROTOCOL));
+		$this->packetSerializerContext = new PacketSerializerContext(GlobalItemTypeDictionary::getInstance()->getDictionary());
 
 		$this->disposeHooks = new ObjectSet();
 
 		$this->connectTime = time();
 		$this->lastPacketBudgetUpdateTimeNs = hrtime(true);
 
-		$this->setHandler(new SessionStartPacketHandler(
+		$this->setHandler(new LoginPacketHandler(
+			$this->server,
 			$this,
-			fn() => $this->onSessionStartSuccess()
+			function(PlayerInfo $info) : void{
+				$this->info = $info;
+				$this->logger->info($this->server->getLanguage()->translate(KnownTranslationFactory::pocketmine_network_session_playerName(TextFormat::AQUA . $info->getUsername() . TextFormat::RESET)));
+				$this->logger->setPrefix($this->getLogPrefix());
+				$this->manager->markLoginReceived($this);
+			},
+			\Closure::fromCallable([$this, "setAuthenticationStatus"])
 		));
 
 		$this->manager->add($this);
@@ -394,11 +398,19 @@ class NetworkSession{
 		$this->protocolId = $protocolId;
 
 		$this->broadcaster = RakLibInterface::getBroadcaster($this->server, $protocolId);
-		$this->packetSerializerContext = new PacketSerializerContext(GlobalItemTypeDictionary::getInstance()->getDictionary(GlobalItemTypeDictionary::getDictionaryProtocol($protocolId)));
+		$this->packetSerializerContext = new PacketSerializerContext(GlobalItemTypeDictionary::getInstance($protocolId)->getDictionary());
 	}
 
 	public function getProtocolId() : int{
 		return $this->protocolId ?? ProtocolInfo::CURRENT_PROTOCOL;
+	}
+
+	/**
+	 * @return \Closure[]|ObjectSet
+	 * @phpstan-return ObjectSet<\Closure() : void>
+	 */
+	public function getDisposeHooks() : ObjectSet{
+		return $this->disposeHooks;
 	}
 
 	/**
@@ -437,19 +449,19 @@ class NetworkSession{
 					$decompressed = $this->compressor->decompress($payload);
 				}catch(DecompressionException $e){
 					if($this->isFirstPacket){
-					$this->logger->debug("Failed to decompress packet, assuming client is using the new compression method");
+						$this->logger->debug("Failed to decompress packet, assuming client is using the new compression method");
 
-					$this->enableCompression = false;
-					$this->setHandler(new SessionStartPacketHandler(
-						$this,
-						fn() => $this->onSessionStartSuccess()
-					));
+						$this->enableCompression = false;
+						$this->setHandler(new SessionStartPacketHandler(
+							$this,
+							fn() => $this->onSessionStartSuccess()
+						));
 
-					$decompressed = $payload;
-				}else{
-					$this->logger->debug("Failed to decompress packet: " . base64_encode($payload));
-					throw PacketHandlingException::wrap($e, "Compressed packet batch decode error");
-				}
+						$decompressed = $payload;
+					}else{
+						$this->logger->debug("Failed to decompress packet: " . base64_encode($payload));
+						throw PacketHandlingException::wrap($e, "Compressed packet batch decode error");
+					}
 				}finally{
 					Timings::$playerNetworkReceiveDecompress->stopTiming();
 				}
@@ -547,7 +559,7 @@ class NetworkSession{
 			$packets = $ev->getPackets();
 
 			foreach($packets as $evPacket){
-				$this->addToSendBuffer(self::encodePacketTimed(PacketSerializer::encoder($this->packetSerializerContext), $evPacket));
+				$this->addToSendBuffer(self::encodePacketTimed(PacketSerializer::encoder($this->packetSerializerContext, $this->getProtocolId()), $evPacket));
 			}
 			if($immediate){
 				$this->flushSendBuffer(true);
@@ -595,7 +607,7 @@ class NetworkSession{
 				PacketBatch::encodeRaw($stream, $this->sendBuffer);
 
 				if($this->enableCompression){
-					$promise = $this->server->prepareBatch(new PacketBatch($stream->getBuffer()), $this->compressor, $syncMode);
+					$promise = $this->server->prepareBatch(new PacketBatch($stream->getBuffer()), $this->compressor, $syncMode, Timings::$playerNetworkSendCompressSessionBuffer);
 				}else{
 					$promise = new CompressBatchPromise();
 					$promise->resolve($stream->getBuffer());
@@ -744,8 +756,8 @@ class NetworkSession{
 	 * Instructs the remote client to connect to a different server.
 	 */
 	public function transfer(string $ip, int $port, Translatable|string|null $reason = null) : void{
-		$reason ??= KnownTranslationFactory::pocketmine_disconnect_transfer();
 		$this->flushChunkCache();
+		$reason ??= KnownTranslationFactory::pocketmine_disconnect_transfer();
 		$this->tryDisconnect(function() use ($ip, $port, $reason) : void{
 			$this->sendDataPacket(TransferPacket::create($ip, $port), true);
 			if($this->player !== null){
@@ -1175,7 +1187,7 @@ class NetworkSession{
 		$world = $this->player->getLocation()->getWorld();
 		ChunkCache::getInstance($world, $this->compressor)->request($chunkX, $chunkZ, $this->getProtocolId())->onResolve(
 
-			//this callback may be called synchronously or asynchronously, depending on whether the promise is resolved yet
+		//this callback may be called synchronously or asynchronously, depending on whether the promise is resolved yet
 			function(CachedChunkPromise $promise) use ($world, $onCompletion, $chunkX, $chunkZ) : void{
 
 				if(!$this->isConnected()){
@@ -1270,12 +1282,12 @@ class NetworkSession{
 	public function onMobMainHandItemChange(Human $mob) : void{
 		//TODO: we could send zero for slot here because remote players don't need to know which slot was selected
 		$inv = $mob->getInventory();
-		$this->sendDataPacket(MobEquipmentPacket::create($mob->getId(), ItemStackWrapper::legacy(TypeConverter::getInstance()->coreItemStackToNet($inv->getItemInHand(), $this->getProtocolId())), $inv->getHeldItemIndex(), $inv->getHeldItemIndex(), ContainerIds::INVENTORY));
+		$this->sendDataPacket(MobEquipmentPacket::create($mob->getId(), ItemStackWrapper::legacy(TypeConverter::getInstance()->coreItemStackToNet($this->getProtocolId(), $inv->getItemInHand())), $inv->getHeldItemIndex(), $inv->getHeldItemIndex(), ContainerIds::INVENTORY));
 	}
 
 	public function onMobOffHandItemChange(Human $mob) : void{
 		$inv = $mob->getOffHandInventory();
-		$this->sendDataPacket(MobEquipmentPacket::create($mob->getId(), ItemStackWrapper::legacy(TypeConverter::getInstance()->coreItemStackToNet($inv->getItem(0), $this->getProtocolId())), 0, 0, ContainerIds::OFFHAND));
+		$this->sendDataPacket(MobEquipmentPacket::create($mob->getId(), ItemStackWrapper::legacy(TypeConverter::getInstance()->coreItemStackToNet($this->getProtocolId(), $inv->getItem(0))), 0, 0, ContainerIds::OFFHAND));
 	}
 
 	public function onMobArmorChange(Living $mob) : void{
@@ -1284,10 +1296,10 @@ class NetworkSession{
 		$protocolId = $this->getProtocolId();
 		$this->sendDataPacket(MobArmorEquipmentPacket::create(
 			$mob->getId(),
-			ItemStackWrapper::legacy($converter->coreItemStackToNet($inv->getHelmet(), $protocolId)),
-			ItemStackWrapper::legacy($converter->coreItemStackToNet($inv->getChestplate(), $protocolId)),
-			ItemStackWrapper::legacy($converter->coreItemStackToNet($inv->getLeggings(), $protocolId)),
-			ItemStackWrapper::legacy($converter->coreItemStackToNet($inv->getBoots(), $protocolId))
+			ItemStackWrapper::legacy($converter->coreItemStackToNet($protocolId, $inv->getHelmet())),
+			ItemStackWrapper::legacy($converter->coreItemStackToNet($protocolId, $inv->getChestplate())),
+			ItemStackWrapper::legacy($converter->coreItemStackToNet($protocolId, $inv->getLeggings())),
+			ItemStackWrapper::legacy($converter->coreItemStackToNet($protocolId, $inv->getBoots()))
 		));
 	}
 
@@ -1299,18 +1311,18 @@ class NetworkSession{
 	 * @param Player[] $players
 	 */
 	public function syncPlayerList(array $players) : void{
-		$this->sendDataPacket(PlayerListPacket::create(new PlayerListAdditionEntries(array_map(function(Player $player) : PlayerListAdditionEntry{
-			return new PlayerListAdditionEntry($player->getUniqueId(), $player->getId(), $player->getDisplayName(), SkinAdapterSingleton::get()->toSkinData($player->getSkin()), $player->getXuid());
-		}, $players))));
+		$this->sendDataPacket(PlayerListPacket::add(array_map(function(Player $player) : PlayerListEntry{
+			return PlayerListEntry::createAdditionEntry($player->getUniqueId(), $player->getId(), $player->getDisplayName(), SkinAdapterSingleton::get()->toSkinData($player->getSkin()), $player->getXuid());
+		}, $players)));
 	}
 
 	public function onPlayerAdded(Player $p) : void{
-		$this->sendDataPacket(PlayerListPacket::create(new PlayerListAdditionEntries([new PlayerListAdditionEntry($p->getUniqueId(), $p->getId(), $p->getDisplayName(), SkinAdapterSingleton::get()->toSkinData($p->getSkin()), $p->getXuid())])));
+		$this->sendDataPacket(PlayerListPacket::add([PlayerListEntry::createAdditionEntry($p->getUniqueId(), $p->getId(), $p->getDisplayName(), SkinAdapterSingleton::get()->toSkinData($p->getSkin()), $p->getXuid())]));
 	}
 
 	public function onPlayerRemoved(Player $p) : void{
 		if($p !== $this->player){
-			$this->sendDataPacket(PlayerListPacket::create(new PlayerListRemovalEntries([$p->getUniqueId()])));
+			$this->sendDataPacket(PlayerListPacket::remove([PlayerListEntry::createRemovalEntry($p->getUniqueId())]));
 		}
 	}
 

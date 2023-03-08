@@ -25,19 +25,20 @@ namespace pocketmine\entity\animation;
 
 use pocketmine\entity\Human;
 use pocketmine\item\Item;
-use pocketmine\network\mcpe\convert\ItemTranslator;
 use pocketmine\network\mcpe\protocol\ActorEventPacket;
 use pocketmine\network\mcpe\protocol\types\ActorEvent;
 
-final class ConsumingItemAnimation extends DictionaryAnimation{
+final class ConsumingItemAnimation extends ItemAnimation{
 
 	public function __construct(
 		private Human $human, //TODO: maybe this can be expanded to more than just player entities?
-		private Item $item
-	){}
+		Item $item
+	){
+		parent::__construct($item);
+	}
 
 	public function encode() : array{
-		[$netId, $netData] = ItemTranslator::getInstance()->toNetworkId($this->item, $this->dictionaryProtocol);
+		[$netId, $netData] = $this->toNetworkId();
 		return [
 			//TODO: need to check the data values
 			ActorEventPacket::create($this->human->getId(), ActorEvent::EATING_ITEM, ($netId << 16) | $netData)

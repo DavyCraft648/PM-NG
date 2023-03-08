@@ -2018,10 +2018,6 @@ class Player extends Human implements CommandSender, ChunkListener, IPlayer{
 	 * Sends a direct chat message to a player
 	 */
 	public function sendMessage(Translatable|string $message) : void{
-		if(!$this->isConnected()){
-			return;
-		}
-
 		$this->getNetworkSession()->onChatMessage($message);
 	}
 

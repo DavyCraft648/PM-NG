@@ -24,14 +24,18 @@ declare(strict_types=1);
 namespace pocketmine\world\particle;
 
 use pocketmine\block\Block;
+use pocketmine\network\mcpe\convert\RuntimeBlockMapping;
 
-abstract class MappingParticle implements Particle{
+abstract class BlockParticle implements Particle{
 
-	protected int $mappingProtocol;
+	private int $protocolId;
 
 	public function __construct(protected Block $b){}
 
-	public function setMappingProtocol(int $mappingProtocol) : void{
-		$this->mappingProtocol = $mappingProtocol;
+	public function setProtocolId(int $protocolId) : void{
+		$this->protocolId = $protocolId;
+	}
+	public function toRuntimeId() : int{
+		return RuntimeBlockMapping::getInstance($this->protocolId)->toRuntimeId($this->b->getStateId());
 	}
 }

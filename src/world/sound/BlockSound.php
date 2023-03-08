@@ -21,11 +21,22 @@
 
 declare(strict_types=1);
 
-namespace pocketmine\network\mcpe\compression;
+namespace pocketmine\world\sound;
 
-interface ThresholdCompressor extends Compressor{
-	/**
-	 * Returns the minimum size of packet batch that will be compressed. Null means that no packets will be compressed.
-	 */
-	public function getCompressionThreshold() : ?int;
+use pocketmine\block\Block;
+use pocketmine\network\mcpe\convert\RuntimeBlockMapping;
+
+abstract class BlockSound implements Sound{
+
+	private int $protocolId;
+
+	public function __construct(private Block $block){}
+
+	public function setProtocolId(int $protocolId) : void{
+		$this->protocolId = $protocolId;
+	}
+
+	public function toRuntimeId() : int{
+		return RuntimeBlockMapping::getInstance($this->protocolId)->toRuntimeId($this->block->getStateId());
+	}
 }

@@ -198,7 +198,7 @@ class InventoryManager{
 				($action->windowId === ContainerIds::UI && isset($this->complexSlotToWindowMap[$action->inventorySlot]))
 			)){
 				try{
-					$item = TypeConverter::getInstance()->netItemStackToCore($action->newItem->getItemStack(), $this->session->getProtocolId());
+					$item = TypeConverter::getInstance()->netItemStackToCore($this->session->getProtocolId(), $action->newItem->getItemStack());
 				}catch(TypeConversionException $e){
 					throw new PacketHandlingException($e->getMessage(), 0, $e);
 				}
@@ -368,7 +368,7 @@ class InventoryManager{
 			$currentItem = $inventory->getItem($slot);
 			$clientSideItem = $this->initiatedSlotChanges[$windowId][$netSlot] ?? null;
 			if($clientSideItem === null || !$clientSideItem->equalsExact($currentItem)){
-				$itemStackWrapper = ItemStackWrapper::legacy(TypeConverter::getInstance()->coreItemStackToNet($currentItem, $this->session->getProtocolId()));
+				$itemStackWrapper = ItemStackWrapper::legacy(TypeConverter::getInstance()->coreItemStackToNet($this->session->getProtocolId(), $currentItem));
 				if($windowId === ContainerIds::OFFHAND){
 					//TODO: HACK!
 					//The client may sometimes ignore the InventorySlotPacket for the offhand slot.
@@ -403,13 +403,13 @@ class InventoryManager{
 					$this->session->sendDataPacket(InventorySlotPacket::create(
 						$windowId,
 						$packetSlot,
-						ItemStackWrapper::legacy($typeConverter->coreItemStackToNet($inventory->getItem($slotId), $this->session->getProtocolId()))
+						ItemStackWrapper::legacy($typeConverter->coreItemStackToNet($this->session->getProtocolId(), $inventory->getItem($slotId)))
 					));
 				}
 			}else{
 				unset($this->initiatedSlotChanges[$windowId]);
 				$this->session->sendDataPacket(InventoryContentPacket::create($windowId, array_map(function(Item $itemStack) use ($typeConverter) : ItemStackWrapper{
-					return ItemStackWrapper::legacy($typeConverter->coreItemStackToNet($itemStack, $this->session->getProtocolId()));
+					return ItemStackWrapper::legacy($typeConverter->coreItemStackToNet($this->session->getProtocolId(), $itemStack));
 				}, $inventory->getContents(true))));
 			}
 		}
@@ -463,7 +463,7 @@ class InventoryManager{
 		if($selected !== $this->clientSelectedHotbarSlot){
 			$this->session->sendDataPacket(MobEquipmentPacket::create(
 				$this->player->getId(),
-				ItemStackWrapper::legacy(TypeConverter::getInstance()->coreItemStackToNet($this->player->getInventory()->getItemInHand(), $this->session->getProtocolId())),
+				ItemStackWrapper::legacy(TypeConverter::getInstance()->coreItemStackToNet($this->session->getProtocolId(), $this->player->getInventory()->getItemInHand())),
 				$selected,
 				$selected,
 				ContainerIds::INVENTORY
@@ -476,8 +476,16 @@ class InventoryManager{
 		$typeConverter = TypeConverter::getInstance();
 
 		$nextEntryId = 1;
-		$this->session->sendDataPacket(CreativeContentPacket::create(array_map(function(Item $item) use($typeConverter, &$nextEntryId) : CreativeContentEntry{
-			return new CreativeContentEntry($nextEntryId++, $typeConverter->coreItemStackToNet($item, $this->session->getProtocolId()));
-		}, $this->player->isSpectator() ? [] : CreativeInventory::getInstance()->getAll())));
+		$results = [];
+		foreach($this->player->isSpectator() ? [] : CreativeInventory::getInstance()->getAll() as $item){
+			try {
+				$itemStack = $typeConverter->coreItemStackToNet($this->session->getProtocolId(), $item);
+				$results[] = new CreativeContentEntry($nextEntryId++, $itemStack);
+			} catch(\InvalidArgumentException $e){
+				//ignore
+			}
+		}
+
+		$this->session->sendDataPacket(CreativeContentPacket::create($results));
 	}
 }

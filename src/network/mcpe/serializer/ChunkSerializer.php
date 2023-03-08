@@ -72,15 +72,15 @@ final class ChunkSerializer{
 	public static function serializeSubChunks(Chunk $chunk, RuntimeBlockMapping $blockMapper, PacketSerializerContext $encoderContext, int $mappingProtocol) : array
 	{
 		$stream = PacketSerializer::encoder($encoderContext, $mappingProtocol);
-
-		$subChunkCount = self::getSubChunkCount($chunk);
 		$subChunks = [];
+
 		$maxSubChunkIndex = match($dimensionId = $chunk->getDimensionId()){
 			DimensionIds::NETHER => 7,
 			DimensionIds::THE_END => 15,
 			DimensionIds::OVERWORLD => Chunk::MAX_SUBCHUNK_INDEX,
 			default => throw new AssumptionFailedError("Unknown DimensionId " . $dimensionId)
 		};
+		$subChunkCount = self::getSubChunkCount($chunk);
 		$writtenCount = 0;
 		for($y = Chunk::MIN_SUBCHUNK_INDEX; $writtenCount < $subChunkCount; ++$y, ++$writtenCount){
 			if($y < 0 && $dimensionId !== DimensionIds::OVERWORLD){
@@ -149,14 +149,7 @@ final class ChunkSerializer{
 
 		foreach($layers as $blocks){
 			$bitsPerBlock = $blocks->getBitsPerBlock();
-			if($stream->getProtocolId() <= ProtocolInfo::PROTOCOL_1_17_0 && $bitsPerBlock === 0){
-				//TODO: we use these in memory, but the game doesn't support them yet
-				//polyfill them with 1-bpb instead
-				$bitsPerBlock = 1;
-				$words = str_repeat("\x00", PalettedBlockArray::getExpectedWordArraySize(1));
-			}else{
-				$words = $blocks->getWordArray();
-			}
+			$words = $blocks->getWordArray();
 			$stream->putByte(($bitsPerBlock << 1) | ($persistentBlockStates ? 0 : 1));
 			$stream->put($words);
 			$palette = $blocks->getPalette();
@@ -180,7 +173,7 @@ final class ChunkSerializer{
 				}
 			}else{
 				foreach($palette as $p){
-					$stream->put(Binary::writeUnsignedVarInt($blockMapper->toRuntimeId($p, $stream->getProtocolId()) << 1));
+					$stream->put(Binary::writeUnsignedVarInt($blockMapper->toRuntimeId($p) << 1));
 				}
 			}
 		}

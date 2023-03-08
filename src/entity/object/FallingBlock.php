@@ -178,7 +178,7 @@ class FallingBlock extends Entity{
 	}
 
 	protected function sendSpawnPacket(Player $player) : void{
-		$this->getNetworkProperties()->setInt(EntityMetadataProperties::VARIANT, RuntimeBlockMapping::getInstance()->toRuntimeId($this->block->getStateId(), RuntimeBlockMapping::getMappingProtocol($player->getNetworkSession()->getProtocolId())));
+		$this->getNetworkProperties()->setInt(EntityMetadataProperties::VARIANT, RuntimeBlockMapping::getInstance($player->getNetworkSession()->getProtocolId())->toRuntimeId($this->block->getStateId()));
 		$this->getNetworkProperties()->clearDirtyProperties(); //needed for multi protocol
 
 		parent::sendSpawnPacket($player);
@@ -187,7 +187,7 @@ class FallingBlock extends Entity{
 	//protected function syncNetworkData(EntityMetadataCollection $properties) : void{ No need due to multi protocol
 	//	parent::syncNetworkData($properties);
 	//
-	//	$properties->setInt(EntityMetadataProperties::VARIANT, RuntimeBlockMapping::getInstance()->toRuntimeId($this->block->getStateId(), RuntimeBlockMapping::getMappingProtocol($player->getNetworkSession()->getProtocolId())));
+	//	$properties->setInt(EntityMetadataProperties::VARIANT, RuntimeBlockMapping::getInstance()->toRuntimeId($this->block->getStateId()));
 	//}
 
 	public function getOffsetPosition(Vector3 $vector3) : Vector3{

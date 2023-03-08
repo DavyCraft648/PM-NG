@@ -23,6 +23,8 @@ declare(strict_types=1);
 
 namespace pocketmine\network\mcpe\convert;
 
+use pocketmine\data\bedrock\item\downgrade\ItemIdMetaDowngrader;
+use pocketmine\data\bedrock\item\downgrade\ItemIdMetaDowngradeSchemaUtils;
 use pocketmine\data\bedrock\item\ItemDeserializer;
 use pocketmine\data\bedrock\item\ItemSerializer;
 use pocketmine\data\bedrock\item\ItemTypeDeserializeException;
@@ -33,9 +35,10 @@ use pocketmine\nbt\tag\CompoundTag;
 use pocketmine\network\mcpe\protocol\ProtocolInfo;
 use pocketmine\network\mcpe\protocol\serializer\ItemTypeDictionary;
 use pocketmine\utils\AssumptionFailedError;
-use pocketmine\utils\SingletonTrait;
-use pocketmine\world\format\io\GlobalBlockStateHandlers;
+use pocketmine\utils\ProtocolSingletonTrait;
 use pocketmine\world\format\io\GlobalItemDataHandlers;
+use Symfony\Component\Filesystem\Path;
+use const pocketmine\BEDROCK_ITEM_UPGRADE_SCHEMA_PATH;
 
 /**
  * This class handles translation between network item ID+metadata to PocketMine-MP internal ID+metadata and vice versa.
@@ -43,54 +46,40 @@ use pocketmine\world\format\io\GlobalItemDataHandlers;
 final class ItemTranslator{
 	public const NO_BLOCK_RUNTIME_ID = 0;
 
-	use SingletonTrait;
+	use ProtocolSingletonTrait;
 
-	private static function make() : self{
-		$itemTypeDictionaries = [];
-		$blockStateDictionaries = [];
-
-		foreach(ProtocolInfo::ACCEPTED_PROTOCOL as $protocolId){
-			$itemTypeDictionaries[$protocolId] = GlobalItemTypeDictionary::getInstance()->getDictionary(GlobalItemTypeDictionary::getDictionaryProtocol($protocolId));
-			$blockStateDictionaries[$protocolId] = RuntimeBlockMapping::getInstance()->getBlockStateDictionary(RuntimeBlockMapping::getMappingProtocol($protocolId));
+	private static function make(int $protocolId) : self{
+		if(($itemSchemaId = self::getItemSchemaId($protocolId)) !== null){
+			$itemDataDowngradeSchema = new ItemIdMetaDowngrader(ItemIdMetaDowngradeSchemaUtils::loadSchemas(Path::join(BEDROCK_ITEM_UPGRADE_SCHEMA_PATH, 'id_meta_upgrade_schema'), $itemSchemaId));
 		}
 
 		return new self(
-			$itemTypeDictionaries,
-			$blockStateDictionaries,
+			GlobalItemTypeDictionary::getInstance($protocolId)->getDictionary(),
+			RuntimeBlockMapping::getInstance($protocolId),
 			GlobalItemDataHandlers::getSerializer(),
-			GlobalItemDataHandlers::getDeserializer()
+			GlobalItemDataHandlers::getDeserializer(),
+			$itemDataDowngradeSchema ?? null
 		);
 	}
 
-	/**
-	 * @param ItemTypeDictionary[] $itemTypeDictionary
-	 * @param BlockStateDictionary[] $blockStateDictionary
-	 */
 	public function __construct(
-		private array $itemTypeDictionary,
-		private array $blockStateDictionary,
+		private ItemTypeDictionary $itemTypeDictionary,
+		private RuntimeBlockMapping $runtimeBlockMapping,
 		private ItemSerializer $itemSerializer,
-		private ItemDeserializer $itemDeserializer
+		private ItemDeserializer $itemDeserializer,
+		private ?ItemIdMetaDowngrader $itemDataDowngrader,
 	){}
 
 	/**
 	 * @return int[]|null
 	 * @phpstan-return array{int, int, int}|null
 	 */
-	public function toNetworkIdQuiet(Item $item, int $protocolId) : ?array{
+	public function toNetworkIdQuiet(Item $item) : ?array{
 		try{
-			return $this->toNetworkId($item, $protocolId);
+			return $this->toNetworkId($item);
 		}catch(ItemTypeSerializeException){
 			return null;
 		}
-	}
-
-	private function getItemTypeDictionary(int $protocolId) : ItemTypeDictionary{
-		return $this->itemTypeDictionary[$protocolId] ?? throw new AssumptionFailedError("No item type dictionary for protocol $protocolId");
-	}
-
-	private function getBlockStateDictionary(int $protocolId) : BlockStateDictionary{
-		return $this->blockStateDictionary[$protocolId] ?? throw new AssumptionFailedError("No block state dictionary for protocol $protocolId");
 	}
 
 	/**
@@ -99,16 +88,32 @@ final class ItemTranslator{
 	 *
 	 * @throws ItemTypeSerializeException
 	 */
-	public function toNetworkId(Item $item, int $protocolId) : array{
+	public function toNetworkId(Item $item) : array{
 		//TODO: we should probably come up with a cache for this
 
 		$itemData = $this->itemSerializer->serializeType($item);
 
-		$numericId = $this->getItemTypeDictionary($protocolId)->fromStringId($itemData->getName());
+		if($this->itemDataDowngrader !== null){
+			[$name, $meta] = $this->itemDataDowngrader->downgrade($itemData->getName(), $itemData->getMeta());
+
+			try {
+				$numericId = $this->itemTypeDictionary->fromStringId($name);
+			} catch (\InvalidArgumentException $e) {
+				$numericId = $this->itemTypeDictionary->fromStringId($itemData->getName());
+				$meta = $itemData->getMeta();
+			}
+		} else {
+			$numericId = $this->itemTypeDictionary->fromStringId($itemData->getName());
+		}
+
 		$blockStateData = $itemData->getBlock();
 
 		if($blockStateData !== null){
-			$blockRuntimeId = $this->getBlockStateDictionary($protocolId)->lookupStateIdFromData($blockStateData);
+			if(($blockStateDowngrader = $this->runtimeBlockMapping->getBlockStateDowngrader()) !== null){
+				$blockStateData = $blockStateDowngrader->downgrade($blockStateData);
+			}
+
+			$blockRuntimeId = $this->runtimeBlockMapping->getBlockStateDictionary()->lookupStateIdFromData($blockStateData);
 			if($blockRuntimeId === null){
 				throw new AssumptionFailedError("Unmapped blockstate returned by blockstate serializer: " . $blockStateData->toNbt());
 			}
@@ -116,7 +121,7 @@ final class ItemTranslator{
 			$blockRuntimeId = self::NO_BLOCK_RUNTIME_ID; //this is technically a valid block runtime ID, but is used to represent "no block" (derp mojang)
 		}
 
-		return [$numericId, $itemData->getMeta(), $blockRuntimeId];
+		return [$numericId, $meta ?? $itemData->getMeta(), $blockRuntimeId];
 	}
 
 	/**
@@ -132,9 +137,9 @@ final class ItemTranslator{
 	/**
 	 * @throws TypeConversionException
 	 */
-	public function fromNetworkId(int $networkId, int $networkMeta, int $networkBlockRuntimeId, int $protocolId) : Item{
+	public function fromNetworkId(int $networkId, int $networkMeta, int $networkBlockRuntimeId) : Item{
 		try{
-			$stringId = $this->getItemTypeDictionary($protocolId)->fromIntId($networkId);
+			$stringId = $this->itemTypeDictionary->fromIntId($networkId);
 		}catch(\InvalidArgumentException $e){
 			//TODO: a quiet version of fromIntId() would be better than catching InvalidArgumentException
 			throw TypeConversionException::wrap($e, "Invalid network itemstack ID $networkId");
@@ -142,19 +147,49 @@ final class ItemTranslator{
 
 		$blockStateData = null;
 		if($networkBlockRuntimeId !== self::NO_BLOCK_RUNTIME_ID){
-			$blockStateData = $this->getBlockStateDictionary($protocolId)->getDataFromStateId($networkBlockRuntimeId);
+			$blockStateData = $this->runtimeBlockMapping->getBlockStateDictionary()->getDataFromStateId($networkBlockRuntimeId);
 			if($blockStateData === null){
 				throw new TypeConversionException("Blockstate runtimeID $networkBlockRuntimeId does not correspond to any known blockstate");
 			}
-			if($protocolId < ProtocolInfo::CURRENT_PROTOCOL){
-				$blockStateData = GlobalBlockStateHandlers::getUpgrader()->getBlockStateUpgrader()->upgrade($blockStateData);
+
+			if(($blockStateUpgrader = $this->runtimeBlockMapping->getBlockStateUpgrader()) !== null){
+				$blockStateData = $blockStateUpgrader->upgrade($blockStateData);
 			}
 		}
+
+		[$stringId, $networkMeta] = GlobalItemDataHandlers::getUpgrader()->getIdMetaUpgrader()->upgrade($stringId, $networkMeta);
 
 		try{
 			return $this->itemDeserializer->deserializeType(new SavedItemData($stringId, $networkMeta, $blockStateData));
 		}catch(ItemTypeDeserializeException $e){
 			throw TypeConversionException::wrap($e, "Invalid network itemstack data");
 		}
+	}
+
+	public static function convertProtocol(int $protocolId) : int{
+		$itemProtocol = GlobalItemTypeDictionary::convertProtocol($protocolId);
+		$mappingProtocol = RuntimeBlockMapping::convertProtocol($protocolId);
+		$itemSchemaId = self::getItemSchemaId($protocolId);
+
+		return $itemProtocol === $mappingProtocol && $itemSchemaId === self::getItemSchemaId($itemProtocol) ? $itemProtocol : $protocolId;
+	}
+
+	private static function getItemSchemaId(int $protocolId) : ?int{
+		return match($protocolId){
+			ProtocolInfo::PROTOCOL_1_19_63,
+			ProtocolInfo::PROTOCOL_1_19_60,
+			ProtocolInfo::PROTOCOL_1_19_50,
+			ProtocolInfo::PROTOCOL_1_19_40,
+			ProtocolInfo::PROTOCOL_1_19_30 => null,
+
+			ProtocolInfo::PROTOCOL_1_19_21,
+			ProtocolInfo::PROTOCOL_1_19_20,
+			ProtocolInfo::PROTOCOL_1_19_10,
+			ProtocolInfo::PROTOCOL_1_19_0,
+			ProtocolInfo::PROTOCOL_1_18_30 => 81,
+
+			ProtocolInfo::PROTOCOL_1_18_10 => 71,
+			default => throw new AssumptionFailedError("Unknown protocol ID $protocolId"),
+		};
 	}
 }

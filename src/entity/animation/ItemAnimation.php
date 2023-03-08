@@ -21,13 +21,29 @@
 
 declare(strict_types=1);
 
-namespace pocketmine\world\sound;
+namespace pocketmine\entity\animation;
 
-abstract class MappingSound implements Sound{
+use pocketmine\data\bedrock\item\ItemTypeSerializeException;
+use pocketmine\item\Item;
+use pocketmine\network\mcpe\convert\ItemTranslator;
 
-	protected int $mappingProtocol;
+abstract class ItemAnimation implements Animation{
 
-	public function setMappingProtocol(int $mappingProtocol) : void{
-		$this->mappingProtocol = $mappingProtocol;
+	private int $protocolId;
+
+	public function __construct(private Item $item){}
+
+	public function setProtocolId(int $protocolId) : void{
+		$this->protocolId = $protocolId;
+	}
+
+	/**
+	 * @return int[]
+	 * @phpstan-return array{int, int, int}
+	 *
+	 * @throws ItemTypeSerializeException
+	 */
+	public function toNetworkId() : array{
+		return ItemTranslator::getInstance($this->protocolId)->toNetworkId($this->item);
 	}
 }

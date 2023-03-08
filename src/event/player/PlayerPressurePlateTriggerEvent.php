@@ -21,14 +21,24 @@
 
 declare(strict_types=1);
 
-namespace pocketmine\entity\animation;
+namespace pocketmine\event\player;
 
-abstract class DictionaryAnimation implements Animation{
+use pocketmine\block\Block;
+use pocketmine\event\Cancellable;
+use pocketmine\event\CancellableTrait;
+use pocketmine\player\Player;
 
-	/** @var int */
-	protected $dictionaryProtocol;
+class PlayerPressurePlateTriggerEvent extends PlayerEvent implements Cancellable{
+	use CancellableTrait;
 
-	public function setDictionaryProtocol(int $dictionaryProtocol) : void{
-		$this->dictionaryProtocol = $dictionaryProtocol;
+	public function __construct(
+		Player $player,
+		private Block $block
+	){
+		$this->player = $player;
+	}
+
+	public function getBlock() : Block{
+		return $this->block;
 	}
 }

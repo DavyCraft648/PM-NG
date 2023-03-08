@@ -66,10 +66,11 @@ class ChunkRequestTask extends AsyncTask{
 
 	public function onRun() : void{
 		$chunk = FastChunkSerializer::deserializeTerrain($this->chunk);
+
 		$cache = new CachedChunk();
 
-		$blockMapper = RuntimeBlockMapping::getInstance();
-		$encoderContext = new PacketSerializerContext(GlobalItemTypeDictionary::getInstance()->getDictionary(GlobalItemTypeDictionary::getDictionaryProtocol($this->mappingProtocol)));
+		$blockMapper = RuntimeBlockMapping::getInstance($this->mappingProtocol);
+		$encoderContext = new PacketSerializerContext(GlobalItemTypeDictionary::getInstance($this->mappingProtocol)->getDictionary());
 		$encoder = PacketSerializer::encoder($encoderContext, $this->mappingProtocol);
 
 		foreach(ChunkSerializer::serializeSubChunks($chunk, $blockMapper, $encoderContext, $this->mappingProtocol) as $subChunk){
