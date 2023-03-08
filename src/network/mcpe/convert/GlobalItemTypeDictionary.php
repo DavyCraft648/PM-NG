@@ -35,16 +35,16 @@ final class GlobalItemTypeDictionary{
 
 	private static function make() : self{
 		$protocolPaths = [
-			ProtocolInfo::CURRENT_PROTOCOL => "",
-			ProtocolInfo::PROTOCOL_1_19_50 => "-1.19.50",
-			ProtocolInfo::PROTOCOL_1_19_10 => "-1.19.10",
-			ProtocolInfo::PROTOCOL_1_19_0 => "-1.19.0"
+			ProtocolInfo::CURRENT_PROTOCOL => BedrockDataFiles::REQUIRED_ITEM_LIST_JSON,
+			ProtocolInfo::PROTOCOL_1_19_50 => BedrockDataFiles::REQUIRED_ITEM_LIST_JSON_1_19_50,
+			ProtocolInfo::PROTOCOL_1_19_10 => BedrockDataFiles::REQUIRED_ITEM_LIST_JSON_1_19_10,
+			ProtocolInfo::PROTOCOL_1_19_0 => BedrockDataFiles::REQUIRED_ITEM_LIST_JSON_1_19_0
 		];
 
 		$dictionaries = [];
 
-		foreach ($protocolPaths as $protocolId => $path){
-			$data = Filesystem::fileGetContents(BedrockDataFiles::REQUIRED_ITEM_LIST_JSON);
+		foreach($protocolPaths as $protocolId => $path){
+			$data = Filesystem::fileGetContents($path);
 			$dictionaries[$protocolId] = ItemTypeDictionaryFromDataHelper::loadFromString($data);
 		}
 
@@ -54,7 +54,7 @@ final class GlobalItemTypeDictionary{
 	/**
 	 * @param ItemTypeDictionary[] $dictionaries
 	 */
-	public function __construct(private array $dictionaries){}
+	public function __construct(private array $dictionaries){ }
 
 	public static function getDictionaryProtocol(int $protocolId) : int{
 		if($protocolId === ProtocolInfo::PROTOCOL_1_19_60){

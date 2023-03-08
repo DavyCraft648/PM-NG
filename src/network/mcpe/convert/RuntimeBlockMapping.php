@@ -58,28 +58,28 @@ final class RuntimeBlockMapping{
 	private static function make() : self{
 		$protocolPaths = [
 			ProtocolInfo::CURRENT_PROTOCOL => [
-				self::BLOCK_PALETTE_PATH => '',
-				self::META_MAP_PATH => '',
+				self::BLOCK_PALETTE_PATH => BedrockDataFiles::CANONICAL_BLOCK_STATES_NBT,
+				self::META_MAP_PATH => BedrockDataFiles::BLOCK_STATE_META_MAP_JSON,
 			],
 			ProtocolInfo::PROTOCOL_1_19_50 => [
-				self::BLOCK_PALETTE_PATH => '-1.19.50',
-				self::META_MAP_PATH => '-1.19.50',
+				self::BLOCK_PALETTE_PATH => BedrockDataFiles::CANONICAL_BLOCK_STATES_NBT_1_19_50,
+				self::META_MAP_PATH => BedrockDataFiles::BLOCK_STATE_META_MAP_JSON_1_19_50,
 			],
 			ProtocolInfo::PROTOCOL_1_19_20 => [
-				self::BLOCK_PALETTE_PATH => '-1.19.20',
-				self::META_MAP_PATH => '-1.19.20',
+				self::BLOCK_PALETTE_PATH => BedrockDataFiles::CANONICAL_BLOCK_STATES_NBT_1_19_20,
+				self::META_MAP_PATH => BedrockDataFiles::BLOCK_STATE_META_MAP_JSON_1_19_20,
 			],
 			ProtocolInfo::PROTOCOL_1_19_0 => [
-				self::BLOCK_PALETTE_PATH => '-1.19.0',
-				self::META_MAP_PATH => '-1.19.0',
+				self::BLOCK_PALETTE_PATH => BedrockDataFiles::CANONICAL_BLOCK_STATES_NBT_1_19_0,
+				self::META_MAP_PATH => BedrockDataFiles::BLOCK_STATE_META_MAP_JSON_1_19_0,
 			]
 		];
 
 		$blockStateDictionaries = [];
 
 		foreach($protocolPaths as $mappingProtocol => $paths){
-			$canonicalBlockStatesRaw = Filesystem::fileGetContents(BedrockDataFiles::CANONICAL_BLOCK_STATES_NBT);
-			$metaMappingRaw = Filesystem::fileGetContents(BedrockDataFiles::BLOCK_STATE_META_MAP_JSON);
+			$canonicalBlockStatesRaw = Filesystem::fileGetContents($paths[self::BLOCK_PALETTE_PATH]);
+			$metaMappingRaw = Filesystem::fileGetContents($paths[self::META_MAP_PATH]);
 
 			$blockStateDictionaries[$mappingProtocol] = BlockStateDictionary::loadFromString($canonicalBlockStatesRaw, $metaMappingRaw);
 		}
