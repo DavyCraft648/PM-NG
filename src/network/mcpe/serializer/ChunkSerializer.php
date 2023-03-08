@@ -44,7 +44,6 @@ use pocketmine\world\format\PalettedBlockArray;
 use pocketmine\world\format\SubChunk;
 use function count;
 use function get_class;
-use function str_repeat;
 
 final class ChunkSerializer{
 	private function __construct(){
@@ -81,8 +80,7 @@ final class ChunkSerializer{
 			default => throw new AssumptionFailedError("Unknown DimensionId " . $dimensionId)
 		};
 		$subChunkCount = self::getSubChunkCount($chunk);
-		$writtenCount = 0;
-		for($y = Chunk::MIN_SUBCHUNK_INDEX; $writtenCount < $subChunkCount; ++$y, ++$writtenCount){
+		for($y = Chunk::MIN_SUBCHUNK_INDEX, $writtenCount = 0; $writtenCount < $subChunkCount; ++$y, ++$writtenCount){
 			if($y < 0 && $dimensionId !== DimensionIds::OVERWORLD){
 				continue;
 			}
@@ -145,7 +143,7 @@ final class ChunkSerializer{
 
 		$stream->putByte(count($layers));
 
-		$blockStateDictionary = $blockMapper->getBlockStateDictionary($stream->getProtocolId());
+		$blockStateDictionary = $blockMapper->getBlockStateDictionary();
 
 		foreach($layers as $blocks){
 			$bitsPerBlock = $blocks->getBitsPerBlock();
@@ -164,9 +162,9 @@ final class ChunkSerializer{
 				$nbtSerializer = new NetworkNbtSerializer();
 				foreach($palette as $p){
 					//TODO: introduce a binary cache for this
-					$state = $blockStateDictionary->getDataFromStateId($blockMapper->toRuntimeId($p, $stream->getProtocolId()));
+					$state = $blockStateDictionary->getDataFromStateId($blockMapper->toRuntimeId($p));
 					if($state === null){
-						$state = $blockMapper->getFallbackStateData($stream->getProtocolId());
+						$state = $blockMapper->getFallbackStateData();
 					}
 
 					$stream->put($nbtSerializer->write(new TreeRoot($state->toNbt())));

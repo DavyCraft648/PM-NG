@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "3976f239616f8fe1c280497b2dff7e24",
+    "content-hash": "63a0a8d5ab4fa3268b95bf1fc9b23dee",
     "packages": [
         {
             "name": "adhocore/json-comment",
@@ -199,40 +199,41 @@
         },
         {
             "name": "nethergamesmc/bedrock-data",
-            "version": "dev-modern-world-support",
+            "version": "dev-master",
             "source": {
                 "type": "git",
-                "url": "https://github.com/DavyCraft648/BedrockData.git",
-                "reference": "481fbcc722519a738a56abfa13e2c8652080f73c"
+                "url": "https://github.com/NetherGamesMC/BedrockData.git",
+                "reference": "17f124c9a6634b735229e9091341173e445c1cf6"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/DavyCraft648/BedrockData/zipball/481fbcc722519a738a56abfa13e2c8652080f73c",
-                "reference": "481fbcc722519a738a56abfa13e2c8652080f73c",
+                "url": "https://api.github.com/repos/NetherGamesMC/BedrockData/zipball/17f124c9a6634b735229e9091341173e445c1cf6",
+                "reference": "17f124c9a6634b735229e9091341173e445c1cf6",
                 "shasum": ""
             },
+            "default-branch": true,
             "type": "library",
             "license": [
                 "CC0-1.0"
             ],
             "description": "Blobs of data generated from Minecraft: Bedrock Edition, used by PocketMine-MP",
             "support": {
-                "source": "https://github.com/DavyCraft648/BedrockData/tree/modern-world-support"
+                "source": "https://github.com/NetherGamesMC/BedrockData/tree/master"
             },
-            "time": "2023-02-09T16:57:57+00:00"
+            "time": "2023-03-05T15:44:32+00:00"
         },
         {
             "name": "nethergamesmc/bedrock-protocol",
-            "version": "dev-next-major",
+            "version": "dev-master",
             "source": {
                 "type": "git",
-                "url": "https://github.com/DavyCraft648/BedrockProtocol.git",
-                "reference": "77ca8c7b14584d69a5791088100bba6bb3f5107d"
+                "url": "https://github.com/NetherGamesMC/BedrockProtocol.git",
+                "reference": "c4d2ffebb1a450b2a4f886b62012059bcbfbee86"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/DavyCraft648/BedrockProtocol/zipball/77ca8c7b14584d69a5791088100bba6bb3f5107d",
-                "reference": "77ca8c7b14584d69a5791088100bba6bb3f5107d",
+                "url": "https://api.github.com/repos/NetherGamesMC/BedrockProtocol/zipball/c4d2ffebb1a450b2a4f886b62012059bcbfbee86",
+                "reference": "c4d2ffebb1a450b2a4f886b62012059bcbfbee86",
                 "shasum": ""
             },
             "require": {
@@ -246,11 +247,12 @@
                 "ramsey/uuid": "^4.1"
             },
             "require-dev": {
-                "phpstan/phpstan": "1.9.13",
+                "phpstan/phpstan": "1.10.1",
                 "phpstan/phpstan-phpunit": "^1.0.0",
                 "phpstan/phpstan-strict-rules": "^1.0.0",
                 "phpunit/phpunit": "^9.5"
             },
+            "default-branch": true,
             "type": "library",
             "autoload": {
                 "psr-4": {
@@ -272,9 +274,9 @@
             ],
             "description": "An implementation of the Minecraft: Bedrock Edition protocol in PHP",
             "support": {
-                "source": "https://github.com/DavyCraft648/BedrockProtocol/tree/next-major"
+                "source": "https://github.com/NetherGamesMC/BedrockProtocol/tree/master"
             },
-            "time": "2023-02-24T22:43:04+00:00"
+            "time": "2023-03-05T15:43:28+00:00"
         },
         {
             "name": "netresearch/jsonmapper",
@@ -329,19 +331,18 @@
         },
         {
             "name": "pocketmine/bedrock-block-upgrade-schema",
-            "version": "dev-master",
+            "version": "1.1.0",
             "source": {
                 "type": "git",
                 "url": "https://github.com/pmmp/BedrockBlockUpgradeSchema.git",
-                "reference": "b0cc441e029cf5a6de5b05dd0f5657208855232b"
+                "reference": "78c965a2316986ac0eaf3235d75efb187127e7a2"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/pmmp/BedrockBlockUpgradeSchema/zipball/b0cc441e029cf5a6de5b05dd0f5657208855232b",
-                "reference": "b0cc441e029cf5a6de5b05dd0f5657208855232b",
+                "url": "https://api.github.com/repos/pmmp/BedrockBlockUpgradeSchema/zipball/78c965a2316986ac0eaf3235d75efb187127e7a2",
+                "reference": "78c965a2316986ac0eaf3235d75efb187127e7a2",
                 "shasum": ""
             },
-            "default-branch": true,
             "type": "library",
             "notification-url": "https://packagist.org/downloads/",
             "license": [
@@ -350,13 +351,13 @@
             "description": "Schemas describing how to upgrade saved block data in older Minecraft: Bedrock Edition world saves",
             "support": {
                 "issues": "https://github.com/pmmp/BedrockBlockUpgradeSchema/issues",
-                "source": "https://github.com/pmmp/BedrockBlockUpgradeSchema/tree/master"
+                "source": "https://github.com/pmmp/BedrockBlockUpgradeSchema/tree/1.1.0"
             },
-            "time": "2023-02-01T21:11:39+00:00"
+            "time": "2023-03-06T17:53:36+00:00"
         },
         {
             "name": "pocketmine/bedrock-item-upgrade-schema",
-            "version": "dev-master",
+            "version": "1.0.0",
             "source": {
                 "type": "git",
                 "url": "https://github.com/pmmp/BedrockItemUpgradeSchema.git",
@@ -368,7 +369,6 @@
                 "reference": "7e53f77ea34ba30b1f94d3c24e64e19d3c4296e7",
                 "shasum": ""
             },
-            "default-branch": true,
             "type": "library",
             "notification-url": "https://packagist.org/downloads/",
             "license": [
@@ -788,16 +788,16 @@
         },
         {
             "name": "pocketmine/raklib",
-            "version": "0.15.0",
+            "version": "0.15.1",
             "source": {
                 "type": "git",
                 "url": "https://github.com/pmmp/RakLib.git",
-                "reference": "1f490cff6bf5e9eb46ebdbf7a7994d62be2bd2c1"
+                "reference": "79b7b4d1d7516dc6e322514453645ad9452b20ca"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/pmmp/RakLib/zipball/1f490cff6bf5e9eb46ebdbf7a7994d62be2bd2c1",
-                "reference": "1f490cff6bf5e9eb46ebdbf7a7994d62be2bd2c1",
+                "url": "https://api.github.com/repos/pmmp/RakLib/zipball/79b7b4d1d7516dc6e322514453645ad9452b20ca",
+                "reference": "79b7b4d1d7516dc6e322514453645ad9452b20ca",
                 "shasum": ""
             },
             "require": {
@@ -825,9 +825,9 @@
             "description": "A RakNet server implementation written in PHP",
             "support": {
                 "issues": "https://github.com/pmmp/RakLib/issues",
-                "source": "https://github.com/pmmp/RakLib/tree/0.15.0"
+                "source": "https://github.com/pmmp/RakLib/tree/0.15.1"
             },
-            "time": "2023-02-13T12:56:35+00:00"
+            "time": "2023-03-07T15:10:34+00:00"
         },
         {
             "name": "pocketmine/raklib-ipc",
@@ -1783,16 +1783,16 @@
         },
         {
             "name": "phpstan/phpstan",
-            "version": "1.10.3",
+            "version": "1.10.4",
             "source": {
                 "type": "git",
                 "url": "https://github.com/phpstan/phpstan.git",
-                "reference": "5419375b5891add97dc74be71e6c1c34baaddf64"
+                "reference": "8d39218664b45a4a42d5be66d2b63dcf8c149982"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/phpstan/phpstan/zipball/5419375b5891add97dc74be71e6c1c34baaddf64",
-                "reference": "5419375b5891add97dc74be71e6c1c34baaddf64",
+                "url": "https://api.github.com/repos/phpstan/phpstan/zipball/8d39218664b45a4a42d5be66d2b63dcf8c149982",
+                "reference": "8d39218664b45a4a42d5be66d2b63dcf8c149982",
                 "shasum": ""
             },
             "require": {
@@ -1822,7 +1822,7 @@
             ],
             "support": {
                 "issues": "https://github.com/phpstan/phpstan/issues",
-                "source": "https://github.com/phpstan/phpstan/tree/1.10.3"
+                "source": "https://github.com/phpstan/phpstan/tree/1.10.4"
             },
             "funding": [
                 {
@@ -1838,7 +1838,7 @@
                     "type": "tidelift"
                 }
             ],
-            "time": "2023-02-25T14:47:13+00:00"
+            "time": "2023-03-06T13:39:20+00:00"
         },
         {
             "name": "phpstan/phpstan-phpunit",
@@ -1943,16 +1943,16 @@
         },
         {
             "name": "phpunit/php-code-coverage",
-            "version": "9.2.25",
+            "version": "9.2.26",
             "source": {
                 "type": "git",
                 "url": "https://github.com/sebastianbergmann/php-code-coverage.git",
-                "reference": "0e2b40518197a8c0d4b08bc34dfff1c99c508954"
+                "reference": "443bc6912c9bd5b409254a40f4b0f4ced7c80ea1"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/sebastianbergmann/php-code-coverage/zipball/0e2b40518197a8c0d4b08bc34dfff1c99c508954",
-                "reference": "0e2b40518197a8c0d4b08bc34dfff1c99c508954",
+                "url": "https://api.github.com/repos/sebastianbergmann/php-code-coverage/zipball/443bc6912c9bd5b409254a40f4b0f4ced7c80ea1",
+                "reference": "443bc6912c9bd5b409254a40f4b0f4ced7c80ea1",
                 "shasum": ""
             },
             "require": {
@@ -1974,8 +1974,8 @@
                 "phpunit/phpunit": "^9.3"
             },
             "suggest": {
-                "ext-pcov": "*",
-                "ext-xdebug": "*"
+                "ext-pcov": "PHP extension that provides line coverage",
+                "ext-xdebug": "PHP extension that provides line coverage as well as branch and path coverage"
             },
             "type": "library",
             "extra": {
@@ -2008,7 +2008,7 @@
             ],
             "support": {
                 "issues": "https://github.com/sebastianbergmann/php-code-coverage/issues",
-                "source": "https://github.com/sebastianbergmann/php-code-coverage/tree/9.2.25"
+                "source": "https://github.com/sebastianbergmann/php-code-coverage/tree/9.2.26"
             },
             "funding": [
                 {
@@ -2016,7 +2016,7 @@
                     "type": "github"
                 }
             ],
-            "time": "2023-02-25T05:32:00+00:00"
+            "time": "2023-03-06T12:58:08+00:00"
         },
         {
             "name": "phpunit/php-file-iterator",
@@ -3379,9 +3379,7 @@
     "aliases": [],
     "minimum-stability": "stable",
     "stability-flags": {
-        "pocketmine/bedrock-block-upgrade-schema": 20,
         "nethergamesmc/bedrock-data": 20,
-        "pocketmine/bedrock-item-upgrade-schema": 20,
         "nethergamesmc/bedrock-protocol": 20
     },
     "prefer-stable": false,

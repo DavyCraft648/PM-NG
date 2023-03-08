@@ -62,9 +62,7 @@ use pocketmine\network\mcpe\protocol\types\entity\PropertySyncData;
 use pocketmine\network\mcpe\protocol\types\entity\StringMetadataProperty;
 use pocketmine\network\mcpe\protocol\types\GameMode;
 use pocketmine\network\mcpe\protocol\types\inventory\ItemStackWrapper;
-use pocketmine\network\mcpe\protocol\types\PlayerListAdditionEntries;
-use pocketmine\network\mcpe\protocol\types\PlayerListAdditionEntry;
-use pocketmine\network\mcpe\protocol\types\PlayerListRemovalEntries;
+use pocketmine\network\mcpe\protocol\types\PlayerListEntry;
 use pocketmine\network\mcpe\protocol\types\PlayerPermissions;
 use pocketmine\network\mcpe\protocol\UpdateAbilitiesPacket;
 use pocketmine\player\Player;
@@ -483,7 +481,7 @@ class Human extends Living implements ProjectileSource, InventoryHolder{
 
 	protected function sendSpawnPacket(Player $player) : void{
 		if(!($this instanceof Player)){
-			$player->getNetworkSession()->sendDataPacket(PlayerListPacket::create(new PlayerListAdditionEntries([new PlayerListAdditionEntry($this->uuid, $this->id, $this->getName(), SkinAdapterSingleton::get()->toSkinData($this->skin), "")])));
+			$player->getNetworkSession()->sendDataPacket(PlayerListPacket::add([PlayerListEntry::createAdditionEntry($this->uuid, $this->id, $this->getName(), SkinAdapterSingleton::get()->toSkinData($this->skin))]));
 		}
 
 		$player->getNetworkSession()->sendDataPacket(AddPlayerPacket::create(
@@ -496,7 +494,7 @@ class Human extends Living implements ProjectileSource, InventoryHolder{
 			$this->location->pitch,
 			$this->location->yaw,
 			$this->location->yaw, //TODO: head yaw
-			ItemStackWrapper::legacy(TypeConverter::getInstance()->coreItemStackToNet($this->getInventory()->getItemInHand(), $player->getNetworkSession()->getProtocolId())),
+			ItemStackWrapper::legacy(TypeConverter::getInstance()->coreItemStackToNet($player->getNetworkSession()->getProtocolId(), $this->getInventory()->getItemInHand())),
 			GameMode::SURVIVAL,
 			$this->getAllNetworkData(),
 			new PropertySyncData([], []),
@@ -520,7 +518,7 @@ class Human extends Living implements ProjectileSource, InventoryHolder{
 		$player->getNetworkSession()->onMobOffHandItemChange($this);
 
 		if(!($this instanceof Player)){
-			$player->getNetworkSession()->sendDataPacket(PlayerListPacket::create(new PlayerListRemovalEntries([$this->uuid])));
+			$player->getNetworkSession()->sendDataPacket(PlayerListPacket::remove([PlayerListEntry::createRemovalEntry($this->uuid)]));
 		}
 	}
 

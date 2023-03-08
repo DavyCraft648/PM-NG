@@ -710,8 +710,6 @@ class World implements ChunkManager{
 				}
 			}
 		}
-		$players ??= $this->getViewersForPosition($pos);
-		$ev = new WorldSoundEvent($this, $sound, $pos, $players);
 	}
 
 	/**
@@ -1138,7 +1136,7 @@ class World implements ChunkManager{
 				);
 				$packets[] = UpdateBlockPacket::create(
 					$blockPosition,
-					$blockMapping->getBlockStateDictionary($mappingProtocol)->lookupStateIdFromData($fakeStateData) ?? throw new AssumptionFailedError("Unmapped fake blockstate data: " . $fakeStateData->toNbt()),
+					$blockMapping->getBlockStateDictionary()->lookupStateIdFromData($fakeStateData) ?? throw new AssumptionFailedError("Unmapped fake blockstate data: " . $fakeStateData->toNbt()),
 					UpdateBlockPacket::FLAG_NETWORK,
 					UpdateBlockPacket::DATA_LAYER_NORMAL
 				);
@@ -2045,8 +2043,8 @@ class World implements ChunkManager{
 	/**
 	 * Uses a item on a position and face, placing it or activating the block
 	 *
-	 * @param Player|null $player    default null
-	 * @param bool        $playSound Whether to play a block-place sound if the block was placed successfully.
+	 * @param Player|null $player         default null
+	 * @param bool        $playSound      Whether to play a block-place sound if the block was placed successfully.
 	 * @param Item[]      &$returnedItems Items to be added to the target's inventory (or dropped if the inventory is full)
 	 */
 	public function useItemOn(Vector3 $vector, Item &$item, int $face, ?Vector3 $clickVector = null, ?Player $player = null, bool $playSound = false, array &$returnedItems = []) : bool{

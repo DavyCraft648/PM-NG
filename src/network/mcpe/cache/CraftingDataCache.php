@@ -25,16 +25,13 @@ namespace pocketmine\network\mcpe\cache;
 
 use pocketmine\crafting\CraftingManager;
 use pocketmine\crafting\FurnaceType;
-use pocketmine\crafting\MetaWildcardRecipeIngredient;
 use pocketmine\crafting\RecipeIngredient;
 use pocketmine\crafting\ShapelessRecipeType;
-use pocketmine\data\bedrock\ItemTagToIdMap;
 use pocketmine\item\Item;
 use pocketmine\network\mcpe\convert\GlobalItemTypeDictionary;
 use pocketmine\network\mcpe\convert\ItemTranslator;
 use pocketmine\network\mcpe\convert\TypeConverter;
 use pocketmine\network\mcpe\protocol\CraftingDataPacket;
-use pocketmine\network\mcpe\protocol\ProtocolInfo;
 use pocketmine\network\mcpe\protocol\types\inventory\ItemStack;
 use pocketmine\network\mcpe\protocol\types\recipe\CraftingRecipeBlockName;
 use pocketmine\network\mcpe\protocol\types\recipe\FurnaceRecipe as ProtocolFurnaceRecipe;
@@ -45,14 +42,12 @@ use pocketmine\network\mcpe\protocol\types\recipe\PotionTypeRecipe as ProtocolPo
 use pocketmine\network\mcpe\protocol\types\recipe\RecipeIngredient as ProtocolRecipeIngredient;
 use pocketmine\network\mcpe\protocol\types\recipe\ShapedRecipe as ProtocolShapedRecipe;
 use pocketmine\network\mcpe\protocol\types\recipe\ShapelessRecipe as ProtocolShapelessRecipe;
-use pocketmine\network\mcpe\protocol\types\recipe\TagItemDescriptor;
 use pocketmine\timings\Timings;
 use pocketmine\utils\AssumptionFailedError;
 use pocketmine\utils\Binary;
 use pocketmine\utils\ProtocolSingletonTrait;
 use Ramsey\Uuid\Uuid;
 use function array_map;
-use function count;
 use function in_array;
 use function spl_object_id;
 
@@ -139,7 +134,6 @@ final class CraftingDataCache{
 		foreach($manager->getShapedRecipes() as $list){
 			foreach($list as $recipe){
 				$inputs = [];
-				$tagItems = [];
 
 				try{
 					for($row = 0, $height = $recipe->getHeight(); $row < $height; ++$row){

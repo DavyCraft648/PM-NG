@@ -35,9 +35,9 @@
       "fgrosse/phpasn1": "^2.3",
       "netresearch/jsonmapper": "^4.0",
       "pocketmine/bedrock-block-upgrade-schema": "^1.0.0",
-      "nethergamesmc/bedrock-data": "dev-modern-world-support@dev",
+      "nethergamesmc/bedrock-data": "dev-master",
       "pocketmine/bedrock-item-upgrade-schema": "^1.0.0",
-      "nethergamesmc/bedrock-protocol": "dev-next-major@dev",
+      "nethergamesmc/bedrock-protocol": "dev-master",
       "pocketmine/binaryutils": "^0.2.1",
       "pocketmine/callback-validator": "^1.0.2",
       "pocketmine/classloader": "^0.3.0",
@@ -63,11 +63,11 @@
    "repositories": [
       {
          "type": "vcs",
-         "url":  "git@github.com:DavyCraft648/BedrockProtocol.git"
+         "url":  "git@github.com:NetherGamesMC/BedrockProtocol.git"
       },
       {
          "type": "vcs",
-         "url":  "git@github.com:DavyCraft648/BedrockData.git"
+         "url":  "git@github.com:NetherGamesMC/BedrockData.git"
       }
    ],
    "autoload": {

@@ -357,7 +357,7 @@ class InGamePacketHandler extends ChunkRequestPacketHandler{
 			}
 
 			try{
-				$action = $converter->createInventoryAction($networkInventoryAction, $this->player, $this->inventoryManager, $this->session->getProtocolId());
+				$action = $converter->createInventoryAction($this->session->getProtocolId(), $networkInventoryAction, $this->player, $this->inventoryManager);
 				if($action !== null){
 					$actions[] = $action;
 				}
