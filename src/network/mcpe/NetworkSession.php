@@ -44,7 +44,6 @@ use pocketmine\network\mcpe\cache\ChunkCache;
 use pocketmine\network\mcpe\compression\CompressBatchPromise;
 use pocketmine\network\mcpe\compression\Compressor;
 use pocketmine\network\mcpe\compression\DecompressionException;
-use pocketmine\network\mcpe\convert\GlobalItemTypeDictionary;
 use pocketmine\network\mcpe\convert\SkinAdapterSingleton;
 use pocketmine\network\mcpe\convert\TypeConverter;
 use pocketmine\network\mcpe\encryption\DecryptionException;
@@ -203,8 +202,6 @@ class NetworkSession{
 	private ?int $protocolId = null;
 	private bool $enableCompression = true;
 
-	private PacketSerializerContext $packetSerializerContext;
-
 	private ?InventoryManager $invManager = null;
 
 	/**
@@ -217,6 +214,7 @@ class NetworkSession{
 		private Server $server,
 		private NetworkSessionManager $manager,
 		private PacketPool $packetPool,
+		private PacketSerializerContext $packetSerializerContext,
 		private PacketSender $sender,
 		private PacketBroadcaster $broadcaster,
 		private Compressor $compressor,
@@ -226,9 +224,6 @@ class NetworkSession{
 		$this->logger = new \PrefixedLogger($this->server->getLogger(), $this->getLogPrefix());
 
 		$this->compressedQueue = new \SplQueue();
-
-		//TODO: allow this to be injected
-		$this->packetSerializerContext = new PacketSerializerContext(GlobalItemTypeDictionary::getInstance()->getDictionary());
 
 		$this->disposeHooks = new ObjectSet();
 
@@ -507,32 +502,39 @@ class NetworkSession{
 			throw new PacketHandlingException("Unexpected non-serverbound packet");
 		}
 
-		$timings = Timings::getDecodeDataPacketTimings($packet);
+		$timings = Timings::getReceiveDataPacketTimings($packet);
 		$timings->startTiming();
-		try{
-			$stream = PacketSerializer::decoder($buffer, 0, $this->packetSerializerContext, $protocolId);
-			try{
-				$packet->decode($stream);
-			}catch(PacketDecodeException $e){
-				throw PacketHandlingException::wrap($e);
-			}
-			if(!$stream->feof()){
-				$remains = substr($stream->getBuffer(), $stream->getOffset());
-				$this->logger->debug("Still " . strlen($remains) . " bytes unread in " . $packet->getName() . ": " . bin2hex($remains));
-			}
-		}finally{
-			$timings->stopTiming();
-		}
 
-		$timings = Timings::getHandleDataPacketTimings($packet);
-		$timings->startTiming();
 		try{
-			//TODO: I'm not sure DataPacketReceiveEvent should be included in the handler timings, but it needs to be
-			//included for now to ensure the receivePacket timings are counted the way they were before
-			$ev = new DataPacketReceiveEvent($this, $packet);
-			$ev->call();
-			if(!$ev->isCancelled() && ($this->handler === null || !$packet->handle($this->handler))){
-				$this->logger->debug("Unhandled " . $packet->getName() . ": " . base64_encode($stream->getBuffer()));
+			$decodeTimings = Timings::getDecodeDataPacketTimings($packet);
+			$decodeTimings->startTiming();
+			try{
+				$stream = PacketSerializer::decoder($buffer, 0, $this->packetSerializerContext, $protocolId);
+				try{
+					$packet->decode($stream);
+				}catch(PacketDecodeException $e){
+					throw PacketHandlingException::wrap($e);
+				}
+				if(!$stream->feof()){
+					$remains = substr($stream->getBuffer(), $stream->getOffset());
+					$this->logger->debug("Still " . strlen($remains) . " bytes unread in " . $packet->getName() . ": " . bin2hex($remains));
+				}
+			}finally{
+				$decodeTimings->stopTiming();
+			}
+
+			$handlerTimings = Timings::getHandleDataPacketTimings($packet);
+			$handlerTimings->startTiming();
+			try{
+				//TODO: I'm not sure DataPacketReceiveEvent should be included in the handler timings, but it needs to be
+				//included for now to ensure the receivePacket timings are counted the way they were before
+				$ev = new DataPacketReceiveEvent($this, $packet);
+				$ev->call();
+				if(!$ev->isCancelled() && ($this->handler === null || !$packet->handle($this->handler))){
+					$this->logger->debug("Unhandled " . $packet->getName() . ": " . base64_encode($stream->getBuffer()));
+				}
+			}finally{
+				$handlerTimings->stopTiming();
 			}
 		}finally{
 			$timings->stopTiming();
