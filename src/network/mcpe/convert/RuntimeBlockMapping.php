@@ -54,6 +54,10 @@ final class RuntimeBlockMapping{
 			self::CANONICAL_BLOCK_STATES_PATH => '',
 			self::BLOCK_STATE_META_MAP_PATH => '',
 		],
+		ProtocolInfo::PROTOCOL_1_19_63 => [
+			self::CANONICAL_BLOCK_STATES_PATH => '-1.19.63',
+			self::BLOCK_STATE_META_MAP_PATH => '-1.19.63',
+		],
 		ProtocolInfo::PROTOCOL_1_19_50 => [
 			self::CANONICAL_BLOCK_STATES_PATH => '-1.19.50',
 			self::BLOCK_STATE_META_MAP_PATH => '-1.19.50',
@@ -176,8 +180,10 @@ final class RuntimeBlockMapping{
 
 	private static function getBlockStateSchemaId(int $protocolId) : ?int{
 		return match($protocolId){
+			ProtocolInfo::PROTOCOL_1_19_70 => null,
+
 			ProtocolInfo::PROTOCOL_1_19_63,
-			ProtocolInfo::PROTOCOL_1_19_60 => null,
+			ProtocolInfo::PROTOCOL_1_19_60 => 171,
 
 			ProtocolInfo::PROTOCOL_1_19_50,
 			ProtocolInfo::PROTOCOL_1_19_40,
