@@ -695,7 +695,7 @@ class World implements ChunkManager{
 				$pk = $sound->encode($pos);
 
 				if(count($pk) > 0){
-					$this->server->broadcastPackets($this->filterViewersForPosition($pos, $pl), $pk);
+					NetworkBroadcastUtils::broadcastPackets($this->filterViewersForPosition($pos, $pl), $pk);
 				}
 			}
 		}else{
@@ -1048,7 +1048,7 @@ class World implements ChunkManager{
 						}
 					}else{
 						foreach(RuntimeBlockMapping::sortByProtocol($this->getChunkPlayers($chunkX, $chunkZ)) as $mappingProtocol => $players){
-							$this->server->broadcastPackets($players, $this->createBlockUpdatePackets($mappingProtocol, $blocks));
+							NetworkBroadcastUtils::broadcastPackets($players, $this->createBlockUpdatePackets($mappingProtocol, $blocks));
 						}
 					}
 				}
@@ -2038,9 +2038,9 @@ class World implements ChunkManager{
 			return false;
 		}
 
-		if($blockClicked->getTypeId() === BlockTypeIds::AIR){
-			return false;
-		}
+		//if($blockClicked->getId() === BlockLegacyIds::AIR){
+		//	return false;
+		//}
 
 		if($player !== null){
 			$ev = new PlayerInteractEvent($player, $item, $blockClicked, $clickVector, $face, PlayerInteractEvent::RIGHT_CLICK_BLOCK);
@@ -2071,7 +2071,7 @@ class World implements ChunkManager{
 		$hand = $item->getBlock($face);
 		$hand->position($this, $blockReplace->getPosition()->x, $blockReplace->getPosition()->y, $blockReplace->getPosition()->z);
 
-		if($hand->canBePlacedAt($blockClicked, $clickVector, $face, true)){
+		if($blockClicked->getId() !== BlockLegacyIds::AIR && $hand->canBePlacedAt($blockClicked, $clickVector, $face, true)){
 			$blockReplace = $blockClicked;
 			//TODO: while this mimics the vanilla behaviour with replaceable blocks, we should really pass some other
 			//value like NULL and let place() deal with it. This will look like a bug to anyone who doesn't know about

@@ -374,8 +374,9 @@ class NetworkSession{
 	public function setProtocolId(int $protocolId) : void{
 		$this->protocolId = $protocolId;
 
-		$this->broadcaster = RakLibInterface::getBroadcaster($this->server, $protocolId);
-		$this->packetSerializerContext = new PacketSerializerContext(GlobalItemTypeDictionary::getInstance($protocolId)->getDictionary());
+		$this->entityEventBroadcaster = $this->server->getEntityEventBroadcaster($protocolId);
+		$this->broadcaster = $this->server->getPacketBroadcaster($protocolId);
+		$this->packetSerializerContext = $this->server->getPacketSerializerContext($protocolId);
 	}
 
 	public function getProtocolId() : int{
@@ -459,7 +460,7 @@ class NetworkSession{
 						throw new PacketHandlingException("Unknown packet received");
 					}
 					try{
-						$this->handleDataPacket($packet, $this->getProtocolId(), $buffer);
+						$this->handleDataPacket($packet, $buffer);
 					}catch(PacketHandlingException $e){
 						$this->logger->debug($packet->getName() . ": " . base64_encode($buffer));
 						throw PacketHandlingException::wrap($e, "Error processing " . $packet->getName());
@@ -477,7 +478,7 @@ class NetworkSession{
 	/**
 	 * @throws PacketHandlingException
 	 */
-	public function handleDataPacket(Packet $packet, int $protocolId, string $buffer) : void{
+	public function handleDataPacket(Packet $packet, string $buffer) : void{
 		if(!($packet instanceof ServerboundPacket)){
 			throw new PacketHandlingException("Unexpected non-serverbound packet");
 		}
@@ -495,7 +496,7 @@ class NetworkSession{
 			$decodeTimings = Timings::getDecodeDataPacketTimings($packet);
 			$decodeTimings->startTiming();
 			try{
-				$stream = PacketSerializer::decoder($buffer, 0, $this->packetSerializerContext, $protocolId);
+				$stream = PacketSerializer::decoder($buffer, 0, $this->packetSerializerContext, $this->getProtocolId());
 				try{
 					$packet->decode($stream);
 				}catch(PacketDecodeException $e){
