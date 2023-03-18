@@ -1849,10 +1849,10 @@ class Server{
 	}
 
 	public function getPacketSerializerContext(int $protocolId = ProtocolInfo::CURRENT_PROTOCOL) : PacketSerializerContext{
-		$dictionaryId = GlobalItemTypeDictionary::getDictionaryProtocol($protocolId);
+		$dictionaryId = GlobalItemTypeDictionary::convertProtocol($protocolId);
 
 		if(!isset($this->packetSerializerContexts[$dictionaryId])){
-			$this->packetSerializerContexts[$dictionaryId] = new PacketSerializerContext(GlobalItemTypeDictionary::getInstance()->getDictionary($dictionaryId));
+			$this->packetSerializerContexts[$dictionaryId] = new PacketSerializerContext(GlobalItemTypeDictionary::getInstance($protocolId)->getDictionary());
 		}
 
 		return $this->packetSerializerContexts[$dictionaryId];

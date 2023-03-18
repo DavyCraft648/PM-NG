@@ -178,8 +178,10 @@ final class RuntimeBlockMapping{
 
 	private static function getBlockStateSchemaId(int $protocolId) : ?int{
 		return match($protocolId){
+			ProtocolInfo::PROTOCOL_1_19_70 => null,
+
 			ProtocolInfo::PROTOCOL_1_19_63,
-			ProtocolInfo::PROTOCOL_1_19_60 => null,
+			ProtocolInfo::PROTOCOL_1_19_60 => 171,
 
 			ProtocolInfo::PROTOCOL_1_19_50,
 			ProtocolInfo::PROTOCOL_1_19_40,

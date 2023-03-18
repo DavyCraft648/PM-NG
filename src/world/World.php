@@ -728,9 +728,9 @@ class World implements ChunkManager{
 
 		$players = $ev->getRecipients();
 		if($particle instanceof BlockParticle){
-			$sortedPlayers = RuntimeBlockMapping::sortByProtocol($players);
+			$sortedPlayers = RuntimeBlockMapping::sortByProtocol($this->filterViewersForPosition($pos, $players));
 		} elseif($particle instanceof ItemParticle){
-			$sortedPlayers = ItemTranslator::sortByProtocol($players);
+			$sortedPlayers = ItemTranslator::sortByProtocol($this->filterViewersForPosition($pos, $players));
 		}else{
 			$pk = $particle->encode($pos);
 
@@ -752,7 +752,7 @@ class World implements ChunkManager{
 			$pk = $particle->encode($pos);
 
 			if(count($pk) > 0){
-				NetworkBroadcastUtils::broadcastPackets($this->filterViewersForPosition($pos, $pl), $pk);
+				NetworkBroadcastUtils::broadcastPackets($pl, $pk);
 			}
 		}
 	}
@@ -2038,7 +2038,7 @@ class World implements ChunkManager{
 			return false;
 		}
 
-		//if($blockClicked->getId() === BlockLegacyIds::AIR){
+		//if($blockClicked->getTypeId() === BlockTypeIds::AIR){
 		//	return false;
 		//}
 
@@ -2071,7 +2071,7 @@ class World implements ChunkManager{
 		$hand = $item->getBlock($face);
 		$hand->position($this, $blockReplace->getPosition()->x, $blockReplace->getPosition()->y, $blockReplace->getPosition()->z);
 
-		if($blockClicked->getId() !== BlockLegacyIds::AIR && $hand->canBePlacedAt($blockClicked, $clickVector, $face, true)){
+		if($blockClicked->getTypeId() !== BlockTypeIds::AIR && $hand->canBePlacedAt($blockClicked, $clickVector, $face, true)){
 			$blockReplace = $blockClicked;
 			//TODO: while this mimics the vanilla behaviour with replaceable blocks, we should really pass some other
 			//value like NULL and let place() deal with it. This will look like a bug to anyone who doesn't know about

@@ -173,7 +173,7 @@ class Human extends Living implements ProjectileSource, InventoryHolder{
 			$targets = array_diff($targets ?? $this->hasSpawned, [$this]);
 		}
 
-		NetworkBroadcastUtils::broadcastPackets($targets, [
+		NetworkBroadcastUtils::broadcastPackets($targets ?? $this->hasSpawned, [
 			PlayerSkinPacket::create($this->getUniqueId(), "", "", SkinAdapterSingleton::get()->toSkinData($this->skin))
 		]);
 	}
