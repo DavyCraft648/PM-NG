@@ -470,6 +470,7 @@ class NetworkSession{
 				throw PacketHandlingException::wrap($e, "Packet batch decode error");
 			}
 		}finally{
+			$this->isFirstPacket = false;
 			Timings::$playerNetworkReceive->stopTiming();
 		}
 	}
@@ -495,7 +496,7 @@ class NetworkSession{
 			$decodeTimings = Timings::getDecodeDataPacketTimings($packet);
 			$decodeTimings->startTiming();
 			try{
-				$stream = PacketSerializer::decoder($buffer, 0, $this->packetSerializerContext, $this->getProtocolId());
+				$stream = PacketSerializer::decoder($buffer, 0, $this->packetSerializerContext);
 				try{
 					$packet->decode($stream);
 				}catch(PacketDecodeException $e){
@@ -547,7 +548,7 @@ class NetworkSession{
 			$packets = $ev->getPackets();
 
 			foreach($packets as $evPacket){
-				$this->addToSendBuffer(self::encodePacketTimed(PacketSerializer::encoder($this->packetSerializerContext, $this->getProtocolId()), $evPacket));
+				$this->addToSendBuffer(self::encodePacketTimed(PacketSerializer::encoder($this->packetSerializerContext), $evPacket));
 			}
 			if($immediate){
 				$this->flushSendBuffer(true);
