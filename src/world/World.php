@@ -689,13 +689,13 @@ class World implements ChunkManager{
 
 		$players = $ev->getRecipients();
 		if($sound instanceof BlockSound){
-			foreach(RuntimeBlockMapping::sortByProtocol($players) as $mappingProtocol => $pl){
+			foreach(RuntimeBlockMapping::sortByProtocol($this->filterViewersForPosition($pos, $players)) as $mappingProtocol => $pl){
 				$sound->setProtocolId($mappingProtocol);
 
 				$pk = $sound->encode($pos);
 
 				if(count($pk) > 0){
-					NetworkBroadcastUtils::broadcastPackets($this->filterViewersForPosition($pos, $pl), $pk);
+					NetworkBroadcastUtils::broadcastPackets($pl, $pk);
 				}
 			}
 		}else{

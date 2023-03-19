@@ -57,6 +57,7 @@ use pocketmine\network\mcpe\convert\GlobalItemTypeDictionary;
 use pocketmine\network\mcpe\encryption\EncryptionContext;
 use pocketmine\network\mcpe\EntityEventBroadcaster;
 use pocketmine\network\mcpe\NetworkSession;
+use pocketmine\network\mcpe\PacketBroadcaster;
 use pocketmine\network\mcpe\protocol\ProtocolInfo;
 use pocketmine\network\mcpe\protocol\serializer\PacketSerializerContext;
 use pocketmine\network\mcpe\raklib\RakLibInterface;
@@ -297,10 +298,10 @@ class Server{
 
 	/** @var array<int, PacketSerializerContext> */
 	private array $packetSerializerContexts = [];
-	/** @var array<int, StandardPacketBroadcaster> */
+	/** @var array<int, PacketBroadcaster> */
 	private array $packetBroadcasters = [];
 	/** @var array<int, EntityEventBroadcaster> */
-	private array $entityEventBroadcaster = [];
+	private array $entityEventBroadcasters = [];
 
 	public function getName() : string{
 		return VersionInfo::NAME;
@@ -1858,7 +1859,7 @@ class Server{
 		return $this->packetSerializerContexts[$dictionaryId];
 	}
 
-	public function getPacketBroadcaster(int $protocolId = ProtocolInfo::CURRENT_PROTOCOL) : StandardPacketBroadcaster{
+	public function getPacketBroadcaster(int $protocolId = ProtocolInfo::CURRENT_PROTOCOL) : PacketBroadcaster{
 		if(!isset($this->packetBroadcasters[$protocolId])){
 			$this->packetBroadcasters[$protocolId] = new StandardPacketBroadcaster($this, $this->getPacketSerializerContext($protocolId), $protocolId);
 		}
@@ -1867,10 +1868,10 @@ class Server{
 	}
 
 	public function getEntityEventBroadcaster(int $protocolId = ProtocolInfo::CURRENT_PROTOCOL) : EntityEventBroadcaster{
-		if(!isset($this->entityEventBroadcaster[$protocolId])){
-			$this->entityEventBroadcaster[$protocolId] = new StandardEntityEventBroadcaster($this->getPacketBroadcaster($protocolId));
+		if(!isset($this->entityEventBroadcasters[$protocolId])){
+			$this->entityEventBroadcasters[$protocolId] = new StandardEntityEventBroadcaster($this->getPacketBroadcaster($protocolId));
 		}
 
-		return $this->entityEventBroadcaster[$protocolId];
+		return $this->entityEventBroadcasters[$protocolId];
 	}
 }

@@ -47,8 +47,6 @@ final class SessionStartPacketHandler extends PacketHandler{
 
 			return true;
 		}
-
-		//TODO: we're filling in the defaults to get pre-1.19.30 behaviour back for now, but we should explore the new options in the future
 		$this->session->setProtocolId($protocolVersion);
 
 		$this->session->sendDataPacket(NetworkSettingsPacket::create(
