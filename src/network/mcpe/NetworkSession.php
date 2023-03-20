@@ -24,14 +24,10 @@ declare(strict_types=1);
 namespace pocketmine\network\mcpe;
 
 use pocketmine\block\tile\Spawnable;
-use pocketmine\data\bedrock\EffectIdMap;
-use pocketmine\entity\Attribute;
 use pocketmine\entity\effect\EffectInstance;
-use pocketmine\entity\Entity;
-use pocketmine\entity\Human;
-use pocketmine\entity\Living;
 use pocketmine\event\player\PlayerDuplicateLoginEvent;
 use pocketmine\event\player\SessionDisconnectEvent;
+use pocketmine\event\server\DataPacketDecodeEvent;
 use pocketmine\event\server\DataPacketReceiveEvent;
 use pocketmine\event\server\DataPacketSendEvent;
 use pocketmine\form\Form;
@@ -65,10 +61,6 @@ use pocketmine\network\mcpe\protocol\ChunkRadiusUpdatedPacket;
 use pocketmine\network\mcpe\protocol\ClientboundPacket;
 use pocketmine\network\mcpe\protocol\ClientCacheMissResponsePacket;
 use pocketmine\network\mcpe\protocol\DisconnectPacket;
-use pocketmine\network\mcpe\protocol\EmotePacket;
-use pocketmine\network\mcpe\protocol\MobArmorEquipmentPacket;
-use pocketmine\network\mcpe\protocol\MobEffectPacket;
-use pocketmine\network\mcpe\protocol\MobEquipmentPacket;
 use pocketmine\network\mcpe\protocol\ModalFormRequestPacket;
 use pocketmine\network\mcpe\protocol\MovePlayerPacket;
 use pocketmine\network\mcpe\protocol\NetworkChunkPublisherUpdatePacket;
@@ -78,19 +70,16 @@ use pocketmine\network\mcpe\protocol\PacketPool;
 use pocketmine\network\mcpe\protocol\PlayerListPacket;
 use pocketmine\network\mcpe\protocol\PlayStatusPacket;
 use pocketmine\network\mcpe\protocol\ProtocolInfo;
-use pocketmine\network\mcpe\protocol\RemoveActorPacket;
 use pocketmine\network\mcpe\protocol\serializer\PacketBatch;
 use pocketmine\network\mcpe\protocol\serializer\PacketSerializer;
 use pocketmine\network\mcpe\protocol\serializer\PacketSerializerContext;
 use pocketmine\network\mcpe\protocol\ServerboundPacket;
 use pocketmine\network\mcpe\protocol\ServerToClientHandshakePacket;
-use pocketmine\network\mcpe\protocol\SetActorDataPacket;
 use pocketmine\network\mcpe\protocol\SetDifficultyPacket;
 use pocketmine\network\mcpe\protocol\SetPlayerGameTypePacket;
 use pocketmine\network\mcpe\protocol\SetSpawnPositionPacket;
 use pocketmine\network\mcpe\protocol\SetTimePacket;
 use pocketmine\network\mcpe\protocol\SetTitlePacket;
-use pocketmine\network\mcpe\protocol\TakeItemActorPacket;
 use pocketmine\network\mcpe\protocol\TextPacket;
 use pocketmine\network\mcpe\protocol\ToastRequestPacket;
 use pocketmine\network\mcpe\protocol\TransferPacket;
@@ -103,17 +92,10 @@ use pocketmine\network\mcpe\protocol\types\command\CommandEnum;
 use pocketmine\network\mcpe\protocol\types\command\CommandParameter;
 use pocketmine\network\mcpe\protocol\types\command\CommandPermissions;
 use pocketmine\network\mcpe\protocol\types\DimensionIds;
-use pocketmine\network\mcpe\protocol\types\entity\Attribute as NetworkAttribute;
-use pocketmine\network\mcpe\protocol\types\entity\MetadataProperty;
-use pocketmine\network\mcpe\protocol\types\entity\PropertySyncData;
-use pocketmine\network\mcpe\protocol\types\inventory\ContainerIds;
-use pocketmine\network\mcpe\protocol\types\inventory\ItemStackWrapper;
 use pocketmine\network\mcpe\protocol\types\PlayerListEntry;
 use pocketmine\network\mcpe\protocol\types\PlayerPermissions;
 use pocketmine\network\mcpe\protocol\UpdateAbilitiesPacket;
 use pocketmine\network\mcpe\protocol\UpdateAdventureSettingsPacket;
-use pocketmine\network\mcpe\protocol\UpdateAttributesPacket;
-use pocketmine\network\mcpe\raklib\RakLibInterface;
 use pocketmine\network\NetworkSessionManager;
 use pocketmine\network\PacketHandlingException;
 use pocketmine\permission\DefaultPermissionNames;
@@ -143,7 +125,6 @@ use function hrtime;
 use function in_array;
 use function intdiv;
 use function json_encode;
-use function ksort;
 use function min;
 use function random_bytes;
 use function strcasecmp;
@@ -153,7 +134,6 @@ use function substr;
 use function time;
 use function ucfirst;
 use const JSON_THROW_ON_ERROR;
-use const SORT_NUMERIC;
 
 class NetworkSession{
 	private const INCOMING_PACKET_BATCH_PER_TICK = 2; //usually max 1 per tick, but transactions may arrive separately
@@ -217,6 +197,7 @@ class NetworkSession{
 		private PacketSerializerContext $packetSerializerContext,
 		private PacketSender $sender,
 		private PacketBroadcaster $broadcaster,
+		private EntityEventBroadcaster $entityEventBroadcaster,
 		private Compressor $compressor,
 		private string $ip,
 		private int $port
@@ -316,10 +297,10 @@ class NetworkSession{
 
 		$effectManager = $this->player->getEffects();
 		$effectManager->getEffectAddHooks()->add($effectAddHook = function(EffectInstance $effect, bool $replacesOldEffect) : void{
-			$this->onEntityEffectAdded($this->player, $effect, $replacesOldEffect);
+			$this->entityEventBroadcaster->onEntityEffectAdded([$this], $this->player, $effect, $replacesOldEffect);
 		});
 		$effectManager->getEffectRemoveHooks()->add($effectRemoveHook = function(EffectInstance $effect) : void{
-			$this->onEntityEffectRemoved($this->player, $effect);
+			$this->entityEventBroadcaster->onEntityEffectRemoved([$this], $this->player, $effect);
 		});
 		$this->disposeHooks->add(static function() use ($effectManager, $effectAddHook, $effectRemoveHook) : void{
 			$effectManager->getEffectAddHooks()->remove($effectAddHook);
@@ -392,8 +373,9 @@ class NetworkSession{
 	public function setProtocolId(int $protocolId) : void{
 		$this->protocolId = $protocolId;
 
-		$this->broadcaster = RakLibInterface::getBroadcaster($this->server, $protocolId);
-		$this->packetSerializerContext = RakLibInterface::getPacketSerializerContext($protocolId);
+		$this->entityEventBroadcaster = $this->server->getEntityEventBroadcaster($protocolId);
+		$this->broadcaster = $this->server->getPacketBroadcaster($protocolId);
+		$this->packetSerializerContext = $this->server->getPacketSerializerContext($protocolId);
 	}
 
 	public function getProtocolId() : int{
@@ -477,7 +459,7 @@ class NetworkSession{
 						throw new PacketHandlingException("Unknown packet received");
 					}
 					try{
-						$this->handleDataPacket($packet, $this->getProtocolId(), $buffer);
+						$this->handleDataPacket($packet, $buffer);
 					}catch(PacketHandlingException $e){
 						$this->logger->debug($packet->getName() . ": " . base64_encode($buffer));
 						throw PacketHandlingException::wrap($e, "Error processing " . $packet->getName());
@@ -490,6 +472,7 @@ class NetworkSession{
 				$this->isFirstPacket = false;
 			}
 		}finally{
+			$this->isFirstPacket = false;
 			Timings::$playerNetworkReceive->stopTiming();
 		}
 	}
@@ -497,7 +480,7 @@ class NetworkSession{
 	/**
 	 * @throws PacketHandlingException
 	 */
-	public function handleDataPacket(Packet $packet, int $protocolId, string $buffer) : void{
+	public function handleDataPacket(Packet $packet, string $buffer) : void{
 		if(!($packet instanceof ServerboundPacket)){
 			throw new PacketHandlingException("Unexpected non-serverbound packet");
 		}
@@ -506,6 +489,12 @@ class NetworkSession{
 		$timings->startTiming();
 
 		try{
+			$ev = new DataPacketDecodeEvent($this, $packet->pid(), $buffer);
+			$ev->call();
+			if($ev->isCancelled()){
+				return;
+			}
+
 			$decodeTimings = Timings::getDecodeDataPacketTimings($packet);
 			$decodeTimings->startTiming();
 			try{
@@ -523,18 +512,18 @@ class NetworkSession{
 				$decodeTimings->stopTiming();
 			}
 
-			$handlerTimings = Timings::getHandleDataPacketTimings($packet);
-			$handlerTimings->startTiming();
-			try{
-				//TODO: I'm not sure DataPacketReceiveEvent should be included in the handler timings, but it needs to be
-				//included for now to ensure the receivePacket timings are counted the way they were before
-				$ev = new DataPacketReceiveEvent($this, $packet);
-				$ev->call();
-				if(!$ev->isCancelled() && ($this->handler === null || !$packet->handle($this->handler))){
-					$this->logger->debug("Unhandled " . $packet->getName() . ": " . base64_encode($stream->getBuffer()));
+			$ev = new DataPacketReceiveEvent($this, $packet);
+			$ev->call();
+			if(!$ev->isCancelled()){
+				$handlerTimings = Timings::getHandleDataPacketTimings($packet);
+				$handlerTimings->startTiming();
+				try{
+					if($this->handler === null || !$packet->handle($this->handler)){
+						$this->logger->debug("Unhandled " . $packet->getName() . ": " . base64_encode($stream->getBuffer()));
+					}
+				}finally{
+					$handlerTimings->stopTiming();
 				}
-			}finally{
-				$handlerTimings->stopTiming();
 			}
 		}finally{
 			$timings->stopTiming();
@@ -561,7 +550,7 @@ class NetworkSession{
 			$packets = $ev->getPackets();
 
 			foreach($packets as $evPacket){
-				$this->addToSendBuffer(self::encodePacketTimed(PacketSerializer::encoder($this->packetSerializerContext, $this->getProtocolId()), $evPacket));
+				$this->addToSendBuffer(self::encodePacketTimed(PacketSerializer::encoder($this->packetSerializerContext), $evPacket));
 			}
 			if($immediate){
 				$this->flushSendBuffer(true);
@@ -609,7 +598,7 @@ class NetworkSession{
 				PacketBatch::encodeRaw($stream, $this->sendBuffer);
 
 				if($this->enableCompression){
-					$promise = $this->server->prepareBatch(new PacketBatch($stream->getBuffer()), $this->compressor, $syncMode, Timings::$playerNetworkSendCompressSessionBuffer);
+					$promise = $this->server->prepareBatch($stream->getBuffer(), $this->compressor, $syncMode, Timings::$playerNetworkSendCompressSessionBuffer);
 				}else{
 					$promise = new CompressBatchPromise();
 					$promise->resolve($stream->getBuffer());
@@ -625,6 +614,8 @@ class NetworkSession{
 	public function getPacketSerializerContext() : PacketSerializerContext{ return $this->packetSerializerContext; }
 
 	public function getBroadcaster() : PacketBroadcaster{ return $this->broadcaster; }
+
+	public function getEntityEventBroadcaster() : EntityEventBroadcaster{ return $this->entityEventBroadcaster; }
 
 	public function getCompressor() : Compressor{
 		return $this->compressor;
@@ -928,7 +919,7 @@ class NetworkSession{
 	}
 
 	public function onServerRespawn() : void{
-		$this->syncAttributes($this->player, $this->player->getAttributeMap()->getAll());
+		$this->entityEventBroadcaster->syncAttributes([$this], $this->player, $this->player->getAttributeMap()->getAll());
 		$this->player->sendData(null);
 
 		$this->syncAbilities($this->player);
@@ -1058,41 +1049,6 @@ class NetworkSession{
 				autoJump: $this->player->hasAutoJump()
 			));
 		}
-	}
-
-	/**
-	 * @param Attribute[] $attributes
-	 */
-	public function syncAttributes(Living $entity, array $attributes) : void{
-		if(count($attributes) > 0){
-			$this->sendDataPacket(UpdateAttributesPacket::create($entity->getId(), array_map(function(Attribute $attr) : NetworkAttribute{
-				return new NetworkAttribute($attr->getId(), $attr->getMinValue(), $attr->getMaxValue(), $attr->getValue(), $attr->getDefaultValue(), []);
-			}, $attributes), 0));
-		}
-	}
-
-	/**
-	 * @param MetadataProperty[] $properties
-	 * @phpstan-param array<int, MetadataProperty> $properties
-	 */
-	public function syncActorData(Entity $entity, array $properties) : void{
-		//TODO: HACK! as of 1.18.10, the client responds differently to the same data ordered in different orders - for
-		//example, sending HEIGHT in the list before FLAGS when unsetting the SWIMMING flag results in a hitbox glitch
-		ksort($properties, SORT_NUMERIC);
-		$this->sendDataPacket(SetActorDataPacket::create($entity->getId(), $properties, new PropertySyncData([], []), 0));
-	}
-
-	public function onEntityEffectAdded(Living $entity, EffectInstance $effect, bool $replacesOldEffect) : void{
-		//TODO: we may need yet another effect <=> ID map in the future depending on protocol changes
-		$this->sendDataPacket(MobEffectPacket::add($entity->getId(), $replacesOldEffect, EffectIdMap::getInstance()->toId($effect->getType()), $effect->getAmplifier(), $effect->isVisible(), $effect->getDuration()));
-	}
-
-	public function onEntityEffectRemoved(Living $entity, EffectInstance $effect) : void{
-		$this->sendDataPacket(MobEffectPacket::remove($entity->getId(), EffectIdMap::getInstance()->toId($effect->getType())));
-	}
-
-	public function onEntityRemoved(Entity $entity) : void{
-		$this->sendDataPacket(RemoveActorPacket::create($entity->getId()));
 	}
 
 	public function syncAvailableCommands() : void{
@@ -1279,37 +1235,6 @@ class NetworkSession{
 	}
 
 	/**
-	 * TODO: expand this to more than just humans
-	 */
-	public function onMobMainHandItemChange(Human $mob) : void{
-		//TODO: we could send zero for slot here because remote players don't need to know which slot was selected
-		$inv = $mob->getInventory();
-		$this->sendDataPacket(MobEquipmentPacket::create($mob->getId(), ItemStackWrapper::legacy(TypeConverter::getInstance()->coreItemStackToNet($this->getProtocolId(), $inv->getItemInHand())), $inv->getHeldItemIndex(), $inv->getHeldItemIndex(), ContainerIds::INVENTORY));
-	}
-
-	public function onMobOffHandItemChange(Human $mob) : void{
-		$inv = $mob->getOffHandInventory();
-		$this->sendDataPacket(MobEquipmentPacket::create($mob->getId(), ItemStackWrapper::legacy(TypeConverter::getInstance()->coreItemStackToNet($this->getProtocolId(), $inv->getItem(0))), 0, 0, ContainerIds::OFFHAND));
-	}
-
-	public function onMobArmorChange(Living $mob) : void{
-		$inv = $mob->getArmorInventory();
-		$converter = TypeConverter::getInstance();
-		$protocolId = $this->getProtocolId();
-		$this->sendDataPacket(MobArmorEquipmentPacket::create(
-			$mob->getId(),
-			ItemStackWrapper::legacy($converter->coreItemStackToNet($protocolId, $inv->getHelmet())),
-			ItemStackWrapper::legacy($converter->coreItemStackToNet($protocolId, $inv->getChestplate())),
-			ItemStackWrapper::legacy($converter->coreItemStackToNet($protocolId, $inv->getLeggings())),
-			ItemStackWrapper::legacy($converter->coreItemStackToNet($protocolId, $inv->getBoots()))
-		));
-	}
-
-	public function onPlayerPickUpItem(Player $collector, Entity $pickedUp) : void{
-		$this->sendDataPacket(TakeItemActorPacket::create($collector->getId(), $pickedUp->getId()));
-	}
-
-	/**
 	 * @param Player[] $players
 	 */
 	public function syncPlayerList(array $players) : void{
@@ -1352,10 +1277,6 @@ class NetworkSession{
 		$this->sendDataPacket(SetTitlePacket::setAnimationTimes($fadeIn, $stay, $fadeOut));
 	}
 
-	public function onEmote(Human $from, string $emoteId) : void{
-		$this->sendDataPacket(EmotePacket::create($from->getId(), $emoteId, EmotePacket::FLAG_SERVER));
-	}
-
 	public function onToastNotification(string $title, string $body) : void{
 		$this->sendDataPacket(ToastRequestPacket::create($title, $body));
 	}
@@ -1395,7 +1316,7 @@ class NetworkSession{
 			$this->player->doChunkRequests();
 
 			$dirtyAttributes = $this->player->getAttributeMap()->needSend();
-			$this->syncAttributes($this->player, $dirtyAttributes);
+			$this->entityEventBroadcaster->syncAttributes([$this], $this->player, $dirtyAttributes);
 			foreach($dirtyAttributes as $attribute){
 				//TODO: we might need to send these to other players in the future
 				//if that happens, this will need to become more complex than a flag on the attribute itself

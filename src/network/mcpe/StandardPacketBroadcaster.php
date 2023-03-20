@@ -30,15 +30,19 @@ use pocketmine\Server;
 use pocketmine\timings\Timings;
 use pocketmine\utils\BinaryStream;
 use function count;
+use function log;
 use function spl_object_id;
 use function strlen;
 
 final class StandardPacketBroadcaster implements PacketBroadcaster{
 	public function __construct(
 		private Server $server,
-		private PacketSerializerContext $protocolContext,
-		private int $protocolId
+		private PacketSerializerContext $protocolContext
 	){}
+
+	public function getProtocolId() : int{
+		return $this->protocolContext->getProtocolId();
+	}
 
 	public function broadcastPackets(array $recipients, array $packets) : void{
 		$compressors = [];
@@ -61,7 +65,8 @@ final class StandardPacketBroadcaster implements PacketBroadcaster{
 		$packetBuffers = [];
 		foreach($packets as $packet){
 			$buffer = NetworkSession::encodePacketTimed(PacketSerializer::encoder($this->protocolContext, $this->protocolId), $packet);
-			$totalLength += strlen($buffer);
+			//varint length prefix + packet buffer
+			$totalLength += (((int) log(strlen($buffer), 128)) + 1) + strlen($buffer);
 			$packetBuffers[] = $buffer;
 		}
 
@@ -75,7 +80,7 @@ final class StandardPacketBroadcaster implements PacketBroadcaster{
 				PacketBatch::encodeRaw($stream, $packetBuffers);
 				$batchBuffer = $stream->getBuffer();
 
-				$promise = $this->server->prepareBatch(new PacketBatch($batchBuffer), $compressor, timings: Timings::$playerNetworkSendCompressBroadcast);
+				$promise = $this->server->prepareBatch($batchBuffer, $compressor, timings: Timings::$playerNetworkSendCompressBroadcast);
 				foreach($compressorTargets as $target){
 					$target->queueCompressed($promise);
 				}

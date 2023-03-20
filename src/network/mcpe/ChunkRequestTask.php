@@ -70,13 +70,13 @@ class ChunkRequestTask extends AsyncTask{
 		$cache = new CachedChunk();
 
 		$blockMapper = RuntimeBlockMapping::getInstance($this->mappingProtocol);
-		$encoderContext = new PacketSerializerContext(GlobalItemTypeDictionary::getInstance($this->mappingProtocol)->getDictionary());
-		$encoder = PacketSerializer::encoder($encoderContext, $this->mappingProtocol);
+		$encoderContext = new PacketSerializerContext(GlobalItemTypeDictionary::getInstance($this->mappingProtocol)->getDictionary(), $this->mappingProtocol);
 
-		foreach(ChunkSerializer::serializeSubChunks($chunk, $blockMapper, $encoderContext, $this->mappingProtocol) as $subChunk){
+		foreach(ChunkSerializer::serializeSubChunks($chunk, $blockMapper, $encoderContext) as $subChunk){
 			$cache->addSubChunk(Binary::readLong(xxhash64($subChunk)), $subChunk);
 		}
 
+		$encoder = PacketSerializer::encoder($encoderContext);
 		$biomeEncoder = clone $encoder;
 		ChunkSerializer::serializeBiomes($chunk, $biomeEncoder);
 		$cache->setBiomes(Binary::readLong(xxhash64($chunkBuffer = $biomeEncoder->getBuffer())), $chunkBuffer);
@@ -90,7 +90,6 @@ class ChunkRequestTask extends AsyncTask{
 			$chunkDataEncoder->getBuffer(),
 			$this->compressor->deserialize(),
 			$encoderContext,
-			$this->mappingProtocol
 		);
 
 		$this->setResult($cache);

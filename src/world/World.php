@@ -68,6 +68,7 @@ use pocketmine\nbt\tag\IntTag;
 use pocketmine\nbt\tag\StringTag;
 use pocketmine\network\mcpe\convert\ItemTranslator;
 use pocketmine\network\mcpe\convert\RuntimeBlockMapping;
+use pocketmine\network\mcpe\NetworkBroadcastUtils;
 use pocketmine\network\mcpe\protocol\BlockActorDataPacket;
 use pocketmine\network\mcpe\protocol\ClientboundPacket;
 use pocketmine\network\mcpe\protocol\types\BlockPosition;
@@ -688,13 +689,13 @@ class World implements ChunkManager{
 
 		$players = $ev->getRecipients();
 		if($sound instanceof BlockSound){
-			foreach(RuntimeBlockMapping::sortByProtocol($players) as $mappingProtocol => $pl){
+			foreach(RuntimeBlockMapping::sortByProtocol($this->filterViewersForPosition($pos, $players)) as $mappingProtocol => $pl){
 				$sound->setProtocolId($mappingProtocol);
 
 				$pk = $sound->encode($pos);
 
 				if(count($pk) > 0){
-					$this->server->broadcastPackets($this->filterViewersForPosition($pos, $pl), $pk);
+					NetworkBroadcastUtils::broadcastPackets($pl, $pk);
 				}
 			}
 		}else{
@@ -706,7 +707,7 @@ class World implements ChunkManager{
 						$this->broadcastPacketToViewers($pos, $e);
 					}
 				}else{
-					$this->server->broadcastPackets($this->filterViewersForPosition($pos, $players), $pk);
+					NetworkBroadcastUtils::broadcastPackets($this->filterViewersForPosition($pos, $players), $pk);
 				}
 			}
 		}
@@ -727,9 +728,9 @@ class World implements ChunkManager{
 
 		$players = $ev->getRecipients();
 		if($particle instanceof BlockParticle){
-			$sortedPlayers = RuntimeBlockMapping::sortByProtocol($players);
+			$sortedPlayers = RuntimeBlockMapping::sortByProtocol($this->filterViewersForPosition($pos, $players));
 		}elseif($particle instanceof ItemParticle){
-			$sortedPlayers = ItemTranslator::sortByProtocol($players);
+			$sortedPlayers = ItemTranslator::sortByProtocol($this->filterViewersForPosition($pos, $players));
 		}else{
 			$pk = $particle->encode($pos);
 
@@ -739,7 +740,7 @@ class World implements ChunkManager{
 						$this->broadcastPacketToViewers($pos, $e);
 					}
 				}else{
-					$this->server->broadcastPackets($this->filterViewersForPosition($pos, $ev->getRecipients()), $pk);
+					NetworkBroadcastUtils::broadcastPackets($this->filterViewersForPosition($pos, $ev->getRecipients()), $pk);
 				}
 			}
 			return;
@@ -751,7 +752,7 @@ class World implements ChunkManager{
 			$pk = $particle->encode($pos);
 
 			if(count($pk) > 0){
-				$this->server->broadcastPackets($this->filterViewersForPosition($pos, $pl), $pk);
+				NetworkBroadcastUtils::broadcastPackets($pl, $pk);
 			}
 		}
 	}
@@ -1051,7 +1052,7 @@ class World implements ChunkManager{
 						}
 					}else{
 						foreach(RuntimeBlockMapping::sortByProtocol($this->getChunkPlayers($chunkX, $chunkZ)) as $mappingProtocol => $players){
-							$this->server->broadcastPackets($players, $this->createBlockUpdatePackets($mappingProtocol, $blocks));
+							NetworkBroadcastUtils::broadcastPackets($players, $this->createBlockUpdatePackets($mappingProtocol, $blocks));
 						}
 					}
 				}
@@ -1069,7 +1070,7 @@ class World implements ChunkManager{
 			World::getXZ($index, $chunkX, $chunkZ);
 			$chunkPlayers = $this->getChunkPlayers($chunkX, $chunkZ);
 			if(count($chunkPlayers) > 0){
-				$this->server->broadcastPackets($chunkPlayers, $entries);
+				NetworkBroadcastUtils::broadcastPackets($chunkPlayers, $entries);
 			}
 		}
 
@@ -2065,9 +2066,9 @@ class World implements ChunkManager{
 			return false;
 		}
 
-		if($blockClicked->getTypeId() === BlockTypeIds::AIR){
-			return false;
-		}
+		//if($blockClicked->getTypeId() === BlockTypeIds::AIR){
+		//	return false;
+		//}
 
 		if($player !== null){
 			$ev = new PlayerInteractEvent($player, $item, $blockClicked, $clickVector, $face, PlayerInteractEvent::RIGHT_CLICK_BLOCK);
@@ -2098,7 +2099,7 @@ class World implements ChunkManager{
 		$hand = $item->getBlock($face);
 		$hand->position($this, $blockReplace->getPosition()->x, $blockReplace->getPosition()->y, $blockReplace->getPosition()->z);
 
-		if($hand->canBePlacedAt($blockClicked, $clickVector, $face, true)){
+		if($blockClicked->getTypeId() !== BlockTypeIds::AIR && $hand->canBePlacedAt($blockClicked, $clickVector, $face, true)){
 			$blockReplace = $blockClicked;
 			//TODO: while this mimics the vanilla behaviour with replaceable blocks, we should really pass some other
 			//value like NULL and let place() deal with it. This will look like a bug to anyone who doesn't know about

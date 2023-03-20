@@ -66,12 +66,13 @@ class LoginPacketHandler extends ChunkRequestPacketHandler{
 	}
 
 	public function handleLogin(LoginPacket $packet) : bool{
-		if(!$this->isCompatibleProtocol($packet->protocol)){
-			$this->session->disconnectIncompatibleProtocol($packet->protocol);
+		$protocolVersion = $packet->protocol;
+		if(!$this->isCompatibleProtocol($protocolVersion)){
+			$this->session->disconnectIncompatibleProtocol($protocolVersion);
 
 			return true;
 		}
-		$this->session->setProtocolId($packet->protocol);
+		$this->session->setProtocolId($protocolVersion);
 
 		$extraData = $this->fetchAuthData($packet->chainDataJwt);
 
@@ -83,7 +84,6 @@ class LoginPacketHandler extends ChunkRequestPacketHandler{
 
 		$clientData = $this->parseClientData($packet->clientDataJwt);
 
-		//TODO: REMOVE THIS
 		//Mojang forgot to bump the protocol version when they changed protocol in 1.19.62. Check the game version instead.
 		if(preg_match('/^(\d+)\.(\d+)\.(\d+)/', $clientData->GameVersion, $matches) !== 1){
 			throw new PacketHandlingException("Invalid game version format, expected at least 3 digits");
