@@ -133,6 +133,9 @@ final class RuntimeBlockMapping{
 
 			$networkId = $this->blockStateDictionary->lookupStateIdFromData($blockStateData);
 			if($networkId === null){
+				if($this !== RuntimeBlockMapping::getInstance() && RuntimeBlockMapping::getInstance()->blockStateDictionary->lookupStateIdFromData($blockStateData) !== null){
+					throw new BlockStateSerializeException();
+				}
 				throw new AssumptionFailedError("Unmapped blockstate returned by blockstate serializer: " . $blockStateData->toNbt());
 			}
 		}catch(BlockStateSerializeException){
