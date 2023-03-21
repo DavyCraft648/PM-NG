@@ -390,7 +390,7 @@ class InGamePacketHandler extends ChunkRequestPacketHandler{
 				//it's technically possible to see this more than once, but a normal client should never do that.
 				$inventory = $this->player->getInventory();
 
-				$heldItemStack = TypeConverter::getInstance()->coreItemStackToNet($inventory->getItemInHand());
+				$heldItemStack = TypeConverter::getInstance()->coreItemStackToNet($this->session->getProtocolId(), $inventory->getItemInHand());
 				$droppedItemStack = $networkInventoryAction->newItem->getItemStack();
 				//because the client doesn't tell us the expected itemstack ID, we have to deep-compare our known
 				//itemstack info with the one the client sent. This is costly, but we don't have any other option :(
