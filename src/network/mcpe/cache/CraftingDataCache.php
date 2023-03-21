@@ -26,6 +26,8 @@ namespace pocketmine\network\mcpe\cache;
 use pocketmine\crafting\CraftingManager;
 use pocketmine\crafting\FurnaceType;
 use pocketmine\crafting\RecipeIngredient;
+use pocketmine\crafting\ShapedRecipe;
+use pocketmine\crafting\ShapelessRecipe;
 use pocketmine\crafting\ShapelessRecipeType;
 use pocketmine\item\Item;
 use pocketmine\network\mcpe\convert\GlobalItemTypeDictionary;
@@ -86,13 +88,13 @@ final class CraftingDataCache{
 	private function buildCraftingDataCache(CraftingManager $manager) : CraftingDataPacket{
 		Timings::$craftingDataCacheRebuild->startTiming();
 
-		$counter = 0;
 		$nullUUID = Uuid::fromString(Uuid::NIL);
 		$converter = TypeConverter::getInstance();
 		$recipesWithTypeIds = [];
-		foreach($manager->getShapelessRecipes() as $list){
-			foreach($list as $recipe){
-				$typeTag = match ($recipe->getType()->id()) {
+
+		foreach($manager->getCraftingRecipeIndex() as $index => $recipe){
+			if($recipe instanceof ShapelessRecipe){
+				$typeTag = match($recipe->getType()->id()){
 					ShapelessRecipeType::CRAFTING()->id() => CraftingRecipeBlockName::CRAFTING_TABLE,
 					ShapelessRecipeType::STONECUTTER()->id() => CraftingRecipeBlockName::STONECUTTER,
 					ShapelessRecipeType::CARTOGRAPHY()->id() => CraftingRecipeBlockName::CARTOGRAPHY_TABLE,
@@ -121,18 +123,15 @@ final class CraftingDataCache{
 
 				$recipesWithTypeIds[] = new ProtocolShapelessRecipe(
 					CraftingDataPacket::ENTRY_SHAPELESS,
-					Binary::writeInt(++$counter),
+					Binary::writeInt($index),
 					$inputs,
 					$outputs,
 					$nullUUID,
 					$typeTag,
 					50,
-					$counter
+					$index
 				);
-			}
-		}
-		foreach($manager->getShapedRecipes() as $list){
-			foreach($list as $recipe){
+			}elseif($recipe instanceof ShapedRecipe){
 				$inputs = [];
 
 				try{
@@ -159,19 +158,21 @@ final class CraftingDataCache{
 
 				$recipesWithTypeIds[] = new ProtocolShapedRecipe(
 					CraftingDataPacket::ENTRY_SHAPED,
-					Binary::writeInt(++$counter),
+					Binary::writeInt($index),
 					$inputs,
 					$outputs,
 					$nullUUID,
 					CraftingRecipeBlockName::CRAFTING_TABLE,
 					50,
-					$counter
+					$index
 				);
+			}else{
+				//TODO: probably special recipe types
 			}
 		}
 
 		foreach(FurnaceType::getAll() as $furnaceType){
-			$typeTag = match ($furnaceType->id()) {
+			$typeTag = match($furnaceType->id()){
 				FurnaceType::FURNACE()->id() => FurnaceRecipeBlockName::FURNACE,
 				FurnaceType::BLAST_FURNACE()->id() => FurnaceRecipeBlockName::BLAST_FURNACE,
 				FurnaceType::SMOKER()->id() => FurnaceRecipeBlockName::SMOKER,
