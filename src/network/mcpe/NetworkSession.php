@@ -450,7 +450,7 @@ class NetworkSession{
 				$stream = new BinaryStream($decompressed);
 				$count = 0;
 				foreach(PacketBatch::decodeRaw($stream) as $buffer){
-					if(++$count > 1300){
+					if(++$count > 100){
 						throw new PacketHandlingException("Too many packets in batch");
 					}
 					$packet = $this->packetPool->getPacket($buffer);
@@ -639,20 +639,25 @@ class NetworkSession{
 				$this->compressedQueue->enqueue($payload);
 				$payload->onResolve(function(CompressBatchPromise $payload) : void{
 					if($this->connected && $this->compressedQueue->bottom() === $payload){
-						$this->compressedQueue->dequeue(); //result unused
-						$this->sendEncoded($payload->getResult());
+						Timings::$playerNetworkSend->startTiming();
+						try{
+							$this->compressedQueue->dequeue(); //result unused
+							$this->sendEncoded($payload->getResult());
 
-						while(!$this->compressedQueue->isEmpty()){
-							/** @var CompressBatchPromise $current */
-							$current = $this->compressedQueue->bottom();
-							if($current->hasResult()){
-								$this->compressedQueue->dequeue();
+							while(!$this->compressedQueue->isEmpty()){
+								/** @var CompressBatchPromise $current */
+								$current = $this->compressedQueue->bottom();
+								if($current->hasResult()){
+									$this->compressedQueue->dequeue();
 
-								$this->sendEncoded($current->getResult());
-							}else{
-								//can't send any more queued until this one is ready
-								break;
+									$this->sendEncoded($current->getResult());
+								}else{
+									//can't send any more queued until this one is ready
+									break;
+								}
 							}
+						}finally{
+							Timings::$playerNetworkSend->stopTiming();
 						}
 					}
 				});
@@ -1000,6 +1005,7 @@ class NetworkSession{
 				AbilitiesLayer::ABILITY_OPEN_CONTAINERS => !$for->isSpectator(),
 				AbilitiesLayer::ABILITY_ATTACK_PLAYERS => !$for->isSpectator(),
 				AbilitiesLayer::ABILITY_ATTACK_MOBS => !$for->isSpectator(),
+				AbilitiesLayer::ABILITY_PRIVILEGED_BUILDER => false,
 			];
 
 			$pk = UpdateAbilitiesPacket::create(new AbilitiesData(
@@ -1320,6 +1326,12 @@ class NetworkSession{
 				//if that happens, this will need to become more complex than a flag on the attribute itself
 				$attribute->markSynchronized();
 			}
+		}
+		Timings::$playerNetworkSendInventorySync->startTiming();
+		try{
+			$this->invManager?->flushPendingUpdates();
+		}finally{
+			Timings::$playerNetworkSendInventorySync->stopTiming();
 		}
 
 		$this->flushSendBuffer();
