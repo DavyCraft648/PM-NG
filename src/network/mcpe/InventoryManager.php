@@ -520,7 +520,7 @@ class InventoryManager{
 	}
 
 	public function syncMismatchedPredictedSlotChanges() : void{
-		$typeConverter = TypeConverter::getInstance();
+		$typeConverter = TypeConverter::getInstance($this->session->getProtocolId());
 		foreach($this->inventories as $entry){
 			$inventory = $entry->inventory;
 			foreach($entry->predictions as $slot => $expectedItem){
