@@ -228,12 +228,12 @@
             "source": {
                 "type": "git",
                 "url": "https://github.com/NetherGamesMC/BedrockProtocol.git",
-                "reference": "3e8a2c668c20cfea81099da0b72d917aa9e9b559"
+                "reference": "6ca1e90bcda09866fb9cb6e77b2eeb2bf93fd2fc"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/NetherGamesMC/BedrockProtocol/zipball/3e8a2c668c20cfea81099da0b72d917aa9e9b559",
-                "reference": "3e8a2c668c20cfea81099da0b72d917aa9e9b559",
+                "url": "https://api.github.com/repos/NetherGamesMC/BedrockProtocol/zipball/6ca1e90bcda09866fb9cb6e77b2eeb2bf93fd2fc",
+                "reference": "6ca1e90bcda09866fb9cb6e77b2eeb2bf93fd2fc",
                 "shasum": ""
             },
             "require": {
@@ -276,7 +276,7 @@
             "support": {
                 "source": "https://github.com/NetherGamesMC/BedrockProtocol/tree/master"
             },
-            "time": "2023-03-14T19:28:05+00:00"
+            "time": "2023-03-19T19:23:03+00:00"
         },
         {
             "name": "netresearch/jsonmapper",
@@ -597,16 +597,16 @@
         },
         {
             "name": "pocketmine/locale-data",
-            "version": "2.19.0",
+            "version": "2.19.5",
             "source": {
                 "type": "git",
                 "url": "https://github.com/pmmp/Language.git",
-                "reference": "f47d1687f21f09d2858f040873184a11746b1cf7"
+                "reference": "71af5f9bd23b4e4bad8920dac7f4fe08e5205f7d"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/pmmp/Language/zipball/f47d1687f21f09d2858f040873184a11746b1cf7",
-                "reference": "f47d1687f21f09d2858f040873184a11746b1cf7",
+                "url": "https://api.github.com/repos/pmmp/Language/zipball/71af5f9bd23b4e4bad8920dac7f4fe08e5205f7d",
+                "reference": "71af5f9bd23b4e4bad8920dac7f4fe08e5205f7d",
                 "shasum": ""
             },
             "type": "library",
@@ -614,9 +614,9 @@
             "description": "Language resources used by PocketMine-MP",
             "support": {
                 "issues": "https://github.com/pmmp/Language/issues",
-                "source": "https://github.com/pmmp/Language/tree/2.19.0"
+                "source": "https://github.com/pmmp/Language/tree/2.19.5"
             },
-            "time": "2023-02-13T13:55:22+00:00"
+            "time": "2023-03-19T16:45:15+00:00"
         },
         {
             "name": "pocketmine/log",

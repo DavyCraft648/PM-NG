@@ -498,7 +498,7 @@ class NetworkSession{
 			$decodeTimings = Timings::getDecodeDataPacketTimings($packet);
 			$decodeTimings->startTiming();
 			try{
-				$stream = PacketSerializer::decoder($buffer, 0, $this->packetSerializerContext, $protocolId);
+				$stream = PacketSerializer::decoder($buffer, 0, $this->packetSerializerContext);
 				try{
 					$packet->decode($stream);
 				}catch(PacketDecodeException $e){
