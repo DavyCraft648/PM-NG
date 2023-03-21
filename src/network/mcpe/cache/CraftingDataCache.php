@@ -133,6 +133,25 @@ final class CraftingDataCache{
 				}
 			}
 
+			foreach(FurnaceType::getAll() as $furnaceType){
+				$typeTag = match($furnaceType->id()){
+					FurnaceType::FURNACE()->id() => FurnaceRecipeBlockName::FURNACE,
+					FurnaceType::BLAST_FURNACE()->id() => FurnaceRecipeBlockName::BLAST_FURNACE,
+					FurnaceType::SMOKER()->id() => FurnaceRecipeBlockName::SMOKER,
+					default => throw new AssumptionFailedError("Unreachable"),
+				};
+				foreach($manager->getFurnaceRecipeManager($furnaceType)->getAll() as $recipe){
+					$input = $converter->coreItemStackToNet($dictionaryProtocol, $recipe->getInput());
+					$recipesWithTypeIds[] = new ProtocolFurnaceRecipe(
+						CraftingDataPacket::ENTRY_FURNACE_DATA,
+						$input->getId(),
+						$input->getMeta(),
+						$converter->coreItemStackToNet($dictionaryProtocol, $recipe->getResult()),
+						$typeTag
+					);
+				}
+			}
+
 			$potionTypeRecipes = [];
 			foreach($manager->getPotionTypeRecipes() as $recipes){
 				foreach($recipes as $recipe){
