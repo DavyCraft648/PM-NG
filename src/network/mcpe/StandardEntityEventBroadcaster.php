@@ -103,7 +103,7 @@ final class StandardEntityEventBroadcaster implements EntityEventBroadcaster{
 		$inv = $mob->getInventory();
 		$this->sendDataPacket($recipients, MobEquipmentPacket::create(
 			$mob->getId(),
-			ItemStackWrapper::legacy(TypeConverter::getInstance()->coreItemStackToNet($this->broadcaster->getProtocolId(), $inv->getItemInHand())),
+			ItemStackWrapper::legacy(TypeConverter::getInstance($this->broadcaster->getProtocolId())->coreItemStackToNet($inv->getItemInHand())),
 			$inv->getHeldItemIndex(),
 			$inv->getHeldItemIndex(),
 			ContainerIds::INVENTORY
@@ -114,7 +114,7 @@ final class StandardEntityEventBroadcaster implements EntityEventBroadcaster{
 		$inv = $mob->getOffHandInventory();
 		$this->sendDataPacket($recipients, MobEquipmentPacket::create(
 			$mob->getId(),
-			ItemStackWrapper::legacy(TypeConverter::getInstance()->coreItemStackToNet($this->broadcaster->getProtocolId(), $inv->getItem(0))),
+			ItemStackWrapper::legacy(TypeConverter::getInstance($this->broadcaster->getProtocolId())->coreItemStackToNet($inv->getItem(0))),
 			0,
 			0,
 			ContainerIds::OFFHAND
@@ -123,13 +123,13 @@ final class StandardEntityEventBroadcaster implements EntityEventBroadcaster{
 
 	public function onMobArmorChange(array $recipients, Living $mob) : void{
 		$inv = $mob->getArmorInventory();
-		$converter = TypeConverter::getInstance();
+		$converter = TypeConverter::getInstance($this->broadcaster->getProtocolId());
 		$this->sendDataPacket($recipients, MobArmorEquipmentPacket::create(
 			$mob->getId(),
-			ItemStackWrapper::legacy($converter->coreItemStackToNet($this->broadcaster->getProtocolId(), $inv->getHelmet())),
-			ItemStackWrapper::legacy($converter->coreItemStackToNet($this->broadcaster->getProtocolId(), $inv->getChestplate())),
-			ItemStackWrapper::legacy($converter->coreItemStackToNet($this->broadcaster->getProtocolId(), $inv->getLeggings())),
-			ItemStackWrapper::legacy($converter->coreItemStackToNet($this->broadcaster->getProtocolId(), $inv->getBoots()))
+			ItemStackWrapper::legacy($converter->coreItemStackToNet($inv->getHelmet())),
+			ItemStackWrapper::legacy($converter->coreItemStackToNet($inv->getChestplate())),
+			ItemStackWrapper::legacy($converter->coreItemStackToNet($inv->getLeggings())),
+			ItemStackWrapper::legacy($converter->coreItemStackToNet($inv->getBoots()))
 		));
 	}
 

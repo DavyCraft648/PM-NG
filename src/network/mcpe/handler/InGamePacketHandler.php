@@ -230,7 +230,12 @@ class InGamePacketHandler extends ChunkRequestPacketHandler{
 			$sprinting = $this->resolveOnOffInputFlags($inputFlags, PlayerAuthInputFlags::START_SPRINTING, PlayerAuthInputFlags::STOP_SPRINTING);
 			$swimming = $this->resolveOnOffInputFlags($inputFlags, PlayerAuthInputFlags::START_SWIMMING, PlayerAuthInputFlags::STOP_SWIMMING);
 			$gliding = $this->resolveOnOffInputFlags($inputFlags, PlayerAuthInputFlags::START_GLIDING, PlayerAuthInputFlags::STOP_GLIDING);
-			if(!$this->player->syncPlayerActions($sneaking, $sprinting, $swimming, $gliding)){
+			$mismatch =
+				($sneaking !== null && !$this->player->toggleSneak($sneaking)) |
+				($sprinting !== null && !$this->player->toggleSprint($sprinting)) |
+				($swimming !== null && !$this->player->toggleSwim($swimming)) |
+				($gliding !== null && !$this->player->toggleGlide($gliding));
+			if((bool) $mismatch){
 				$this->player->sendData([$this->player]);
 			}
 
@@ -390,7 +395,7 @@ class InGamePacketHandler extends ChunkRequestPacketHandler{
 				//it's technically possible to see this more than once, but a normal client should never do that.
 				$inventory = $this->player->getInventory();
 
-				$heldItemStack = TypeConverter::getInstance()->coreItemStackToNet($this->session->getProtocolId(), $inventory->getItemInHand());
+				$heldItemStack = TypeConverter::getInstance($this->session->getProtocolId())->coreItemStackToNet($inventory->getItemInHand());
 				$droppedItemStack = $networkInventoryAction->newItem->getItemStack();
 				//because the client doesn't tell us the expected itemstack ID, we have to deep-compare our known
 				//itemstack info with the one the client sent. This is costly, but we don't have any other option :(

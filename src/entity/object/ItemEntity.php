@@ -288,7 +288,7 @@ class ItemEntity extends Entity{
 		$player->getNetworkSession()->sendDataPacket(AddItemActorPacket::create(
 			$this->getId(), //TODO: entity unique ID
 			$this->getId(),
-			ItemStackWrapper::legacy(TypeConverter::getInstance()->coreItemStackToNet($player->getNetworkSession()->getProtocolId(), $this->getItem())),
+			ItemStackWrapper::legacy(TypeConverter::getInstance($player->getNetworkSession()->getProtocolId())->coreItemStackToNet($this->getItem())),
 			$this->location->asVector3(),
 			$this->getMotion(),
 			$this->getAllNetworkData(),

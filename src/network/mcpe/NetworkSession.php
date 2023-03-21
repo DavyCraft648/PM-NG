@@ -468,8 +468,6 @@ class NetworkSession{
 			}catch(PacketDecodeException $e){
 				$this->logger->logException($e);
 				throw PacketHandlingException::wrap($e, "Packet batch decode error");
-			}finally{
-				$this->isFirstPacket = false;
 			}
 		}finally{
 			$this->isFirstPacket = false;
@@ -1151,7 +1149,7 @@ class NetworkSession{
 		$world = $this->player->getLocation()->getWorld();
 		ChunkCache::getInstance($world, $this->compressor)->request($chunkX, $chunkZ, $this->getProtocolId())->onResolve(
 
-		//this callback may be called synchronously or asynchronously, depending on whether the promise is resolved yet
+			//this callback may be called synchronously or asynchronously, depending on whether the promise is resolved yet
 			function(CachedChunkPromise $promise) use ($world, $onCompletion, $chunkX, $chunkZ) : void{
 
 				if(!$this->isConnected()){

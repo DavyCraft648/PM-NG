@@ -224,7 +224,7 @@ class InventoryManager{
 		foreach($tx->getActions() as $action){
 			if($action instanceof SlotChangeAction){
 				//TODO: ItemStackRequestExecutor can probably build these predictions with much lower overhead
-				$itemStack = TypeConverter::getInstance()->coreItemStackToNet($this->session->getProtocolId(), $action->getTargetItem());
+				$itemStack = TypeConverter::getInstance($this->session->getProtocolId())->coreItemStackToNet($action->getTargetItem());
 				$this->addPredictedSlotChange($action->getInventory(), $action->getSlot(), $itemStack);
 			}
 		}
@@ -413,7 +413,7 @@ class InventoryManager{
 	}
 
 	public function onSlotChange(Inventory $inventory, int $slot) : void{
-		$currentItem = TypeConverter::getInstance()->coreItemStackToNet($this->session->getProtocolId(), $inventory->getItem($slot));
+		$currentItem = TypeConverter::getInstance($this->session->getProtocolId())->coreItemStackToNet($inventory->getItem($slot));
 		$inventoryEntry = $this->inventories[spl_object_id($inventory)];
 		$clientSideItem = $inventoryEntry->predictions[$slot] ?? null;
 		if($clientSideItem === null || !$clientSideItem->equals($currentItem)){
@@ -485,9 +485,9 @@ class InventoryManager{
 			$entry->predictions = [];
 			$entry->pendingSyncs = [];
 			$contents = [];
-			$typeConverter = TypeConverter::getInstance();
+			$typeConverter = TypeConverter::getInstance($this->session->getProtocolId());
 			foreach($inventory->getContents(true) as $slot => $item){
-				$itemStack = $typeConverter->coreItemStackToNet($this->session->getProtocolId(), $item);
+				$itemStack = $typeConverter->coreItemStackToNet($item);
 				$info = $this->trackItemStack($entry, $slot, $itemStack, null);
 				$contents[] = new ItemStackWrapper($info->getStackId(), $itemStack);
 			}
@@ -520,7 +520,7 @@ class InventoryManager{
 	}
 
 	public function syncMismatchedPredictedSlotChanges() : void{
-		$typeConverter = TypeConverter::getInstance();
+		$typeConverter = TypeConverter::getInstance($this->session->getProtocolId());
 		foreach($this->inventories as $entry){
 			$inventory = $entry->inventory;
 			foreach($entry->predictions as $slot => $expectedItem){
@@ -530,7 +530,7 @@ class InventoryManager{
 
 				//any prediction that still exists at this point is a slot that was predicted to change but didn't
 				$this->session->getLogger()->debug("Detected prediction mismatch in inventory " . get_class($inventory) . "#" . spl_object_id($inventory) . " slot $slot");
-				$entry->pendingSyncs[$slot] = $typeConverter->coreItemStackToNet($this->session->getProtocolId(), $inventory->getItem($slot));
+				$entry->pendingSyncs[$slot] = $typeConverter->coreItemStackToNet($inventory->getItem($slot));
 			}
 
 			$entry->predictions = [];
@@ -579,7 +579,7 @@ class InventoryManager{
 
 			$this->session->sendDataPacket(MobEquipmentPacket::create(
 				$this->player->getId(),
-				new ItemStackWrapper($itemStackInfo->getStackId(), TypeConverter::getInstance()->coreItemStackToNet($this->session->getProtocolId(), $playerInventory->getItemInHand())),
+				new ItemStackWrapper($itemStackInfo->getStackId(), TypeConverter::getInstance($this->session->getProtocolId())->coreItemStackToNet($playerInventory->getItemInHand())),
 				$selected,
 				$selected,
 				ContainerIds::INVENTORY
@@ -589,18 +589,13 @@ class InventoryManager{
 	}
 
 	public function syncCreative() : void{
-		$typeConverter = TypeConverter::getInstance();
+		$typeConverter = TypeConverter::getInstance($this->session->getProtocolId());
 
 		$entries = [];
 		if(!$this->player->isSpectator()){
-			$protocolId = $this->session->getProtocolId();
 			//creative inventory may have holes if items were unregistered - ensure network IDs used are always consistent
 			foreach(CreativeInventory::getInstance()->getAll() as $k => $item){
-				try{
-					$entries[] = new CreativeContentEntry($k, $typeConverter->coreItemStackToNet($protocolId, $item));
-				}catch(\InvalidArgumentException){
-					//ignore
-				}
+				$entries[] = new CreativeContentEntry($k, $typeConverter->coreItemStackToNet($item));
 			}
 		}
 		$this->session->sendDataPacket(CreativeContentPacket::create($entries));
