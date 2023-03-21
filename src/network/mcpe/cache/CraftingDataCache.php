@@ -25,6 +25,8 @@ namespace pocketmine\network\mcpe\cache;
 
 use pocketmine\crafting\CraftingManager;
 use pocketmine\crafting\FurnaceType;
+use pocketmine\crafting\ShapedRecipe;
+use pocketmine\crafting\ShapelessRecipe;
 use pocketmine\crafting\ShapelessRecipeType;
 use pocketmine\item\Item;
 use pocketmine\network\mcpe\convert\GlobalItemTypeDictionary;
@@ -81,35 +83,32 @@ final class CraftingDataCache{
 		$packets = [];
 
 		foreach(GlobalItemTypeDictionary::getInstance()->getDictionaries() as $dictionaryProtocol => $unused){
-			$counter = 0;
 			$nullUUID = Uuid::fromString(Uuid::NIL);
 			$converter = TypeConverter::getInstance();
 			$recipesWithTypeIds = [];
-			foreach($manager->getShapelessRecipes() as $list){
-				foreach($list as $recipe){
-					$typeTag = match($recipe->getType()->id()){
+
+			foreach($manager->getCraftingRecipeIndex() as $index => $recipe){
+				if($recipe instanceof ShapelessRecipe){
+					$typeTag = match ($recipe->getType()->id()) {
 						ShapelessRecipeType::CRAFTING()->id() => CraftingRecipeBlockName::CRAFTING_TABLE,
 						ShapelessRecipeType::STONECUTTER()->id() => CraftingRecipeBlockName::STONECUTTER,
 						default => throw new AssumptionFailedError("Unreachable"),
 					};
 					$recipesWithTypeIds[] = new ProtocolShapelessRecipe(
 						CraftingDataPacket::ENTRY_SHAPELESS,
-						Binary::writeInt(++$counter),
-						array_map(function(Item $item) use ($dictionaryProtocol, $converter) : RecipeIngredient{
+						Binary::writeInt($index),
+						array_map(function(Item $item) use ($converter, $dictionaryProtocol) : RecipeIngredient{
 							return $converter->coreItemStackToRecipeIngredient($dictionaryProtocol, $item);
 						}, $recipe->getIngredientList()),
-						array_map(function(Item $item) use ($dictionaryProtocol, $converter) : ItemStack{
+						array_map(function(Item $item) use ($converter, $dictionaryProtocol) : ItemStack{
 							return $converter->coreItemStackToNet($dictionaryProtocol, $item);
 						}, $recipe->getResults()),
 						$nullUUID,
 						$typeTag,
 						50,
-						$counter
+						$index
 					);
-				}
-			}
-			foreach($manager->getShapedRecipes() as $list){
-				foreach($list as $recipe){
+				}elseif($recipe instanceof ShapedRecipe){
 					$inputs = [];
 
 					for($row = 0, $height = $recipe->getHeight(); $row < $height; ++$row){
@@ -119,35 +118,18 @@ final class CraftingDataCache{
 					}
 					$recipesWithTypeIds[] = $r = new ProtocolShapedRecipe(
 						CraftingDataPacket::ENTRY_SHAPED,
-						Binary::writeInt(++$counter),
+						Binary::writeInt($index),
 						$inputs,
-						array_map(function(Item $item) use ($dictionaryProtocol, $converter) : ItemStack{
+						array_map(function(Item $item) use ($converter, $dictionaryProtocol) : ItemStack{
 							return $converter->coreItemStackToNet($dictionaryProtocol, $item);
 						}, $recipe->getResults()),
 						$nullUUID,
 						CraftingRecipeBlockName::CRAFTING_TABLE,
 						50,
-						$counter
+						$index
 					);
-				}
-			}
-
-			foreach(FurnaceType::getAll() as $furnaceType){
-				$typeTag = match ($furnaceType->id()) {
-					FurnaceType::FURNACE()->id() => FurnaceRecipeBlockName::FURNACE,
-					FurnaceType::BLAST_FURNACE()->id() => FurnaceRecipeBlockName::BLAST_FURNACE,
-					FurnaceType::SMOKER()->id() => FurnaceRecipeBlockName::SMOKER,
-					default => throw new AssumptionFailedError("Unreachable"),
-				};
-				foreach($manager->getFurnaceRecipeManager($furnaceType)->getAll() as $recipe){
-					$input = $converter->coreItemStackToNet($dictionaryProtocol, $recipe->getInput());
-					$recipesWithTypeIds[] = new ProtocolFurnaceRecipe(
-						CraftingDataPacket::ENTRY_FURNACE_DATA,
-						$input->getId(),
-						$input->getMeta(),
-						$converter->coreItemStackToNet($dictionaryProtocol, $recipe->getResult()),
-						$typeTag
-					);
+				}else{
+					//TODO: probably special recipe types
 				}
 			}
 

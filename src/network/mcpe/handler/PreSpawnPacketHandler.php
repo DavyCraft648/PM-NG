@@ -99,7 +99,7 @@ class PreSpawnPacketHandler extends ChunkRequestPacketHandler{
 			0,
 			0,
 			"",
-			false,
+			true,
 			 "NetherGames v4.0",
 			Uuid::fromString(Uuid::NIL),
 			false,
