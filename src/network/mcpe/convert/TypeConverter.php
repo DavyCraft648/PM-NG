@@ -229,4 +229,8 @@ class TypeConverter{
 
 		return $itemResult;
 	}
+
+	public static function convertProtocol(int $protocolId) : int{
+		return ItemTranslator::convertProtocol($protocolId);
+	}
 }
