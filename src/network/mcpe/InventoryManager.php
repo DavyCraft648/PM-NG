@@ -497,7 +497,7 @@ class InventoryManager{
 			$contents = [];
 			$typeConverter = TypeConverter::getInstance($this->session->getProtocolId());
 			foreach($inventory->getContents(true) as $slot => $item){
-				$itemStack = $typeConverter->coreItemStackToNet($item);
+				$itemStack = $typeConverter->coreItemStackToNet($this->session->getProtocolId(), $item);
 				$info = $this->trackItemStack($entry, $slot, $itemStack, null);
 				$contents[] = new ItemStackWrapper($info->getStackId(), $itemStack);
 			}
@@ -540,7 +540,7 @@ class InventoryManager{
 
 				//any prediction that still exists at this point is a slot that was predicted to change but didn't
 				$this->session->getLogger()->debug("Detected prediction mismatch in inventory " . get_class($inventory) . "#" . spl_object_id($inventory) . " slot $slot");
-				$entry->pendingSyncs[$slot] = $typeConverter->coreItemStackToNet($inventory->getItem($slot));
+				$entry->pendingSyncs[$slot] = $typeConverter->coreItemStackToNet($this->session->getProtocolId(), $inventory->getItem($slot));
 			}
 
 			$entry->predictions = [];
@@ -605,7 +605,7 @@ class InventoryManager{
 		if(!$this->player->isSpectator()){
 			//creative inventory may have holes if items were unregistered - ensure network IDs used are always consistent
 			foreach(CreativeInventory::getInstance()->getAll() as $k => $item){
-				$entries[] = new CreativeContentEntry($k, $typeConverter->coreItemStackToNet($item));
+				$entries[] = new CreativeContentEntry($k, $typeConverter->coreItemStackToNet($this->session->getProtocolId(), $item));
 			}
 		}
 		$this->session->sendDataPacket(CreativeContentPacket::create($entries));
