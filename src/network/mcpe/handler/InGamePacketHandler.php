@@ -420,7 +420,7 @@ class InGamePacketHandler extends ChunkRequestPacketHandler{
 		}
 
 		$sourceSlotItem = $inventory->getItem($sourceSlot);
-		$serverItemStack = TypeConverter::getInstance()->coreItemStackToNet($sourceSlotItem);
+		$serverItemStack = TypeConverter::getInstance()->coreItemStackToNet($this->session->getProtocolId(), $sourceSlotItem);
 		//because the client doesn't tell us the expected itemstack ID, we have to deep-compare our known
 		//itemstack info with the one the client sent. This is costly, but we don't have any other option :(
 		if(!$serverItemStack->equals($clientItemStack)){
