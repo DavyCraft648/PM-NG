@@ -36,6 +36,8 @@ use pocketmine\math\Vector3;
 use pocketmine\player\Player;
 use pocketmine\world\BlockTransaction;
 use pocketmine\world\sound\AnvilBreakSound;
+use function assert;
+use function mt_rand;
 
 class Anvil extends Transparent implements Fallable{
 	use FallableTrait;

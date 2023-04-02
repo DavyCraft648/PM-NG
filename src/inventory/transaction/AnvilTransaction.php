@@ -34,7 +34,11 @@ use pocketmine\item\utils\ItemTypeUtils;
 use pocketmine\player\Player;
 use pocketmine\utils\Limits;
 use pocketmine\world\sound\AnvilUseSound;
+use function count;
+use function floor;
 use function log;
+use function max;
+use function min;
 
 class AnvilTransaction extends InventoryTransaction{
 	private const TAG_REPAIR_COST = "RepairCost";
@@ -93,7 +97,7 @@ class AnvilTransaction extends InventoryTransaction{
 					$this->consumed[] = $this->material->pop();
 					$this->xpCost += 1;
 					$addRepairCost = true;
-				}else if($this->material instanceof Durable && $this->result->equals($this->material, false, false)){
+				}elseif($this->material instanceof Durable && $this->result->equals($this->material, false, false)){
 					// merging the durability values of two items of the same type
 					$damage -= $this->material->getMaxDurability() - $this->material->getDamage();
 					$damage -= (int) floor($this->material->getMaxDurability() * 0.12) - 1;
