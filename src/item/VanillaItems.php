@@ -137,6 +137,7 @@ use pocketmine\utils\CloningRegistryTrait;
  * @method static DriedKelp DRIED_KELP()
  * @method static Egg EGG()
  * @method static Item EMERALD()
+ * @method static EnchantedBook ENCHANTED_BOOK()
  * @method static GoldenAppleEnchanted ENCHANTED_GOLDEN_APPLE()
  * @method static EnderPearl ENDER_PEARL()
  * @method static ExperienceBottle EXPERIENCE_BOTTLE()
@@ -733,5 +734,6 @@ final class VanillaItems{
 		self::register("yellow_dye", $factory->get(Ids::DYE, 11));
 		self::register("zombie_head", $factory->get(Ids::MOB_HEAD, 2));
 		self::register("zombie_spawn_egg", $factory->get(Ids::SPAWN_EGG, 32));
+		self::register("enchanted_book", $factory->get(Ids::ENCHANTED_BOOK));
 	}
 }

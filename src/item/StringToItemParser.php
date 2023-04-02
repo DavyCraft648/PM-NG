@@ -1327,6 +1327,7 @@ final class StringToItemParser extends StringToTParser{
 		$result->register("yellow_dye", fn() => Items::YELLOW_DYE());
 		$result->register("zombie_head", fn() => Items::ZOMBIE_HEAD());
 		$result->register("zombie_spawn_egg", fn() => Items::ZOMBIE_SPAWN_EGG());
+		$result->register("enchanted_book", fn() => Items::ENCHANTED_BOOK());
 
 		return $result;
 	}
