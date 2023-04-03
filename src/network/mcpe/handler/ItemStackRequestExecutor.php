@@ -259,7 +259,7 @@ class ItemStackRequestExecutor{
 	/**
 	 * @throws ItemStackRequestProcessException
 	 */
-	protected function beginAnvilTransaction(?string $newLabel) : void{
+	protected function beginAnvilTransaction(?string $rename) : void{
 		$this->assertFirstSpecialTransaction();
 
 		$currentWindow = $this->player->getCurrentWindow();
@@ -272,7 +272,7 @@ class ItemStackRequestExecutor{
 			$this->player->getWorld()->getBlock($currentWindow->getHolder()),
 			clone $currentWindow->getItem(0),
 			clone $currentWindow->getItem(1),
-			$newLabel, []
+			$rename, []
 		);
 		$this->setNextCreatedItem($this->specialTransaction->getResult());
 	}

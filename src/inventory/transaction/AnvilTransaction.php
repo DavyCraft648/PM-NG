@@ -64,7 +64,7 @@ class AnvilTransaction extends InventoryTransaction{
 		protected Block $holder,
 		protected Item $input,
 		protected Item $material,
-		protected ?string $newLabel,
+		protected ?string $rename,
 		array $actions = []
 	){
 		$this->consumed[] = clone $input;
@@ -80,9 +80,9 @@ class AnvilTransaction extends InventoryTransaction{
 		$addRepairCost = false;
 
 		$this->result = clone $this->input;
-		if($this->newLabel !== null){
+		if($this->rename !== null && $this->rename !== $this->input->getCustomName()){
 			// rename costs 1 additional XP but doesn't incur cumulative repair costs aside from the base cost
-			$this->result->setCustomName($this->newLabel);
+			$this->result->setCustomName($this->rename);
 			$this->xpCost += 1;
 		}
 		if(!$this->material->isNull()){
