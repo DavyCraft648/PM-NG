@@ -86,6 +86,9 @@ class AnvilTransaction extends InventoryTransaction{
 			$this->xpCost += 1;
 		}
 		if(!$this->material->isNull()){
+			$applicableEnchants = self::getApplicableEnchants($this->result, $this->material);
+			$sacrificeConsumed = false;
+
 			if($this->result instanceof Durable && $this->result->getDamage() > 0){
 				// result is a clone of input,
 				// therefore if input is instance of Durable, result must also be Durable
@@ -101,11 +104,13 @@ class AnvilTransaction extends InventoryTransaction{
 						$addRepairCost = true;
 					}
 					$this->consumed[] = $this->material->pop($consumedCount);
+					$sacrificeConsumed = true;
 				}elseif($this->material instanceof Durable && $this->result->equals($this->material, false, false)){
 					// merging the durability values of two items of the same type
 					$damage -= $this->material->getMaxDurability() - $this->material->getDamage();
 					$damage -= (int) floor($this->material->getMaxDurability() * 0.12) - 1;
 					$this->consumed[] = $this->material->pop();
+					$sacrificeConsumed = true;
 					$this->xpCost += 2;
 					$addRepairCost = true;
 				}
@@ -113,17 +118,18 @@ class AnvilTransaction extends InventoryTransaction{
 				$this->result->setDamage(max(0, $damage));
 			}
 
-			$applicableEnchants = self::getApplicableEnchants($this->input, $this->material);
 			if(count($applicableEnchants) > 0){
-				$this->consumed[] = $this->material->pop();
+				if(!$sacrificeConsumed){
+					$this->consumed[] = $this->material->pop();
+				}
 				$addRepairCost = true;
 
 				foreach($applicableEnchants as $enchant){
 					// we calculate the cost needed to "upgrade" the target item to the new enchant, considering the added level
 					$this->xpCost += ItemTypeUtils::getEnchantTransferCost(new EnchantmentInstance(
 						$type = $enchant->getType(),
-						max($enchant->getLevel() - $this->input->getEnchantmentLevel($type), 0)
-					));
+						max($enchant->getLevel() - $this->result->getEnchantmentLevel($type), 0)
+					), !$this->material instanceof EnchantedBook);
 
 					$this->result->addEnchantment(clone $enchant);
 				}
@@ -140,8 +146,8 @@ class AnvilTransaction extends InventoryTransaction{
 		return $this->result;
 	}
 
-	public function getXPCost() : int{
-		if($this->source->isCreative() && $this->xpCost < self::HARD_CAP){
+	public function getXPCost(bool $checkCreative = true) : int{
+		if($checkCreative && $this->source->isCreative() && $this->xpCost < self::HARD_CAP){
 			return 0;
 		}
 		return $this->xpCost;

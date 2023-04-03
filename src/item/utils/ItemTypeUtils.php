@@ -67,6 +67,12 @@ final class ItemTypeUtils{
 		Rarity::RARE => 2,
 		Rarity::MYTHIC => 4,
 	];
+	private const SOURCE_RARITY_TO_MULTIPLIER = [
+		Rarity::COMMON => 1,
+		Rarity::UNCOMMON => 2,
+		Rarity::RARE => 2,
+		Rarity::MYTHIC => 2,
+	];
 
 	public static function getItemFlagFor(Item $item) : int{
 		if($item instanceof Armor){
@@ -151,7 +157,12 @@ final class ItemTypeUtils{
 		};
 	}
 
-	public static function getEnchantTransferCost(EnchantmentInstance $ench) : int{
-		return self::RARITY_TO_MULTIPLIER[$ench->getType()->getRarity()] * $ench->getLevel();
+	public static function getEnchantTransferCost(EnchantmentInstance $ench, bool $transferFromItem) : int{
+		$rarity = $ench->getType()->getRarity();
+		$cost = self::RARITY_TO_MULTIPLIER[$rarity] * $ench->getLevel();
+		if($transferFromItem){
+			$cost *= self::SOURCE_RARITY_TO_MULTIPLIER[$rarity];
+		}
+		return $cost;
 	}
 }
