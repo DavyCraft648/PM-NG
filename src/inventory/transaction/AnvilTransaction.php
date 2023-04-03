@@ -28,9 +28,10 @@ use pocketmine\block\Block;
 use pocketmine\item\Durable;
 use pocketmine\item\EnchantedBook;
 use pocketmine\item\enchantment\EnchantmentInstance;
+use pocketmine\item\enchantment\EnchantmentTransfer;
+use pocketmine\item\enchantment\IncompatibleEnchantMap;
 use pocketmine\item\Item;
-use pocketmine\item\utils\IncompatibleEnchantMap;
-use pocketmine\item\utils\ItemTypeUtils;
+use pocketmine\item\utils\ItemRepairUtils;
 use pocketmine\player\Player;
 use pocketmine\utils\Limits;
 use pocketmine\world\sound\AnvilUseSound;
@@ -93,7 +94,7 @@ class AnvilTransaction extends InventoryTransaction{
 				// result is a clone of input,
 				// therefore if input is instance of Durable, result must also be Durable
 				$damage = $this->result->getDamage();
-				if(ItemTypeUtils::isRepairableWith($this->result, $this->material)){
+				if(ItemRepairUtils::isRepairableWith($this->result, $this->material)){
 					$currentRepairCost += $this->material->getNamedTag()->getInt(self::TAG_REPAIR_COST, 0);
 
 					$consumedCount = 0;
@@ -126,10 +127,11 @@ class AnvilTransaction extends InventoryTransaction{
 
 				foreach($applicableEnchants as $enchant){
 					// we calculate the cost needed to "upgrade" the target item to the new enchant, considering the added level
-					$this->xpCost += ItemTypeUtils::getEnchantTransferCost(new EnchantmentInstance(
+					$this->xpCost += EnchantmentTransfer::getCost(
 						$type = $enchant->getType(),
-						max($enchant->getLevel() - $this->result->getEnchantmentLevel($type), 0)
-					), !$this->material instanceof EnchantedBook);
+						max($enchant->getLevel() - $this->result->getEnchantmentLevel($type), 0),
+						!$this->material instanceof EnchantedBook
+					);
 
 					$this->result->addEnchantment(clone $enchant);
 				}
@@ -210,7 +212,7 @@ class AnvilTransaction extends InventoryTransaction{
 	 */
 	public static function getApplicableEnchants(Item $target, Item $source) : array{
 		$applicableEnchants = [];
-		$itemFlag = ItemTypeUtils::getItemFlagFor($target);
+		$itemFlag = ItemRepairUtils::getItemFlagFor($target);
 
 		foreach($source->getEnchantments() as $enchantment){
 			$enchantmentType = $enchantment->getType();

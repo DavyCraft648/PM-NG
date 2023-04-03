@@ -21,35 +21,45 @@
 
 declare(strict_types=1);
 
-namespace pocketmine\item\utils;
+namespace pocketmine\item\enchantment;
 
 use pocketmine\data\bedrock\EnchantmentIdMap;
 use pocketmine\data\bedrock\EnchantmentIds;
-use pocketmine\item\enchantment\Enchantment;
 
 final class IncompatibleEnchantMap{
 	public const MAP = [
+		// todo: ideally this lookup-table should be summarized into groups
 		EnchantmentIds::PROTECTION => [EnchantmentIds::FIRE_PROTECTION => true, EnchantmentIds::BLAST_PROTECTION => true, EnchantmentIds::PROJECTILE_PROTECTION => true],
 		EnchantmentIds::FIRE_PROTECTION => [EnchantmentIds::PROTECTION => true, EnchantmentIds::BLAST_PROTECTION => true, EnchantmentIds::PROJECTILE_PROTECTION => true],
 		EnchantmentIds::BLAST_PROTECTION => [EnchantmentIds::PROTECTION => true, EnchantmentIds::FIRE_PROTECTION => true, EnchantmentIds::PROJECTILE_PROTECTION => true],
 		EnchantmentIds::PROJECTILE_PROTECTION => [EnchantmentIds::PROTECTION => true, EnchantmentIds::FIRE_PROTECTION => true, EnchantmentIds::BLAST_PROTECTION => true],
+
 		EnchantmentIds::DEPTH_STRIDER => [EnchantmentIds::FROST_WALKER => true],
+		EnchantmentIds::FROST_WALKER => [EnchantmentIds::DEPTH_STRIDER => true],
+
 		EnchantmentIds::SHARPNESS => [EnchantmentIds::SMITE => true, EnchantmentIds::BANE_OF_ARTHROPODS => true],
 		EnchantmentIds::SMITE => [EnchantmentIds::SHARPNESS => true, EnchantmentIds::BANE_OF_ARTHROPODS => true],
 		EnchantmentIds::BANE_OF_ARTHROPODS => [EnchantmentIds::SHARPNESS => true, EnchantmentIds::SMITE => true],
+
 		EnchantmentIds::LOOTING => [EnchantmentIds::SILK_TOUCH => true],
-		EnchantmentIds::SILK_TOUCH => [EnchantmentIds::FORTUNE => true, EnchantmentIds::LOOTING => true, EnchantmentIds::LUCK_OF_THE_SEA => true],
 		EnchantmentIds::FORTUNE => [EnchantmentIds::SILK_TOUCH => true],
-		EnchantmentIds::INFINITY => [EnchantmentIds::MENDING => true],
 		EnchantmentIds::LUCK_OF_THE_SEA => [EnchantmentIds::SILK_TOUCH => true],
-		EnchantmentIds::FROST_WALKER => [EnchantmentIds::DEPTH_STRIDER => true],
+		EnchantmentIds::SILK_TOUCH => [EnchantmentIds::FORTUNE => true, EnchantmentIds::LOOTING => true, EnchantmentIds::LUCK_OF_THE_SEA => true],
+
+		EnchantmentIds::INFINITY => [EnchantmentIds::MENDING => true],
 		EnchantmentIds::MENDING => [EnchantmentIds::INFINITY => true],
-		EnchantmentIds::RIPTIDE => [EnchantmentIds::LOYALTY => true, EnchantmentIds::CHANNELING => true],
+
 		EnchantmentIds::LOYALTY => [EnchantmentIds::RIPTIDE => true],
 		EnchantmentIds::CHANNELING => [EnchantmentIds::RIPTIDE => true],
+		EnchantmentIds::RIPTIDE => [EnchantmentIds::LOYALTY => true, EnchantmentIds::CHANNELING => true],
+
 		EnchantmentIds::MULTISHOT => [EnchantmentIds::PIERCING => true],
 		EnchantmentIds::PIERCING => [EnchantmentIds::MULTISHOT => true],
 	];
+
+	private function __construct(){
+		//NOOP
+	}
 
 	public static function isIncompatible(Enchantment $first, Enchantment $second) : bool{
 		$map = EnchantmentIdMap::getInstance();

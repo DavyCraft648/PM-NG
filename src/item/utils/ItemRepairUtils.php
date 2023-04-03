@@ -38,7 +38,7 @@ use pocketmine\item\TieredTool;
 use pocketmine\item\ToolTier;
 use pocketmine\item\VanillaItems;
 
-final class ItemTypeUtils{
+final class ItemRepairUtils{
 	private const ARMOR_SLOT_TO_ITEM_FLAG = [
 		ArmorInventory::SLOT_HEAD => ItemFlags::HEAD,
 		ArmorInventory::SLOT_CHEST => ItemFlags::TORSO,
@@ -60,18 +60,6 @@ final class ItemTypeUtils{
 		ItemIds::ELYTRA => ItemFlags::ELYTRA,
 		ItemIds::TRIDENT => ItemFlags::TRIDENT,
 		ItemIds::CARROT_ON_A_STICK => ItemFlags::CARROT_STICK,
-	];
-	private const RARITY_TO_MULTIPLIER = [
-		Rarity::COMMON => 1,
-		Rarity::UNCOMMON => 1,
-		Rarity::RARE => 2,
-		Rarity::MYTHIC => 4,
-	];
-	private const SOURCE_RARITY_TO_MULTIPLIER = [
-		Rarity::COMMON => 1,
-		Rarity::UNCOMMON => 2,
-		Rarity::RARE => 2,
-		Rarity::MYTHIC => 2,
 	];
 
 	public static function getItemFlagFor(Item $item) : int{
@@ -155,14 +143,5 @@ final class ItemTypeUtils{
 			default => null
 			//TODO: Netherite armor
 		};
-	}
-
-	public static function getEnchantTransferCost(EnchantmentInstance $ench, bool $transferFromItem) : int{
-		$rarity = $ench->getType()->getRarity();
-		$cost = self::RARITY_TO_MULTIPLIER[$rarity] * $ench->getLevel();
-		if($transferFromItem){
-			$cost *= self::SOURCE_RARITY_TO_MULTIPLIER[$rarity];
-		}
-		return $cost;
 	}
 }
