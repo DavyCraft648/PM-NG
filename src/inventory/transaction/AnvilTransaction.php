@@ -93,10 +93,14 @@ class AnvilTransaction extends InventoryTransaction{
 				if(ItemTypeUtils::isRepairableWith($this->result, $this->material)){
 					$currentRepairCost += $this->material->getNamedTag()->getInt(self::TAG_REPAIR_COST, 0);
 
-					$damage -= (int) floor($this->result->getMaxDurability() / 4);
-					$this->consumed[] = $this->material->pop();
-					$this->xpCost += 1;
-					$addRepairCost = true;
+					$consumedCount = 0;
+					for($i = 0; $i < $this->material->getCount() && $damage > 0; $i++){
+						$damage -= (int) floor($this->result->getMaxDurability() / 4);
+						$consumedCount += 1;
+						$this->xpCost += 1;
+						$addRepairCost = true;
+					}
+					$this->consumed[] = $this->material->pop($consumedCount);
 				}elseif($this->material instanceof Durable && $this->result->equals($this->material, false, false)){
 					// merging the durability values of two items of the same type
 					$damage -= $this->material->getMaxDurability() - $this->material->getDamage();
@@ -141,6 +145,10 @@ class AnvilTransaction extends InventoryTransaction{
 			return 0;
 		}
 		return $this->xpCost;
+	}
+
+	public function getConsumedItems() : array{
+		return $this->consumed;
 	}
 
 	public function validate() : void{
