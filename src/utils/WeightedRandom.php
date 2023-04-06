@@ -23,6 +23,8 @@ declare(strict_types=1);
 
 namespace pocketmine\utils;
 
+use function count;
+
 class WeightedRandom{
 	/** @var array<array<int, mixed>> */
 	private array $items = [];

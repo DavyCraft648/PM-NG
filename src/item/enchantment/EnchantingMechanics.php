@@ -27,6 +27,13 @@ use pocketmine\data\bedrock\EnchantmentIdMap;
 use pocketmine\item\Item;
 use pocketmine\utils\Random;
 use pocketmine\utils\WeightedRandom;
+use function count;
+use function floor;
+use function max;
+use function min;
+use function round;
+use function rtrim;
+use function strlen;
 
 final class EnchantingMechanics{
 

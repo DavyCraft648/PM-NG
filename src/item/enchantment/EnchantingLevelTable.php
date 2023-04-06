@@ -28,6 +28,7 @@ use pocketmine\data\bedrock\EnchantmentIds;
 use pocketmine\item\Book;
 use pocketmine\item\Item;
 use pocketmine\item\utils\ItemRepairUtils;
+use function array_values;
 
 final class EnchantingLevelTable{
 	private const MIN_ENCHANTMENT_LEVEL = [

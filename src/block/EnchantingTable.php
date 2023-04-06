@@ -31,6 +31,7 @@ use pocketmine\math\AxisAlignedBB;
 use pocketmine\math\Facing;
 use pocketmine\math\Vector3;
 use pocketmine\player\Player;
+use function abs;
 
 class EnchantingTable extends Transparent{
 	private int $bookshelfCount = 0;

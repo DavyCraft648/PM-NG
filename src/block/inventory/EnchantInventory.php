@@ -33,6 +33,9 @@ use pocketmine\network\mcpe\protocol\PlayerEnchantOptionsPacket;
 use pocketmine\player\Player;
 use pocketmine\utils\Random;
 use pocketmine\world\Position;
+use function array_map;
+use function assert;
+use function count;
 
 class EnchantInventory extends SimpleInventory implements BlockInventory, TemporaryInventory{
 	use BlockInventoryTrait;

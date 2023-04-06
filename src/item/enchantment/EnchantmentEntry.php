@@ -26,6 +26,7 @@ namespace pocketmine\item\enchantment;
 use pocketmine\data\bedrock\EnchantmentIdMap;
 use pocketmine\network\mcpe\protocol\types\Enchant;
 use pocketmine\network\mcpe\protocol\types\EnchantOption;
+use function array_map;
 
 final class EnchantmentEntry{
 	/**

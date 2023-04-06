@@ -28,6 +28,8 @@ use pocketmine\item\Book;
 use pocketmine\item\Item;
 use pocketmine\item\VanillaItems;
 use pocketmine\player\Player;
+use function assert;
+use function count;
 
 class EnchantTransaction extends InventoryTransaction{
 	private int $selectedRecipeId = -1;
