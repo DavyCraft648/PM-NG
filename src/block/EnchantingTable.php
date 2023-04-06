@@ -24,14 +24,17 @@ declare(strict_types=1);
 namespace pocketmine\block;
 
 use pocketmine\block\inventory\EnchantInventory;
+use pocketmine\block\utils\HorizontalFacing8;
 use pocketmine\block\utils\SupportType;
 use pocketmine\item\Item;
 use pocketmine\math\AxisAlignedBB;
 use pocketmine\math\Facing;
 use pocketmine\math\Vector3;
 use pocketmine\player\Player;
+use function abs;
 
 class EnchantingTable extends Transparent{
+	private int $bookshelfCount = 0;
 
 	/**
 	 * @return AxisAlignedBB[]
@@ -46,11 +49,44 @@ class EnchantingTable extends Transparent{
 
 	public function onInteract(Item $item, int $face, Vector3 $clickVector, ?Player $player = null) : bool{
 		if($player instanceof Player){
+			$this->refreshBookshelfCount();
 			//TODO lock
 
-			$player->setCurrentWindow(new EnchantInventory($this->position));
+			$player->setCurrentWindow(new EnchantInventory($this->position, $this->bookshelfCount));
 		}
 
 		return true;
+	}
+
+	private function refreshBookshelfCount() : void{
+		$this->bookshelfCount = 0;
+		$indexBookshelf = function(Vector3 $pos){
+			foreach([$pos, $pos->getSide(Facing::UP)] as $checkBlock){
+				if($this->position->getWorld()->getBlock($checkBlock) instanceof Bookshelf){
+					$this->bookshelfCount++;
+				}
+			}
+		};
+		$air = VanillaBlocks::AIR();
+		foreach(HorizontalFacing8::getAll() as $facing){
+			$pos = $this->position->addVector($facing->toVector3());
+			foreach([$pos, $pos->getSide(Facing::UP)] as $checkBlock){
+				if(!$this->position->getWorld()->getBlock($checkBlock)->isSameState($air)){
+					continue 2;
+				}
+			}
+
+			$pos = $this->position->addVector($facing->toVector3(2));
+			$indexBookshelf($pos);
+			if($facing->isOrdinal()){
+				foreach(Facing::HORIZONTAL as $i){
+					$ordSide = $pos->getSide($i);
+					if(abs($ordSide->x - $this->position->x) > 2 || abs($ordSide->z - $this->position->z) > 2){
+						continue;
+					}
+					$indexBookshelf($ordSide);
+				}
+			}
+		}
 	}
 }
