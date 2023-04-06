@@ -62,6 +62,10 @@ final class ItemRepairUtils{
 		ItemIds::CARROT_ON_A_STICK => ItemFlags::CARROT_STICK,
 	];
 
+	private function __construct(){
+		//NOOP
+	}
+
 	public static function getItemFlagFor(Item $item) : int{
 		if($item instanceof Armor){
 			return self::ARMOR_SLOT_TO_ITEM_FLAG[$item->getArmorSlot()] ?? ItemFlags::NONE;

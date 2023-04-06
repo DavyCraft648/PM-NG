@@ -170,9 +170,6 @@ class AnvilTransaction extends InventoryTransaction{
 		/** @var Item[] $deletedItems */
 		$deletedItems = [];
 		$this->matchItems($createdItems, $deletedItems);
-		if(count($this->actions) === 0){
-			throw new TransactionValidationException("Inventory transaction must have at least one action to be executable");
-		}
 
 		if(count($createdItems) === 0){
 			throw new TransactionValidationException("Transaction attempted to execute but did not result to anything");
