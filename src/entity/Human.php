@@ -247,6 +247,14 @@ class Human extends Living implements ProjectileSource, InventoryHolder{
 		return $this->enderInventory;
 	}
 
+	public function getXpSeed() : int{
+		return $this->xpSeed;
+	}
+
+	public function setXpSeed(int $xpSeed) : void{
+		$this->xpSeed = $xpSeed;
+	}
+
 	/**
 	 * For Human entities which are not players, sets their properties such as nametag, skin and UUID from NBT.
 	 */
