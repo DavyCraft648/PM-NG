@@ -33,7 +33,6 @@ use pocketmine\scheduler\AsyncTask;
 use pocketmine\utils\Binary;
 use pocketmine\world\format\Chunk;
 use pocketmine\world\format\io\FastChunkSerializer;
-use function xxhash64;
 
 class ChunkRequestTask extends AsyncTask{
 	private const TLS_KEY_PROMISE = "promise";
@@ -78,12 +77,14 @@ class ChunkRequestTask extends AsyncTask{
 		$encoderContext = new PacketSerializerContext(GlobalItemTypeDictionary::getInstance()->getDictionary(GlobalItemTypeDictionary::getDictionaryProtocol($this->mappingProtocol)), $this->mappingProtocol);
 
 		foreach(ChunkSerializer::serializeSubChunks($chunk, $blockMapper, $encoderContext) as $subChunk){
+			/** @phpstan-ignore-next-line */
 			$cache->addSubChunk(Binary::readLong(xxhash64($subChunk)), $subChunk);
 		}
 
 		$encoder = PacketSerializer::encoder($encoderContext);
 		$biomeEncoder = clone $encoder;
 		ChunkSerializer::serializeBiomes($chunk, $biomeEncoder);
+		/** @phpstan-ignore-next-line */
 		$cache->setBiomes(Binary::readLong(xxhash64($chunkBuffer = $biomeEncoder->getBuffer())), $chunkBuffer);
 
 		$chunkDataEncoder = clone $encoder;
