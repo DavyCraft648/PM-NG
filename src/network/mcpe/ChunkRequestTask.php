@@ -33,6 +33,7 @@ use pocketmine\scheduler\AsyncTask;
 use pocketmine\utils\Binary;
 use pocketmine\world\format\Chunk;
 use pocketmine\world\format\io\FastChunkSerializer;
+/** @phpstan-ignore-next-line */
 use function xxhash64;
 
 class ChunkRequestTask extends AsyncTask{
