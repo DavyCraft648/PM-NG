@@ -155,6 +155,9 @@ class AnvilTransaction extends InventoryTransaction{
 		return $this->xpCost;
 	}
 
+	/**
+	 * @return Item[]
+	 */
 	public function getConsumedItems() : array{
 		return $this->consumed;
 	}
