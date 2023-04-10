@@ -45,7 +45,6 @@ use pocketmine\network\mcpe\protocol\types\SpawnSettings;
 use pocketmine\player\Player;
 use pocketmine\Server;
 use pocketmine\timings\Timings;
-use pocketmine\VersionInfo;
 use Ramsey\Uuid\Uuid;
 
 /**
