@@ -30,8 +30,7 @@ use pocketmine\item\Armor;
 use pocketmine\item\Durable;
 use pocketmine\item\enchantment\ItemFlags;
 use pocketmine\item\Item;
-use pocketmine\item\ItemFactory;
-use pocketmine\item\ItemIds;
+use pocketmine\item\ItemTypeIds;
 use pocketmine\item\TieredTool;
 use pocketmine\item\ToolTier;
 use pocketmine\item\VanillaItems;
@@ -52,12 +51,12 @@ final class ItemRepairUtils{
 		BlockToolType::SWORD => ItemFlags::SWORD,
 	];
 	private const ITEM_ID_TO_ITEM_FLAG = [
-		ItemIds::FISHING_ROD => ItemFlags::FISHING_ROD,
-		ItemIds::BOW => ItemFlags::BOW,
-		ItemIds::CROSSBOW => 0x10000, // according to features/Enchants
-		ItemIds::ELYTRA => ItemFlags::ELYTRA,
-		ItemIds::TRIDENT => ItemFlags::TRIDENT,
-		ItemIds::CARROT_ON_A_STICK => ItemFlags::CARROT_STICK,
+		ItemTypeIds::FISHING_ROD => ItemFlags::FISHING_ROD,
+		ItemTypeIds::BOW => ItemFlags::BOW,
+		ItemTypeIds::CROSSBOW => 0x10000, // according to features/Enchants
+		ItemTypeIds::ELYTRA => ItemFlags::ELYTRA,
+		ItemTypeIds::TRIDENT => ItemFlags::TRIDENT,
+		ItemTypeIds::CARROT_ON_A_STICK => ItemFlags::CARROT_STICK,
 	];
 
 	private function __construct(){
@@ -69,7 +68,7 @@ final class ItemRepairUtils{
 			return self::ARMOR_SLOT_TO_ITEM_FLAG[$item->getArmorSlot()] ?? ItemFlags::NONE;
 		}
 
-		$flag = self::ITEM_ID_TO_ITEM_FLAG[$item->getId()] ?? ItemFlags::NONE;
+		$flag = self::ITEM_ID_TO_ITEM_FLAG[$item->getTypeId()] ?? ItemFlags::NONE;
 		if($flag === ItemFlags::NONE){
 			return self::TOOL_TYPE_TO_ITEM_FLAG[$item->getBlockToolType()] ?? ItemFlags::NONE;
 		}
@@ -107,34 +106,34 @@ final class ItemRepairUtils{
 				// TODO: Netherite tools
 			};
 		}
-		return match ($target->getId()) {
-			ItemIds::LEATHER_CAP,
-			ItemIds::LEATHER_TUNIC,
-			ItemIds::LEATHER_PANTS,
-			ItemIds::LEATHER_BOOTS => [VanillaItems::LEATHER()],
+		return match ($target->getTypeId()) {
+			ItemTypeIds::LEATHER_CAP,
+			ItemTypeIds::LEATHER_TUNIC,
+			ItemTypeIds::LEATHER_PANTS,
+			ItemTypeIds::LEATHER_BOOTS => [VanillaItems::LEATHER()],
 
-			ItemIds::IRON_HELMET,
-			ItemIds::IRON_CHESTPLATE,
-			ItemIds::IRON_LEGGINGS,
-			ItemIds::IRON_BOOTS,
-			ItemIds::CHAIN_HELMET,
-			ItemIds::CHAIN_CHESTPLATE,
-			ItemIds::CHAIN_LEGGINGS,
-			ItemIds::CHAIN_BOOTS => [VanillaItems::IRON_INGOT()],
+			ItemTypeIds::IRON_HELMET,
+			ItemTypeIds::IRON_CHESTPLATE,
+			ItemTypeIds::IRON_LEGGINGS,
+			ItemTypeIds::IRON_BOOTS,
+			ItemTypeIds::CHAINMAIL_HELMET,
+			ItemTypeIds::CHAINMAIL_CHESTPLATE,
+			ItemTypeIds::CHAINMAIL_LEGGINGS,
+			ItemTypeIds::CHAINMAIL_BOOTS => [VanillaItems::IRON_INGOT()],
 
-			ItemIds::GOLD_HELMET,
-			ItemIds::GOLD_CHESTPLATE,
-			ItemIds::GOLD_LEGGINGS,
-			ItemIds::GOLD_BOOTS => [VanillaItems::GOLD_INGOT()],
+			ItemTypeIds::GOLDEN_HELMET,
+			ItemTypeIds::GOLDEN_CHESTPLATE,
+			ItemTypeIds::GOLDEN_LEGGINGS,
+			ItemTypeIds::GOLDEN_BOOTS => [VanillaItems::GOLD_INGOT()],
 
-			ItemIds::DIAMOND_HELMET,
-			ItemIds::DIAMOND_CHESTPLATE,
-			ItemIds::DIAMOND_LEGGINGS,
-			ItemIds::DIAMOND_BOOTS => [VanillaItems::DIAMOND()],
+			ItemTypeIds::DIAMOND_HELMET,
+			ItemTypeIds::DIAMOND_CHESTPLATE,
+			ItemTypeIds::DIAMOND_LEGGINGS,
+			ItemTypeIds::DIAMOND_BOOTS => [VanillaItems::DIAMOND()],
 
-			ItemIds::ELYTRA => [ItemFactory::getInstance()->get(ItemIds::PHANTOM_MEMBRANE)],
-			ItemIds::TURTLE_HELMET => [VanillaItems::SCUTE()],
-			ItemIds::SHIELD => [
+			ItemTypeIds::ELYTRA => [VanillaItems::PHANTOM_MEMBRANE()],
+			ItemTypeIds::TURTLE_HELMET => [VanillaItems::SCUTE()],
+			ItemTypeIds::SHIELD => [
 				VanillaBlocks::OAK_PLANKS()->asItem(),
 				VanillaBlocks::BIRCH_PLANKS()->asItem(),
 				VanillaBlocks::ACACIA_PLANKS()->asItem(),

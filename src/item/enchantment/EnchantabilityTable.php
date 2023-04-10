@@ -25,7 +25,7 @@ namespace pocketmine\item\enchantment;
 
 use pocketmine\item\Armor;
 use pocketmine\item\Item;
-use pocketmine\item\ItemIds;
+use pocketmine\item\ItemTypeIds;
 use pocketmine\item\TieredTool;
 use pocketmine\item\ToolTier;
 
@@ -47,36 +47,36 @@ final class EnchantabilityTable{
 				default => 1
 			};
 		}elseif($item instanceof Armor){
-			return match ($item->getId()) {
-				ItemIds::LEATHER_HELMET,
-				ItemIds::LEATHER_CHESTPLATE,
-				ItemIds::LEATHER_LEGGINGS,
-				ItemIds::LEATHER_BOOTS,
-				ItemIds::LEATHER_HORSE_ARMOR => 15,
+			return match ($item->getTypeId()) {
+				ItemTypeIds::LEATHER_CAP,
+				ItemTypeIds::LEATHER_TUNIC,
+				ItemTypeIds::LEATHER_PANTS,
+				ItemTypeIds::LEATHER_BOOTS,
+				ItemTypeIds::LEATHER_HORSE_ARMOR => 15,
 
-				ItemIds::CHAIN_HELMET,
-				ItemIds::CHAIN_CHESTPLATE,
-				ItemIds::CHAIN_LEGGINGS,
-				ItemIds::CHAIN_BOOTS => 12,
+				ItemTypeIds::CHAINMAIL_HELMET,
+				ItemTypeIds::CHAINMAIL_CHESTPLATE,
+				ItemTypeIds::CHAINMAIL_LEGGINGS,
+				ItemTypeIds::CHAINMAIL_BOOTS => 12,
 
-				ItemIds::IRON_HELMET,
-				ItemIds::IRON_CHESTPLATE,
-				ItemIds::IRON_LEGGINGS,
-				ItemIds::IRON_BOOTS,
-				ItemIds::IRON_HORSE_ARMOR,
-				ItemIds::TURTLE_HELMET => 9,
+				ItemTypeIds::IRON_HELMET,
+				ItemTypeIds::IRON_CHESTPLATE,
+				ItemTypeIds::IRON_LEGGINGS,
+				ItemTypeIds::IRON_BOOTS,
+				ItemTypeIds::IRON_HORSE_ARMOR,
+				ItemTypeIds::TURTLE_HELMET => 9,
 
-				ItemIds::GOLD_HELMET,
-				ItemIds::GOLD_CHESTPLATE,
-				ItemIds::GOLD_LEGGINGS,
-				ItemIds::GOLD_BOOTS,
-				ItemIds::GOLD_HORSE_ARMOR => 25,
+				ItemTypeIds::GOLDEN_HELMET,
+				ItemTypeIds::GOLDEN_CHESTPLATE,
+				ItemTypeIds::GOLDEN_LEGGINGS,
+				ItemTypeIds::GOLDEN_BOOTS,
+				ItemTypeIds::GOLDEN_HORSE_ARMOR => 25,
 
-				ItemIds::DIAMOND_HELMET,
-				ItemIds::DIAMOND_CHESTPLATE,
-				ItemIds::DIAMOND_LEGGINGS,
-				ItemIds::DIAMOND_BOOTS,
-				ItemIds::DIAMOND_HORSE_ARMOR => 10,
+				ItemTypeIds::DIAMOND_HELMET,
+				ItemTypeIds::DIAMOND_CHESTPLATE,
+				ItemTypeIds::DIAMOND_LEGGINGS,
+				ItemTypeIds::DIAMOND_BOOTS,
+				ItemTypeIds::DIAMOND_HORSE_ARMOR => 10,
 
 				// TODO: Netherite Armor => 15
 				default => 1
