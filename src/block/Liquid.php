@@ -145,9 +145,9 @@ abstract class Liquid extends Transparent{
 	}
 
 	protected function getEffectiveFlowDecay(Block $block) : int{
-		if(!($block instanceof Liquid) || !$block->isSameType($this)){
+		if(!($block instanceof Liquid) || !$block->hasSameTypeId($this)){
 			$block = $block->getBlockLayer(1);
-			if(!($block instanceof Liquid) || !$block->isSameType($this)){
+			if(!($block instanceof Liquid) || !$block->hasSameTypeId($this)){
 				return -1;
 			}
 		}
@@ -295,7 +295,7 @@ abstract class Liquid extends Transparent{
 			$minAdjacentSources = $this->getMinAdjacentSourcesToFormSource();
 			if($minAdjacentSources !== null && $this->adjacentSources >= $minAdjacentSources){
 				$bottomBlock = $world->getBlockAt($this->position->x, $this->position->y - 1, $this->position->z);
-				if($bottomBlock->isSolid() || ($bottomBlock instanceof Liquid && $bottomBlock->isSameType($this) && $bottomBlock->isSource())){
+				if($bottomBlock->isSolid() || ($bottomBlock instanceof Liquid && $bottomBlock->hasSameTypeId($this) && $bottomBlock->isSource())){
 					$newDecay = 0;
 					$falling = false;
 				}
@@ -363,9 +363,9 @@ abstract class Liquid extends Transparent{
 	/** @phpstan-impure */
 	private function getSmallestFlowDecay(Block $block, int $decay) : int{
 		$block = $block->getBlockLayer(0);
-		if(!($block instanceof Liquid) || !$block->isSameType($this)){
+		if(!($block instanceof Liquid) || !$block->hasSameTypeId($this)){
 			$block = $block->getBlockLayer(1);
-			if(!($block instanceof Liquid) || !$block->isSameType($this)){
+			if(!($block instanceof Liquid) || !$block->hasSameTypeId($this)){
 				return $decay;
 			}
 		}
