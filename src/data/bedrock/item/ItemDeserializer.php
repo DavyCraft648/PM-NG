@@ -32,7 +32,6 @@ use pocketmine\data\bedrock\item\SavedItemData as Data;
 use pocketmine\item\Durable;
 use pocketmine\item\Item;
 use pocketmine\nbt\NbtException;
-use pocketmine\world\format\io\GlobalBlockStateHandlers;
 use function min;
 
 final class ItemDeserializer{
@@ -66,8 +65,7 @@ final class ItemDeserializer{
 	 * @throws ItemTypeDeserializeException
 	 */
 	public function deserializeType(Data $data) : Item{
-		$id = $data->getName();
-		if(($blockData = $data->getBlock()) !== null || (!isset($this->deserializers[$id]) && ($blockData = GlobalBlockStateHandlers::getUpgrader()->upgradeStringIdMeta($id, 0)) !== null)){
+		if(($blockData = $data->getBlock()) !== null){
 			//TODO: this is rough duct tape; we need a better way to deal with this
 			try{
 				$block = $this->blockStateDeserializer->deserialize($blockData);
@@ -80,6 +78,7 @@ final class ItemDeserializer{
 			//TODO: worth caching this or not?
 			return RuntimeBlockStateRegistry::getInstance()->fromStateId($block)->asItem();
 		}
+		$id = $data->getName();
 		if(!isset($this->deserializers[$id])){
 			throw new UnsupportedItemTypeException("No deserializer found for ID $id");
 		}

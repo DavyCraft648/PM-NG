@@ -997,7 +997,7 @@ class NetworkSession{
 				AbilitiesLayer::ABILITY_ATTACK_PLAYERS => !$for->isSpectator(),
 				AbilitiesLayer::ABILITY_ATTACK_MOBS => !$for->isSpectator(),
 				AbilitiesLayer::ABILITY_PRIVILEGED_BUILDER => false,
-		];
+			];
 
 			$pk = UpdateAbilitiesPacket::create(new AbilitiesData(
 				$isOp ? CommandPermissions::OPERATOR : CommandPermissions::NORMAL,

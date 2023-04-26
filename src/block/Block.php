@@ -397,7 +397,7 @@ class Block{
 				if($water instanceof Water && $this->canWaterlogged($water)){
 					$tx->addBlock($blockReplace->position, $water);
 				}
-			}else{
+			}elseif($this->getBlockLayer(0)->getTypeId() !== BlockTypeIds::AIR){
 				$air = VanillaBlocks::AIR();
 				$air->setLayer(1);
 				$tx->addBlock($blockReplace->position, $air);
