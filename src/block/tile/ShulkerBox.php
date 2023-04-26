@@ -113,8 +113,8 @@ class ShulkerBox extends Spawnable implements Container, Nameable{
 		return "Shulker Box";
 	}
 
-	protected function addAdditionalSpawnData(CompoundTag $nbt) : void{
+	protected function addAdditionalSpawnData(CompoundTag $nbt, int $protocolId) : void{
 		$nbt->setByte(self::TAG_FACING, $this->facing);
-		$this->addNameSpawnData($nbt);
+		$this->addNameSpawnData($nbt, $protocolId);
 	}
 }

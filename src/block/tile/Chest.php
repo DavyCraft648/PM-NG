@@ -221,12 +221,12 @@ class Chest extends Spawnable implements Container, Nameable{
 		return true;
 	}
 
-	protected function addAdditionalSpawnData(CompoundTag $nbt) : void{
+	protected function addAdditionalSpawnData(CompoundTag $nbt, int $protocolId) : void{
 		if($this->isPaired()){
 			$nbt->setInt(self::TAG_PAIRX, $this->pairX);
 			$nbt->setInt(self::TAG_PAIRZ, $this->pairZ);
 		}
 
-		$this->addNameSpawnData($nbt);
+		$this->addNameSpawnData($nbt, $protocolId);
 	}
 }

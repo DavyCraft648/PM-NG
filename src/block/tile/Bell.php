@@ -51,7 +51,7 @@ final class Bell extends Spawnable{
 
 	public function setTicks(int $ticks) : void{ $this->ticks = $ticks; }
 
-	protected function addAdditionalSpawnData(CompoundTag $nbt) : void{
+	protected function addAdditionalSpawnData(CompoundTag $nbt, int $protocolId) : void{
 		$nbt->setByte(self::TAG_RINGING, $this->ringing ? 1 : 0);
 		$nbt->setInt(self::TAG_DIRECTION, $this->facing);
 		$nbt->setInt(self::TAG_TICKS, $this->ticks);

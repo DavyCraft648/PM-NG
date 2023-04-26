@@ -123,7 +123,7 @@ class MonsterSpawner extends Spawnable{
 		$nbt->setFloat(self::TAG_ENTITY_SCALE, $this->displayEntityScale);
 	}
 
-	protected function addAdditionalSpawnData(CompoundTag $nbt) : void{
+	protected function addAdditionalSpawnData(CompoundTag $nbt, int $protocolId) : void{
 		$nbt->setString(self::TAG_ENTITY_TYPE_ID, $this->entityTypeId);
 
 		//TODO: we can't set SpawnData here because it might crash the client if it's from a PC world (we need to implement full deserialization)

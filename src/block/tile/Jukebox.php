@@ -55,7 +55,7 @@ class Jukebox extends Spawnable{
 		}
 	}
 
-	protected function addAdditionalSpawnData(CompoundTag $nbt) : void{
+	protected function addAdditionalSpawnData(CompoundTag $nbt, int $protocolId) : void{
 		//this is needed for the note particles to show on the client side
 		if($this->record !== null){
 			$nbt->setTag(self::TAG_RECORD, $this->record->nbtSerialize());

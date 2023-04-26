@@ -777,7 +777,13 @@ class InGamePacketHandler extends ChunkRequestPacketHandler{
 		if(!($nbt instanceof CompoundTag)) throw new AssumptionFailedError("PHPStan should ensure this is a CompoundTag"); //for phpstorm's benefit
 
 		if($block instanceof BaseSign){
-			if(($textBlobTag = $nbt->getCompoundTag(Sign::TAG_FRONT_TEXT)?->getTag(Sign::TAG_TEXT_BLOB)) instanceof StringTag){
+			if($this->session->getProtocolId() >= ProtocolInfo::PROTOCOL_1_19_80){
+				$textBlobTag = $nbt->getCompoundTag(Sign::TAG_FRONT_TEXT)?->getTag(Sign::TAG_TEXT_BLOB);
+			}else{
+				$textBlobTag = $nbt->getTag(Sign::TAG_TEXT_BLOB);
+			}
+
+			if($textBlobTag instanceof StringTag){
 				try{
 					$text = SignText::fromBlob($textBlobTag->getValue());
 				}catch(\InvalidArgumentException $e){

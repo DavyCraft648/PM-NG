@@ -71,7 +71,7 @@ class FlowerPot extends Spawnable{
 		}
 	}
 
-	protected function addAdditionalSpawnData(CompoundTag $nbt) : void{
+	protected function addAdditionalSpawnData(CompoundTag $nbt, int $protocolId) : void{
 		if($this->plant !== null){
 			$nbt->setShort(self::TAG_ITEM, $this->plant->getId());
 			$nbt->setInt(self::TAG_ITEM_DATA, $this->plant->getMeta());
