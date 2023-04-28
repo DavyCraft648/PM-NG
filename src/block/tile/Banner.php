@@ -98,7 +98,7 @@ class Banner extends Spawnable{
 		$nbt->setTag(self::TAG_PATTERNS, $patterns);
 	}
 
-	protected function addAdditionalSpawnData(CompoundTag $nbt) : void{
+	protected function addAdditionalSpawnData(CompoundTag $nbt, int $protocolId) : void{
 		$colorIdMap = DyeColorIdMap::getInstance();
 		$patternIdMap = BannerPatternTypeIdMap::getInstance();
 		$nbt->setInt(self::TAG_BASE, $colorIdMap->toInvertedId($this->baseColor));

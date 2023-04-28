@@ -36,7 +36,7 @@
       "netresearch/jsonmapper": "^4.0",
       "pocketmine/bedrock-block-upgrade-schema": "~2.1.0+bedrock-1.19.80",
       "nethergamesmc/bedrock-data": "dev-master",
-      "pocketmine/bedrock-protocol": "~21.0.0+bedrock-1.19.80",
+      "pocketmine/bedrock-item-upgrade-schema": "~1.2.0+bedrock-1.19.80",
       "nethergamesmc/bedrock-protocol": "dev-master",
       "pocketmine/binaryutils": "^0.2.1",
       "pocketmine/callback-validator": "^1.0.2",

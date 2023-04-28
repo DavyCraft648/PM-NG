@@ -92,8 +92,8 @@ class BrewingStand extends Spawnable implements Container, Nameable{
 		$nbt->setShort(self::TAG_REMAINING_FUEL_TIME_PE, $this->remainingFuelTime);
 	}
 
-	protected function addAdditionalSpawnData(CompoundTag $nbt) : void{
-		$this->addNameSpawnData($nbt);
+	protected function addAdditionalSpawnData(CompoundTag $nbt, int $protocolId) : void{
+		$this->addNameSpawnData($nbt, $protocolId);
 
 		$nbt->setShort(self::TAG_BREW_TIME_PE, $this->brewTime);
 		$nbt->setShort(self::TAG_MAX_FUEL_TIME, $this->maxFuelTime);

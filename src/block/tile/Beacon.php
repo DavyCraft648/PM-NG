@@ -32,7 +32,7 @@ final class Beacon extends Spawnable{
 	private int $primaryEffect = 0;
 	private int $secondaryEffect = 0;
 
-	protected function addAdditionalSpawnData(CompoundTag $nbt) : void{
+	protected function addAdditionalSpawnData(CompoundTag $nbt, int $protocolId) : void{
 		$nbt->setInt(self::TAG_PRIMARY, $this->primaryEffect);
 		$nbt->setInt(self::TAG_SECONDARY, $this->secondaryEffect);
 	}

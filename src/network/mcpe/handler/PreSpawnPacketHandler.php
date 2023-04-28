@@ -63,6 +63,7 @@ class PreSpawnPacketHandler extends ChunkRequestPacketHandler{
 	public function setUp() : void{
 		Timings::$playerNetworkSendPreSpawnGameData->startTiming();
 		try{
+			$dictionaryProtocol = GlobalItemTypeDictionary::getDictionaryProtocol($this->session->getProtocolId());
 			$location = $this->player->getLocation();
 			$world = $location->getWorld();
 
