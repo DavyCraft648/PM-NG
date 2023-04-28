@@ -31,7 +31,7 @@ use pocketmine\nbt\tag\CompoundTag;
  */
 final class SporeBlossom extends Spawnable{
 
-	protected function addAdditionalSpawnData(CompoundTag $nbt) : void{
+	protected function addAdditionalSpawnData(CompoundTag $nbt, int $protocolId) : void{
 		//NOOP
 	}
 

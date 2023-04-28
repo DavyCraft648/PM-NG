@@ -34,6 +34,13 @@ final class BedrockDataFiles{
 	public const BIOME_DEFINITIONS_NBT = BEDROCK_DATA_PATH . '/biome_definitions.nbt';
 	public const BIOME_DEFINITIONS_FULL_NBT = BEDROCK_DATA_PATH . '/biome_definitions_full.nbt';
 	public const BIOME_ID_MAP_JSON = BEDROCK_DATA_PATH . '/biome_id_map.json';
+	public const BLOCK_ID_TO_ITEM_ID_MAP_1_18_10_JSON = BEDROCK_DATA_PATH . '/block_id_to_item_id_map-1.18.10.json';
+	public const BLOCK_ID_TO_ITEM_ID_MAP_1_18_30_JSON = BEDROCK_DATA_PATH . '/block_id_to_item_id_map-1.18.30.json';
+	public const BLOCK_ID_TO_ITEM_ID_MAP_1_19_0_JSON = BEDROCK_DATA_PATH . '/block_id_to_item_id_map-1.19.0.json';
+	public const BLOCK_ID_TO_ITEM_ID_MAP_1_19_40_JSON = BEDROCK_DATA_PATH . '/block_id_to_item_id_map-1.19.40.json';
+	public const BLOCK_ID_TO_ITEM_ID_MAP_1_19_50_JSON = BEDROCK_DATA_PATH . '/block_id_to_item_id_map-1.19.50.json';
+	public const BLOCK_ID_TO_ITEM_ID_MAP_1_19_63_JSON = BEDROCK_DATA_PATH . '/block_id_to_item_id_map-1.19.63.json';
+	public const BLOCK_ID_TO_ITEM_ID_MAP_1_19_70_JSON = BEDROCK_DATA_PATH . '/block_id_to_item_id_map-1.19.70.json';
 	public const BLOCK_ID_TO_ITEM_ID_MAP_JSON = BEDROCK_DATA_PATH . '/block_id_to_item_id_map.json';
 	public const BLOCK_STATE_META_MAP_1_19_10_JSON = BEDROCK_DATA_PATH . '/block_state_meta_map-1.19.10.json';
 	public const BLOCK_STATE_META_MAP_1_19_40_JSON = BEDROCK_DATA_PATH . '/block_state_meta_map-1.19.40.json';
