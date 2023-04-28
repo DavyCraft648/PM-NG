@@ -215,6 +215,7 @@ abstract class BaseInventory implements Inventory{
 			$item = $this->getItem($i);
 			if($item->isNull()){
 				$emptySlots[] = $i;
+				continue;
 			}
 
 			if($slot->canStackWith($item) && $item->getCount() < $item->getMaxStackSize()){

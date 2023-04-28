@@ -89,7 +89,7 @@ class FlowerPot extends Spawnable{
 		}
 	}
 
-	protected function addAdditionalSpawnData(CompoundTag $nbt) : void{
+	protected function addAdditionalSpawnData(CompoundTag $nbt, int $protocolId) : void{
 		if($this->plant !== null){
 			$nbt->setTag(self::TAG_PLANT_BLOCK, RuntimeBlockMapping::getInstance()->toStateData($this->plant->getStateId())->toNbt());
 		}

@@ -357,8 +357,8 @@ class InGamePacketHandler extends ChunkRequestPacketHandler{
 		//rejects the transaction. The most common example of this is equipping armor by right-click, which doesn't send
 		//a legacy prediction action for the destination armor slot.
 		foreach($packet->requestChangedSlots as $containerInfo){
-			$windowId = ItemStackContainerIdTranslator::translate($containerInfo->getContainerId(), $this->inventoryManager->getCurrentWindowId());
-			foreach($containerInfo->getChangedSlotIndexes() as $slot){
+			foreach($containerInfo->getChangedSlotIndexes() as $netSlot){
+				[$windowId, $slot] = ItemStackContainerIdTranslator::translate($containerInfo->getContainerId(), $this->inventoryManager->getCurrentWindowId(), $netSlot);
 				$inventoryAndSlot = $this->inventoryManager->locateWindowAndSlot($windowId, $slot);
 				if($inventoryAndSlot !== null){ //trigger the normal slot sync logic
 					$this->inventoryManager->onSlotChange($inventoryAndSlot[0], $inventoryAndSlot[1]);
@@ -773,7 +773,13 @@ class InGamePacketHandler extends ChunkRequestPacketHandler{
 		if(!($nbt instanceof CompoundTag)) throw new AssumptionFailedError("PHPStan should ensure this is a CompoundTag"); //for phpstorm's benefit
 
 		if($block instanceof BaseSign){
-			if(($textBlobTag = $nbt->getCompoundTag(Sign::TAG_FRONT_TEXT)?->getTag(Sign::TAG_TEXT_BLOB)) instanceof StringTag){
+			if($this->session->getProtocolId() >= ProtocolInfo::PROTOCOL_1_19_80){
+				$textBlobTag = $nbt->getCompoundTag(Sign::TAG_FRONT_TEXT)?->getTag(Sign::TAG_TEXT_BLOB);
+			}else{
+				$textBlobTag = $nbt->getTag(Sign::TAG_TEXT_BLOB);
+			}
+
+			if($textBlobTag instanceof StringTag){
 				try{
 					$text = SignText::fromBlob($textBlobTag->getValue());
 				}catch(\InvalidArgumentException $e){

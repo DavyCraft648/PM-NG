@@ -216,7 +216,7 @@ final class ChunkSerializer{
 						->setInt(Tile::TAG_Z, $tile->getPosition()->getFloorZ());
 					$stream->put($nbtSerializer->write(new TreeRoot($nbt)));
 				}else{
-					$stream->put($tile->getSerializedSpawnCompound()->getEncodedNbt());
+					$stream->put($tile->getSerializedSpawnCompound($mappingProtocol)->getEncodedNbt());
 				}
 			}
 		}

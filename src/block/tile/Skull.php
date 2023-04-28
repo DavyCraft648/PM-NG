@@ -83,7 +83,7 @@ class Skull extends Spawnable{
 		$this->skullRotation = $rotation;
 	}
 
-	protected function addAdditionalSpawnData(CompoundTag $nbt) : void{
+	protected function addAdditionalSpawnData(CompoundTag $nbt, int $protocolId) : void{
 		$nbt->setByte(self::TAG_SKULL_TYPE, $this->skullType->getMagicNumber());
 		$nbt->setByte(self::TAG_ROT, $this->skullRotation);
 	}

@@ -1193,7 +1193,7 @@ class NetworkSession{
 								if(!($tile instanceof Spawnable)){
 									continue;
 								}
-								$this->sendDataPacket(BlockActorDataPacket::create(BlockPosition::fromVector3($tile->getPosition()), $tile->getSerializedSpawnCompound()));
+								$this->sendDataPacket(BlockActorDataPacket::create(BlockPosition::fromVector3($tile->getPosition()), $tile->getSerializedSpawnCompound($this->getProtocolId())));
 							}
 						}
 					}
@@ -1278,7 +1278,9 @@ class NetworkSession{
 	}
 
 	public function onOpenSignEditor(Vector3 $signPosition, bool $frontSide) : void{
-		$this->sendDataPacket(OpenSignPacket::create(BlockPosition::fromVector3($signPosition), $frontSide));
+		if($this->getProtocolId() >= ProtocolInfo::PROTOCOL_1_19_80){
+			$this->sendDataPacket(OpenSignPacket::create(BlockPosition::fromVector3($signPosition), $frontSide));
+		}
 	}
 
 	public function tick() : void{

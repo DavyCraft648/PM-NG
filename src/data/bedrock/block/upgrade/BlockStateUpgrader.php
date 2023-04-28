@@ -28,6 +28,7 @@ use pocketmine\nbt\tag\Tag;
 use pocketmine\utils\Utils;
 use function count;
 use function ksort;
+use function max;
 use const SORT_NUMERIC;
 
 final class BlockStateUpgrader{
@@ -56,8 +57,10 @@ final class BlockStateUpgrader{
 
 	public function upgrade(BlockStateData $blockStateData) : BlockStateData{
 		$version = $blockStateData->getVersion();
+		$highestVersion = $version;
 		foreach($this->upgradeSchemas as $schema){
 			$resultVersion = $schema->getVersionId();
+			$highestVersion = max($highestVersion, $resultVersion);
 			if($version > $resultVersion){
 				//even if this is actually the same version, we have to apply it anyway because mojang are dumb and
 				//didn't always bump the blockstate version when changing it :(
@@ -96,6 +99,11 @@ final class BlockStateUpgrader{
 			}
 		}
 
+		if($highestVersion > $version){
+			//always update the version number of the blockstate, even if it didn't change - this is needed for
+			//external tools
+			$blockStateData = new BlockStateData($blockStateData->getName(), $blockStateData->getStates(), $highestVersion);
+		}
 		return $blockStateData;
 	}
 

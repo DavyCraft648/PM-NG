@@ -351,7 +351,7 @@ class ParserPacketHandler extends PacketHandler{
 
 	private function smithingRecipeToJson(SmithingTransformRecipe $recipe) : SmithingTransformRecipeData{
 		return new SmithingTransformRecipeData(
-			$this->recipeIngredientToJson($recipe->getTemplate()),
+			$this->recipeIngredientToJson($recipe->getTemplate()), // @phpstan-ignore-line
 			$this->recipeIngredientToJson($recipe->getInput()),
 			$this->recipeIngredientToJson($recipe->getAddition()),
 			$this->itemStackToJson($recipe->getOutput()),

@@ -63,6 +63,7 @@ class PreSpawnPacketHandler extends ChunkRequestPacketHandler{
 	public function setUp() : void{
 		Timings::$playerNetworkSendPreSpawnGameData->startTiming();
 		try{
+			$protocolId = $this->session->getProtocolId();
 			$location = $this->player->getLocation();
 			$world = $location->getWorld();
 
@@ -70,7 +71,7 @@ class PreSpawnPacketHandler extends ChunkRequestPacketHandler{
 			$levelSettings = new LevelSettings();
 			$levelSettings->seed = -1;
 			$levelSettings->spawnSettings = new SpawnSettings(SpawnSettings::BIOME_TYPE_DEFAULT, "", DimensionIds::OVERWORLD); //TODO: implement this properly
-			$levelSettings->worldGamemode = TypeConverter::getInstance()->coreGameModeToProtocol($this->server->getGamemode());
+			$levelSettings->worldGamemode = TypeConverter::getInstance($protocolId)->coreGameModeToProtocol($this->server->getGamemode());
 			$levelSettings->difficulty = $world->getDifficulty();
 			$levelSettings->spawnPosition = BlockPosition::fromVector3($world->getSpawnLocation());
 			$levelSettings->hasAchievementsDisabled = true;
@@ -87,7 +88,7 @@ class PreSpawnPacketHandler extends ChunkRequestPacketHandler{
 			$this->session->sendDataPacket(StartGamePacket::create(
 				$this->player->getId(),
 				$this->player->getId(),
-				TypeConverter::getInstance($this->session->getProtocolId())->coreGameModeToProtocol($this->player->getGamemode()),
+				TypeConverter::getInstance($protocolId)->coreGameModeToProtocol($this->player->getGamemode()),
 				$this->player->getOffsetPosition($location),
 				$location->pitch,
 				$location->yaw,
@@ -108,7 +109,7 @@ class PreSpawnPacketHandler extends ChunkRequestPacketHandler{
 				false,
 				[],
 				0,
-				GlobalItemTypeDictionary::getInstance($this->session->getProtocolId())->getDictionary()->getEntries(),
+				GlobalItemTypeDictionary::getInstance($protocolId)->getDictionary()->getEntries(),
 			));
 
 			$this->session->getLogger()->debug("Sending actor identifiers");
@@ -143,7 +144,7 @@ class PreSpawnPacketHandler extends ChunkRequestPacketHandler{
 			$this->inventoryManager->syncCreative();
 
 			$this->session->getLogger()->debug("Sending crafting data");
-			$this->session->sendDataPacket(CraftingDataCache::getInstance($this->session->getProtocolId())->getCache($this->server->getCraftingManager()));
+			$this->session->sendDataPacket(CraftingDataCache::getInstance($protocolId)->getCache($this->server->getCraftingManager()));
 
 			$this->session->getLogger()->debug("Sending player list");
 			$this->session->syncPlayerList($this->server->getOnlinePlayers());
