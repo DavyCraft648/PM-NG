@@ -128,7 +128,7 @@ class Anvil extends Transparent implements Fallable{
 	public function attemptDamage() : void{
 		$world = $this->position->world;
 		assert($world !== null);
-		if(!$world->getBlock($this->position)->isSameType(VanillaBlocks::ANVIL())){
+		if(!$world->getBlock($this->position)->isSameState(VanillaBlocks::ANVIL())){
 			return;
 		}
 		if(mt_rand(0, 100) > self::DAMAGE_CHANCE){

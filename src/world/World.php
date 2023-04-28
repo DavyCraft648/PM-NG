@@ -1128,7 +1128,7 @@ class World implements ChunkManager{
 			);
 
 			if($tile instanceof Spawnable){
-				$packets[] = BlockActorDataPacket::create($blockPosition, $tile->getSerializedSpawnCompound($mappingProtocol));
+				$packets[] = BlockActorDataPacket::create($blockPosition, $tile->getSerializedSpawnCompound($protocolId));
 			}
 		}
 
