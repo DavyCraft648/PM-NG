@@ -23,10 +23,8 @@ declare(strict_types=1);
 
 namespace pocketmine\timings;
 
-use pocketmine\entity\Living;
 use pocketmine\Server;
 use pocketmine\utils\Utils;
-use function count;
 use function hrtime;
 use function implode;
 use function spl_object_id;
@@ -77,19 +75,6 @@ class TimingsHandler{
 		$result[] = "# Version " . Server::getInstance()->getVersion();
 		$result[] = "# " . Server::getInstance()->getName() . " " . Server::getInstance()->getPocketMineVersion();
 
-		$entities = 0;
-		$livingEntities = 0;
-		foreach(Server::getInstance()->getWorldManager()->getWorlds() as $world){
-			$entities += count($world->getEntities());
-			foreach($world->getEntities() as $e){
-				if($e instanceof Living){
-					++$livingEntities;
-				}
-			}
-		}
-
-		$result[] = "# Entities " . $entities;
-		$result[] = "# LivingEntities " . $livingEntities;
 		$result[] = "# FormatVersion " . self::FORMAT_VERSION;
 
 		$sampleTime = hrtime(true) - self::$timingStart;
@@ -189,12 +174,12 @@ class TimingsHandler{
 		}
 
 		$record = TimingsRecord::getCurrentRecord();
-		if($record !== null){
-			if($record->getTimerId() !== spl_object_id($this)){
-				throw new \LogicException("Timer \"" . $record->getName() . "\" should have been stopped before stopping timer \"" . $this->name . "\"");
-			}
+		$timerId = spl_object_id($this);
+		for(; $record !== null && $record->getTimerId() !== $timerId; $record = TimingsRecord::getCurrentRecord()){
+			\GlobalLogger::get()->error("Timer \"" . $record->getName() . "\" should have been stopped before stopping timer \"" . $this->name . "\"");
 			$record->stopTiming($now);
 		}
+		$record?->stopTiming($now);
 		if($this->parent !== null){
 			$this->parent->internalStopTiming($now);
 		}

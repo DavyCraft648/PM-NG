@@ -21,26 +21,8 @@
 
 declare(strict_types=1);
 
-namespace pocketmine\crafting\json;
+namespace pmmp\TesterPlugin\event;
 
-final class SmithingTransformRecipeData{
+class ChildEvent extends ParentEvent{
 
-	/** @required */
-	public RecipeIngredientData $template;
-	/** @required */
-	public RecipeIngredientData $input;
-	/** @required */
-	public RecipeIngredientData $addition;
-	/** @required */
-	public ItemStackData $output;
-	/** @required */
-	public string $block;
-
-	public function __construct(RecipeIngredientData $template, RecipeIngredientData $input, RecipeIngredientData $addition, ItemStackData $output, string $block){
-		$this->template = $template;
-		$this->input = $input;
-		$this->addition = $addition;
-		$this->output = $output;
-		$this->block = $block;
-	}
 }

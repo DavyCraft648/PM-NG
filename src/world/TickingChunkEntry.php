@@ -21,26 +21,17 @@
 
 declare(strict_types=1);
 
-namespace pocketmine\crafting\json;
+namespace pocketmine\world;
 
-final class SmithingTransformRecipeData{
+/**
+ * @internal
+ */
+final class TickingChunkEntry{
+	/**
+	 * @var ChunkTicker[] spl_object_id => ChunkTicker
+	 * @phpstan-var array<int, ChunkTicker>
+	 */
+	public array $tickers = [];
 
-	/** @required */
-	public RecipeIngredientData $template;
-	/** @required */
-	public RecipeIngredientData $input;
-	/** @required */
-	public RecipeIngredientData $addition;
-	/** @required */
-	public ItemStackData $output;
-	/** @required */
-	public string $block;
-
-	public function __construct(RecipeIngredientData $template, RecipeIngredientData $input, RecipeIngredientData $addition, ItemStackData $output, string $block){
-		$this->template = $template;
-		$this->input = $input;
-		$this->addition = $addition;
-		$this->output = $output;
-		$this->block = $block;
-	}
+	public bool $ready = false;
 }
