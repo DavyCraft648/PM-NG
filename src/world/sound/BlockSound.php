@@ -24,7 +24,7 @@ declare(strict_types=1);
 namespace pocketmine\world\sound;
 
 use pocketmine\block\Block;
-use pocketmine\network\mcpe\convert\RuntimeBlockMapping;
+use pocketmine\network\mcpe\convert\TypeConverter;
 
 abstract class BlockSound implements Sound{
 
@@ -37,6 +37,6 @@ abstract class BlockSound implements Sound{
 	}
 
 	public function toRuntimeId() : int{
-		return RuntimeBlockMapping::getInstance($this->protocolId)->toRuntimeId($this->block->getStateId());
+		return TypeConverter::getInstance($this->protocolId)->getBlockTranslator()->internalIdToNetworkId($this->block->getStateId());
 	}
 }

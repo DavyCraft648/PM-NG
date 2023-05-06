@@ -222,7 +222,7 @@ final class CraftingDataCache{
 		}
 
 		$potionContainerChangeRecipes = [];
-		$itemTypeDictionary = TypeConverter::getInstance()->getItemTypeDictionary();
+		$itemTypeDictionary = TypeConverter::getInstance($this->protocolId)->getItemTypeDictionary();
 		foreach($manager->getPotionContainerChangeRecipes() as $recipe){
 			$input = $itemTypeDictionary->fromStringId($recipe->getInputItemId());
 			try {

@@ -27,7 +27,7 @@ use pocketmine\math\Vector3;
 use pocketmine\network\mcpe\CachedChunkPromise;
 use pocketmine\network\mcpe\ChunkRequestTask;
 use pocketmine\network\mcpe\compression\Compressor;
-use pocketmine\network\mcpe\convert\RuntimeBlockMapping;
+use pocketmine\network\mcpe\convert\BlockTranslator;
 use pocketmine\network\mcpe\protocol\ProtocolInfo;
 use pocketmine\world\ChunkListener;
 use pocketmine\world\ChunkListenerNoOpTrait;
@@ -105,7 +105,7 @@ class ChunkCache implements ChunkListener{
 		}
 		$chunkHash = World::chunkHash($chunkX, $chunkZ);
 
-		$mappingProtocol = RuntimeBlockMapping::convertProtocol($protocolId);
+		$mappingProtocol = BlockTranslator::convertProtocol($protocolId);
 
 		if(isset($this->caches[$chunkHash][$mappingProtocol])){
 			++$this->hits;

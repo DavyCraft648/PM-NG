@@ -24,7 +24,7 @@ declare(strict_types=1);
 namespace pocketmine\world\particle;
 
 use pocketmine\block\Block;
-use pocketmine\network\mcpe\convert\RuntimeBlockMapping;
+use pocketmine\network\mcpe\convert\TypeConverter;
 
 abstract class BlockParticle implements Particle{
 
@@ -36,6 +36,6 @@ abstract class BlockParticle implements Particle{
 		$this->protocolId = $protocolId;
 	}
 	public function toRuntimeId() : int{
-		return RuntimeBlockMapping::getInstance($this->protocolId)->toRuntimeId($this->b->getStateId());
+		return TypeConverter::getInstance($this->protocolId)->getBlockTranslator()->internalIdToNetworkId($this->b->getStateId());
 	}
 }

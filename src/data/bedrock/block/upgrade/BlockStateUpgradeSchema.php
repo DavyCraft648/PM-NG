@@ -152,7 +152,7 @@ final class BlockStateUpgradeSchema{
 					$downgrade->remappedStates[$remap->newName] = [];
 				}
 
-				$downgrade->remappedStates[$remap->newName][] = new BlockStateUpgradeSchemaBlockRemap($remap->newState, $block, $remap->oldState);
+				$downgrade->remappedStates[$remap->newName][] = new BlockStateUpgradeSchemaBlockRemap($remap->newState, $block, $remap->oldState, $remap->copiedState);
 			}
 		}
 		return $downgrade;

@@ -25,7 +25,7 @@ namespace pocketmine\entity\animation;
 
 use pocketmine\data\bedrock\item\ItemTypeSerializeException;
 use pocketmine\item\Item;
-use pocketmine\network\mcpe\convert\ItemTranslator;
+use pocketmine\network\mcpe\convert\TypeConverter;
 
 abstract class ItemAnimation implements Animation{
 
@@ -44,6 +44,6 @@ abstract class ItemAnimation implements Animation{
 	 * @throws ItemTypeSerializeException
 	 */
 	public function toNetworkId() : array{
-		return ItemTranslator::getInstance($this->protocolId)->toNetworkId($this->item);
+		return TypeConverter::getInstance($this->protocolId)->getItemTranslator()->toNetworkId($this->item);
 	}
 }
