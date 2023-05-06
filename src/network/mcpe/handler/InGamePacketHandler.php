@@ -45,8 +45,6 @@ use pocketmine\math\Facing;
 use pocketmine\math\Vector3;
 use pocketmine\nbt\tag\CompoundTag;
 use pocketmine\nbt\tag\StringTag;
-use pocketmine\network\mcpe\convert\SkinAdapterSingleton;
-use pocketmine\network\mcpe\convert\TypeConverter;
 use pocketmine\network\mcpe\InventoryManager;
 use pocketmine\network\mcpe\NetworkSession;
 use pocketmine\network\mcpe\protocol\ActorEventPacket;
@@ -447,7 +445,7 @@ class InGamePacketHandler extends ChunkRequestPacketHandler{
 		if($sourceSlotItem->getCount() < $droppedCount){
 			return false;
 		}
-		$serverItemStack = TypeConverter::getInstance($this->session->getProtocolId())->coreItemStackToNet($sourceSlotItem);
+		$serverItemStack = $this->session->getTypeConverter()->coreItemStackToNet($sourceSlotItem);
 		//because the client doesn't tell us the expected itemstack ID, we have to deep-compare our known
 		//itemstack info with the one the client sent. This is costly, but we don't have any other option :(
 		if(!$serverItemStack->equals($clientItemStack)){
@@ -810,7 +808,7 @@ class InGamePacketHandler extends ChunkRequestPacketHandler{
 	}
 
 	public function handleSetPlayerGameType(SetPlayerGameTypePacket $packet) : bool{
-		$gameMode = TypeConverter::getInstance()->protocolGameModeToCore($packet->gamemode);
+		$gameMode = $this->session->getTypeConverter()->protocolGameModeToCore($packet->gamemode);
 		if($gameMode === null || !$gameMode->equals($this->player->getGamemode())){
 			//Set this back to default. TODO: handle this properly
 			$this->session->syncGameMode($this->player->getGamemode(), true);
@@ -872,7 +870,7 @@ class InGamePacketHandler extends ChunkRequestPacketHandler{
 
 		$this->session->getLogger()->debug("Processing skin change request");
 		try{
-			$skin = SkinAdapterSingleton::get()->fromSkinData($packet->skin);
+			$skin = $this->session->getTypeConverter()->getSkinAdapter()->fromSkinData($packet->skin);
 		}catch(InvalidSkinException $e){
 			throw PacketHandlingException::wrap($e, "Invalid skin in PlayerSkinPacket");
 		}

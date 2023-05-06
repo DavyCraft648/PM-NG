@@ -30,7 +30,7 @@ use pocketmine\data\bedrock\BiomeIds;
 use pocketmine\data\bedrock\LegacyBiomeIdToStringIdMap;
 use pocketmine\nbt\tag\CompoundTag;
 use pocketmine\nbt\TreeRoot;
-use pocketmine\network\mcpe\convert\RuntimeBlockMapping;
+use pocketmine\network\mcpe\convert\BlockTranslator;
 use pocketmine\network\mcpe\protocol\ProtocolInfo;
 use pocketmine\network\mcpe\protocol\serializer\NetworkNbtSerializer;
 use pocketmine\network\mcpe\protocol\serializer\PacketSerializer;
@@ -66,7 +66,7 @@ final class ChunkSerializer{
 	/**
 	 * @return string[]
 	 */
-	public static function serializeSubChunks(Chunk $chunk, RuntimeBlockMapping $blockMapper, PacketSerializerContext $encoderContext) : array
+	public static function serializeSubChunks(Chunk $chunk, BlockTranslator $blockTranslator, PacketSerializerContext $encoderContext) : array
 	{
 		$stream = PacketSerializer::encoder($encoderContext);
 		$subChunks = [];
@@ -74,17 +74,17 @@ final class ChunkSerializer{
 		$subChunkCount = self::getSubChunkCount($chunk);
 		for($y = Chunk::MIN_SUBCHUNK_INDEX, $writtenCount = 0; $writtenCount < $subChunkCount; ++$y, ++$writtenCount){
 			$subChunkStream = clone $stream;
-			self::serializeSubChunk($chunk->getSubChunk($y), $blockMapper, $subChunkStream, false);
+			self::serializeSubChunk($chunk->getSubChunk($y), $blockTranslator, $subChunkStream, false);
 			$subChunks[] = $subChunkStream->getBuffer();
 		}
 
 		return $subChunks;
 	}
 
-	public static function serializeFullChunk(Chunk $chunk, RuntimeBlockMapping $blockMapper, PacketSerializerContext $encoderContext, ?string $tiles = null) : string{
+	public static function serializeFullChunk(Chunk $chunk, BlockTranslator $blockTranslator, PacketSerializerContext $encoderContext, ?string $tiles = null) : string{
 		$stream = PacketSerializer::encoder($encoderContext);
 
-		foreach(self::serializeSubChunks($chunk, $blockMapper, $encoderContext) as $subChunk){
+		foreach(self::serializeSubChunks($chunk, $blockTranslator, $encoderContext) as $subChunk){
 			$stream->put($subChunk);
 		}
 
@@ -117,13 +117,13 @@ final class ChunkSerializer{
 		}
 	}
 
-	public static function serializeSubChunk(SubChunk $subChunk, RuntimeBlockMapping $blockMapper, PacketSerializer $stream, bool $persistentBlockStates) : void{
+	public static function serializeSubChunk(SubChunk $subChunk, BlockTranslator $blockTranslator, PacketSerializer $stream, bool $persistentBlockStates) : void{
 		$layers = $subChunk->getBlockLayers();
 		$stream->putByte(8); //version
 
 		$stream->putByte(count($layers));
 
-		$blockStateDictionary = $blockMapper->getBlockStateDictionary();
+		$blockStateDictionary = $blockTranslator->getBlockStateDictionary();
 
 		foreach($layers as $blocks){
 			$bitsPerBlock = $blocks->getBitsPerBlock();
@@ -142,16 +142,16 @@ final class ChunkSerializer{
 				$nbtSerializer = new NetworkNbtSerializer();
 				foreach($palette as $p){
 					//TODO: introduce a binary cache for this
-					$state = $blockStateDictionary->getDataFromStateId($blockMapper->toRuntimeId($p));
+					$state = $blockStateDictionary->generateDataFromStateId($blockTranslator->internalIdToNetworkId($p));
 					if($state === null){
-						$state = $blockMapper->getFallbackStateData();
+						$state = $blockTranslator->getFallbackStateData();
 					}
 
 					$stream->put($nbtSerializer->write(new TreeRoot($state->toNbt())));
 				}
 			}else{
 				foreach($palette as $p){
-					$stream->put(Binary::writeUnsignedVarInt($blockMapper->toRuntimeId($p) << 1));
+					$stream->put(Binary::writeUnsignedVarInt($blockTranslator->internalIdToNetworkId($p) << 1));
 				}
 			}
 		}

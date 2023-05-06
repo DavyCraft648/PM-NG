@@ -33,7 +33,7 @@ final class ItemUseOnBlockSound extends BlockSound{
 			LevelSoundEvent::ITEM_USE_ON,
 			$pos,
 			false,
-			$this->toRuntimeId()
+			$this->toRuntimeId(),
 		)];
 	}
 }

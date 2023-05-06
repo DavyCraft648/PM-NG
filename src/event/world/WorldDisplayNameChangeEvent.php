@@ -21,19 +21,28 @@
 
 declare(strict_types=1);
 
-namespace pocketmine\network\mcpe\convert;
+namespace pocketmine\event\world;
 
-use PHPUnit\Framework\TestCase;
-use pocketmine\block\RuntimeBlockStateRegistry;
+use pocketmine\world\World;
 
-class RuntimeBlockMappingTest extends TestCase{
+/**
+ * Called when a world's display name is changed.
+ */
+final class WorldDisplayNameChangeEvent extends WorldEvent{
 
-	/**
-	 * @doesNotPerformAssertions
-	 */
-	public function testAllBlockStatesSerialize() : void{
-		foreach(RuntimeBlockStateRegistry::getInstance()->getAllKnownStates() as $state){
-			RuntimeBlockMapping::getInstance()->toRuntimeId($state->getStateId());
-		}
+	public function __construct(
+		World $world,
+		private string $oldName,
+		private string $newName
+	){
+		parent::__construct($world);
+	}
+
+	public function getOldName() : string{
+		return $this->oldName;
+	}
+
+	public function getNewName() : string{
+		return $this->newName;
 	}
 }

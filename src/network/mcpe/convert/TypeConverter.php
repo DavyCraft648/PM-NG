@@ -33,6 +33,7 @@ use pocketmine\item\Item;
 use pocketmine\item\VanillaItems;
 use pocketmine\nbt\NbtException;
 use pocketmine\nbt\tag\CompoundTag;
+use pocketmine\network\mcpe\protocol\serializer\ItemTypeDictionary;
 use pocketmine\network\mcpe\protocol\types\GameMode as ProtocolGameMode;
 use pocketmine\network\mcpe\protocol\types\inventory\ItemStack;
 use pocketmine\network\mcpe\protocol\types\recipe\IntIdMetaItemDescriptor;
@@ -52,11 +53,36 @@ class TypeConverter{
 
 	private const RECIPE_INPUT_WILDCARD_META = 0x7fff;
 
+	private BlockItemIdMap $blockItemIdMap;
+	private BlockTranslator $blockTranslator;
+	private ItemTranslator $itemTranslator;
+	private ItemTypeDictionary $itemTypeDictionary;
 	private int $shieldRuntimeId;
+	private SkinAdapter $skinAdapter;
 
-	public function __construct(private int $protocolId){
+	public function __construct(int $protocolId){
 		//TODO: inject stuff via constructor
-		$this->shieldRuntimeId = GlobalItemTypeDictionary::getInstance($protocolId)->getDictionary()->fromStringId("minecraft:shield");
+		$this->blockItemIdMap = BlockItemIdMap::getInstance();
+
+		$this->blockTranslator = BlockTranslator::getInstance($protocolId);
+		$this->itemTranslator = ItemTranslator::getInstance($protocolId);
+
+		$this->itemTypeDictionary = $this->itemTranslator->getDictionary();
+		$this->shieldRuntimeId = $this->itemTypeDictionary->fromStringId("minecraft:shield");
+
+		$this->skinAdapter = new LegacySkinAdapter();
+	}
+
+	public function getBlockTranslator() : BlockTranslator{ return $this->blockTranslator; }
+
+	public function getItemTypeDictionary() : ItemTypeDictionary{ return $this->itemTypeDictionary; }
+
+	public function getItemTranslator() : ItemTranslator{ return $this->itemTranslator; }
+
+	public function getSkinAdapter() : SkinAdapter{ return $this->skinAdapter; }
+
+	public function setSkinAdapter(SkinAdapter $skinAdapter) : void{
+		$this->skinAdapter = $skinAdapter;
 	}
 
 	/**
@@ -76,14 +102,6 @@ class TypeConverter{
 				return ProtocolGameMode::ADVENTURE;
 			default:
 				throw new AssumptionFailedError("Unknown game mode");
-		}
-	}
-
-	public function protocolGameModeName(GameMode $gameMode) : string{
-		switch($gameMode->id()){
-			case GameMode::SURVIVAL()->id(): return "Survival";
-			case GameMode::ADVENTURE()->id(): return "Adventure";
-			default: return "Creative";
 		}
 	}
 
@@ -108,14 +126,14 @@ class TypeConverter{
 			return new ProtocolRecipeIngredient(null, 0);
 		}
 		if($ingredient instanceof MetaWildcardRecipeIngredient){
-			$id = GlobalItemTypeDictionary::getInstance($this->protocolId)->getDictionary()->fromStringId($ingredient->getItemId());
+			$id = $this->itemTypeDictionary->fromStringId($ingredient->getItemId());
 			$meta = self::RECIPE_INPUT_WILDCARD_META;
 			$descriptor = new IntIdMetaItemDescriptor($id, $meta);
 		}elseif($ingredient instanceof ExactRecipeIngredient){
 			$item = $ingredient->getItem();
-			[$id, $meta, $blockRuntimeId] = ItemTranslator::getInstance($this->protocolId)->toNetworkId($item);
+			[$id, $meta, $blockRuntimeId] = $this->itemTranslator->toNetworkId($item);
 			if($blockRuntimeId !== ItemTranslator::NO_BLOCK_RUNTIME_ID){
-				$meta = RuntimeBlockMapping::getInstance($this->protocolId)->getBlockStateDictionary()->getMetaFromStateId($blockRuntimeId);
+				$meta = $this->blockTranslator->getBlockStateDictionary()->getMetaFromStateId($blockRuntimeId);
 				if($meta === null){
 					throw new AssumptionFailedError("Every block state should have an associated meta value");
 				}
@@ -141,7 +159,7 @@ class TypeConverter{
 		}
 
 		if($descriptor instanceof IntIdMetaItemDescriptor){
-			$stringId = GlobalItemTypeDictionary::getInstance($this->protocolId)->getDictionary()->fromIntId($descriptor->getId());
+			$stringId = $this->itemTypeDictionary->fromIntId($descriptor->getId());
 			$meta = $descriptor->getMeta();
 		}elseif($descriptor instanceof StringIdMetaItemDescriptor){
 			$stringId = $descriptor->getId();
@@ -155,14 +173,14 @@ class TypeConverter{
 		}
 
 		$blockRuntimeId = null;
-		if(($blockId = BlockItemIdMap::getInstance()->lookupBlockId($stringId)) !== null){
-			$blockRuntimeId = RuntimeBlockMapping::getInstance($this->protocolId)->getBlockStateDictionary()->lookupStateIdFromIdMeta($blockId, $meta);
+		if(($blockId = $this->blockItemIdMap->lookupBlockId($stringId)) !== null){
+			$blockRuntimeId = $this->blockTranslator->getBlockStateDictionary()->lookupStateIdFromIdMeta($blockId, $meta);
 			if($blockRuntimeId !== null){
 				$meta = 0;
 			}
 		}
-		$result = ItemTranslator::getInstance($this->protocolId)->fromNetworkId(
-			GlobalItemTypeDictionary::getInstance($this->protocolId)->getDictionary()->fromStringId($stringId),
+		$result = $this->itemTranslator->fromNetworkId(
+			$this->itemTypeDictionary->fromStringId($stringId),
 			$meta,
 			$blockRuntimeId ?? ItemTranslator::NO_BLOCK_RUNTIME_ID
 		);
@@ -180,15 +198,15 @@ class TypeConverter{
 			$nbt = clone $nbt;
 		}
 
-		$idMeta = ItemTranslator::getInstance($this->protocolId)->toNetworkIdQuiet($itemStack);
+		$idMeta = $this->itemTranslator->toNetworkIdQuiet($itemStack);
 		if($idMeta === null){
 			//Display unmapped items as INFO_UPDATE, but stick something in their NBT to make sure they don't stack with
 			//other unmapped items.
-			[$id, $meta, $blockRuntimeId] = ItemTranslator::getInstance($this->protocolId)->toNetworkId(VanillaBlocks::INFO_UPDATE()->asItem());
+			[$id, $meta, $blockRuntimeId] = $this->itemTranslator->toNetworkId(VanillaBlocks::INFO_UPDATE()->asItem());
 			if($nbt === null){
 				$nbt = new CompoundTag();
 			}
-			$nbt->setInt(self::PM_ID_TAG, morton2d_encode($itemStack->getTypeId(), $itemStack->computeTypeData()));
+			$nbt->setLong(self::PM_ID_TAG, morton2d_encode($itemStack->getTypeId(), $itemStack->computeTypeData()));
 		}else{
 			[$id, $meta, $blockRuntimeId] = $idMeta;
 		}
@@ -214,7 +232,7 @@ class TypeConverter{
 		}
 		$compound = $itemStack->getNbt();
 
-		$itemResult = ItemTranslator::getInstance($this->protocolId)->fromNetworkId($itemStack->getId(), $itemStack->getMeta(), $itemStack->getBlockRuntimeId());
+		$itemResult = $this->itemTranslator->fromNetworkId($itemStack->getId(), $itemStack->getMeta(), $itemStack->getBlockRuntimeId());
 
 		if($compound !== null){
 			$compound = clone $compound;
