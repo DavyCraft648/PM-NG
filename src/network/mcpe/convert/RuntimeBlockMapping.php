@@ -27,8 +27,13 @@ use pocketmine\block\Block;
 use pocketmine\block\BlockLegacyIds;
 use pocketmine\data\bedrock\BedrockDataFiles;
 use pocketmine\data\bedrock\LegacyBlockIdToStringIdMap;
+use pocketmine\nbt\LittleEndianNbtSerializer;
+use pocketmine\nbt\tag\ByteTag;
 use pocketmine\nbt\tag\CompoundTag;
 use pocketmine\network\mcpe\protocol\ProtocolInfo;
+use pocketmine\nbt\tag\IntTag;
+use pocketmine\nbt\tag\StringTag;
+use pocketmine\nbt\TreeRoot;
 use pocketmine\network\mcpe\protocol\serializer\NetworkNbtSerializer;
 use pocketmine\player\Player;
 use pocketmine\utils\BinaryStream;
@@ -103,6 +108,33 @@ final class RuntimeBlockMapping{
 	}
 
 	/**
+	 * @param string[] $keyIndex
+	 * @param (ByteTag|StringTag|IntTag)[][] $valueIndex
+	 * @phpstan-param array<string, string> $keyIndex
+	 * @phpstan-param array<int, array<int|string, ByteTag|IntTag|StringTag>> $valueIndex
+	 */
+	private static function deduplicateCompound(CompoundTag $tag, array &$keyIndex, array &$valueIndex) : CompoundTag{
+		if($tag->count() === 0){
+			return $tag;
+		}
+
+		$newTag = CompoundTag::create();
+		foreach($tag as $key => $value){
+			$key = $keyIndex[$key] ??= $key;
+
+			if($value instanceof CompoundTag){
+				$value = self::deduplicateCompound($value, $keyIndex, $valueIndex);
+			}elseif($value instanceof ByteTag || $value instanceof IntTag || $value instanceof StringTag){
+				$value = $valueIndex[$value->getType()][$value->getValue()] ??= $value;
+			}
+
+			$newTag->setTag($key, $value);
+		}
+
+		return $newTag;
+	}
+
+	/**
 	 * @param string[] $canonicalBlockStatesFiles
 	 * @param string[] $r12ToCurrentBlockMapFiles
 	 */
@@ -111,11 +143,14 @@ final class RuntimeBlockMapping{
 			$stream = new BinaryStream(Filesystem::fileGetContents($canonicalBlockStatesFile));
 			$list = [];
 			$nbtReader = new NetworkNbtSerializer();
+
+			$keyIndex = [];
+			$valueIndex = [];
 			while(!$stream->feof()){
 				$offset = $stream->getOffset();
 				$blockState = $nbtReader->read($stream->getBuffer(), $offset)->mustGetCompoundTag();
 				$stream->setOffset($offset);
-				$list[] = $blockState;
+				$list[] = self::deduplicateCompound($blockState, $keyIndex, $valueIndex);
 			}
 			$this->bedrockKnownStates[$mappingProtocol] = $list;
 		}
