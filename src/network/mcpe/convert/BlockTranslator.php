@@ -183,7 +183,10 @@ final class BlockTranslator{
 	}
 
 	public static function convertProtocol(int $protocolId) : int{
-		return $protocolId;
+		$dictionaryProtocol = self::getDictionaryProtocol($protocolId);
+		$schemaId = self::getBlockStateSchemaId($dictionaryProtocol);
+
+		return $schemaId === self::getBlockStateSchemaId($dictionaryProtocol) ? $dictionaryProtocol : $protocolId;
 	}
 
 	private static function getBlockStateSchemaId(int $protocolId) : ?int{
