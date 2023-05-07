@@ -24,8 +24,7 @@ declare(strict_types=1);
 namespace pocketmine\network\mcpe;
 
 use pocketmine\network\mcpe\compression\Compressor;
-use pocketmine\network\mcpe\convert\GlobalItemTypeDictionary;
-use pocketmine\network\mcpe\convert\RuntimeBlockMapping;
+use pocketmine\network\mcpe\convert\TypeConverter;
 use pocketmine\network\mcpe\protocol\serializer\PacketSerializer;
 use pocketmine\network\mcpe\protocol\serializer\PacketSerializerContext;
 use pocketmine\network\mcpe\serializer\ChunkSerializer;
@@ -70,8 +69,9 @@ class ChunkRequestTask extends AsyncTask{
 
 		$cache = new CachedChunk();
 
-		$blockMapper = RuntimeBlockMapping::getInstance($this->mappingProtocol);
-		$encoderContext = new PacketSerializerContext(GlobalItemTypeDictionary::getInstance($this->mappingProtocol)->getDictionary(), $this->mappingProtocol);
+		$converter = TypeConverter::getInstance($this->mappingProtocol);
+		$blockMapper = $converter->getBlockTranslator();
+		$encoderContext = new PacketSerializerContext($converter->getItemTypeDictionary(), $this->mappingProtocol);
 
 		foreach(ChunkSerializer::serializeSubChunks($chunk, $blockMapper, $encoderContext) as $subChunk){
 			/** @phpstan-ignore-next-line */

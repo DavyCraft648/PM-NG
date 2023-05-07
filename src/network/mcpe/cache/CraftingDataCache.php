@@ -30,7 +30,6 @@ use pocketmine\crafting\ShapedRecipe;
 use pocketmine\crafting\ShapelessRecipe;
 use pocketmine\crafting\ShapelessRecipeType;
 use pocketmine\item\Item;
-use pocketmine\network\mcpe\convert\GlobalItemTypeDictionary;
 use pocketmine\network\mcpe\convert\ItemTranslator;
 use pocketmine\network\mcpe\convert\TypeConverter;
 use pocketmine\network\mcpe\protocol\CraftingDataPacket;
@@ -223,7 +222,7 @@ final class CraftingDataCache{
 		}
 
 		$potionContainerChangeRecipes = [];
-		$itemTypeDictionary = GlobalItemTypeDictionary::getInstance($this->protocolId)->getDictionary();
+		$itemTypeDictionary = TypeConverter::getInstance($this->protocolId)->getItemTypeDictionary();
 		foreach($manager->getPotionContainerChangeRecipes() as $recipe){
 			$input = $itemTypeDictionary->fromStringId($recipe->getInputItemId());
 			try{

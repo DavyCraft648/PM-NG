@@ -48,7 +48,7 @@ final class ItemTranslator{
 
 	use ProtocolSingletonTrait;
 
-	private static function make(int $protocolId) : self{
+	public static function make(int $protocolId) : self{
 		if(($itemSchemaId = self::getItemSchemaId($protocolId)) !== null){
 			$itemDataDowngradeSchema = new ItemIdMetaDowngrader(ItemIdMetaDowngradeSchemaUtils::loadSchemas(Path::join(BEDROCK_ITEM_UPGRADE_SCHEMA_PATH, 'id_meta_upgrade_schema'), $itemSchemaId));
 		}

@@ -53,7 +53,7 @@ use pocketmine\network\mcpe\compression\CompressBatchPromise;
 use pocketmine\network\mcpe\compression\CompressBatchTask;
 use pocketmine\network\mcpe\compression\Compressor;
 use pocketmine\network\mcpe\compression\ZlibCompressor;
-use pocketmine\network\mcpe\convert\GlobalItemTypeDictionary;
+use pocketmine\network\mcpe\convert\TypeConverter;
 use pocketmine\network\mcpe\encryption\EncryptionContext;
 use pocketmine\network\mcpe\EntityEventBroadcaster;
 use pocketmine\network\mcpe\NetworkSession;
@@ -1184,10 +1184,11 @@ class Server{
 		int $port,
 		bool $ipV6,
 		bool $useQuery,
+		TypeConverter $typeConverter
 	) : bool{
 		$prettyIp = $ipV6 ? "[$ip]" : $ip;
 		try{
-			$rakLibRegistered = $this->network->registerInterface(new RakLibInterface($this, $ip, $port, $ipV6));
+			$rakLibRegistered = $this->network->registerInterface(new RakLibInterface($this, $ip, $port, $ipV6, $typeConverter));
 		}catch(NetworkInterfaceStartException $e){
 			$this->logger->emergency($this->language->translate(KnownTranslationFactory::pocketmine_server_networkStartFailed(
 				$ip,
@@ -1213,11 +1214,13 @@ class Server{
 	private function startupPrepareNetworkInterfaces() : bool{
 		$useQuery = $this->configGroup->getConfigBool("enable-query", true);
 
+		$typeConverter = TypeConverter::getInstance();
+
 		if(
-			!$this->startupPrepareConnectableNetworkInterfaces($this->getIp(), $this->getPort(), false, $useQuery) ||
+			!$this->startupPrepareConnectableNetworkInterfaces($this->getIp(), $this->getPort(), false, $useQuery, $typeConverter) ||
 			(
 				$this->configGroup->getConfigBool("enable-ipv6", true) &&
-				!$this->startupPrepareConnectableNetworkInterfaces($this->getIpV6(), $this->getPortV6(), true, $useQuery)
+				!$this->startupPrepareConnectableNetworkInterfaces($this->getIpV6(), $this->getPortV6(), true, $useQuery, $typeConverter)
 			)
 		){
 			return false;

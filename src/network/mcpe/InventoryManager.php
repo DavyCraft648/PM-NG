@@ -40,7 +40,6 @@ use pocketmine\inventory\Inventory;
 use pocketmine\inventory\transaction\action\SlotChangeAction;
 use pocketmine\inventory\transaction\InventoryTransaction;
 use pocketmine\item\Item;
-use pocketmine\network\mcpe\convert\TypeConverter;
 use pocketmine\network\mcpe\protocol\ClientboundPacket;
 use pocketmine\network\mcpe\protocol\ContainerClosePacket;
 use pocketmine\network\mcpe\protocol\ContainerOpenPacket;
@@ -223,10 +222,11 @@ class InventoryManager{
 	}
 
 	public function addTransactionPredictedSlotChanges(InventoryTransaction $tx) : void{
+		$typeConverter = $this->session->getTypeConverter();
 		foreach($tx->getActions() as $action){
 			if($action instanceof SlotChangeAction){
 				//TODO: ItemStackRequestExecutor can probably build these predictions with much lower overhead
-				$itemStack = TypeConverter::getInstance($this->session->getProtocolId())->coreItemStackToNet($action->getTargetItem());
+				$itemStack = $typeConverter->coreItemStackToNet($action->getTargetItem());
 				$this->addPredictedSlotChange($action->getInventory(), $action->getSlot(), $itemStack);
 			}
 		}
@@ -421,7 +421,7 @@ class InventoryManager{
 			//is cleared before removal.
 			return;
 		}
-		$currentItem = TypeConverter::getInstance($this->session->getProtocolId())->coreItemStackToNet($inventory->getItem($slot));
+		$currentItem = $this->session->getTypeConverter()->coreItemStackToNet($inventory->getItem($slot));
 		$clientSideItem = $inventoryEntry->predictions[$slot] ?? null;
 		if($clientSideItem === null || !$clientSideItem->equals($currentItem)){
 			//no prediction or incorrect - do not associate this with the currently active itemstack request
@@ -497,7 +497,7 @@ class InventoryManager{
 			$entry->predictions = [];
 			$entry->pendingSyncs = [];
 			$contents = [];
-			$typeConverter = TypeConverter::getInstance($this->session->getProtocolId());
+			$typeConverter = $this->session->getTypeConverter();
 			foreach($inventory->getContents(true) as $slot => $item){
 				$itemStack = $typeConverter->coreItemStackToNet($item);
 				$info = $this->trackItemStack($entry, $slot, $itemStack, null);
@@ -532,7 +532,7 @@ class InventoryManager{
 	}
 
 	public function syncMismatchedPredictedSlotChanges() : void{
-		$typeConverter = TypeConverter::getInstance($this->session->getProtocolId());
+		$typeConverter = $this->session->getTypeConverter();
 		foreach($this->inventories as $entry){
 			$inventory = $entry->inventory;
 			foreach($entry->predictions as $slot => $expectedItem){
@@ -595,7 +595,7 @@ class InventoryManager{
 
 			$this->session->sendDataPacket(MobEquipmentPacket::create(
 				$this->player->getId(),
-				new ItemStackWrapper($itemStackInfo->getStackId(), TypeConverter::getInstance($this->session->getProtocolId())->coreItemStackToNet($playerInventory->getItemInHand())),
+				new ItemStackWrapper($itemStackInfo->getStackId(), $this->session->getTypeConverter()->coreItemStackToNet($playerInventory->getItemInHand())),
 				$selected,
 				$selected,
 				ContainerIds::INVENTORY
@@ -605,7 +605,7 @@ class InventoryManager{
 	}
 
 	public function syncCreative() : void{
-		$typeConverter = TypeConverter::getInstance($this->session->getProtocolId());
+		$typeConverter = $this->session->getTypeConverter();
 
 		$entries = [];
 		if(!$this->player->isSpectator()){

@@ -46,7 +46,6 @@ use pocketmine\nbt\tag\CompoundTag;
 use pocketmine\nbt\tag\IntTag;
 use pocketmine\nbt\tag\ListTag;
 use pocketmine\nbt\tag\StringTag;
-use pocketmine\network\mcpe\convert\SkinAdapterSingleton;
 use pocketmine\network\mcpe\convert\TypeConverter;
 use pocketmine\network\mcpe\EntityEventBroadcaster;
 use pocketmine\network\mcpe\NetworkBroadcastUtils;
@@ -173,7 +172,7 @@ class Human extends Living implements ProjectileSource, InventoryHolder{
 		}
 
 		NetworkBroadcastUtils::broadcastPackets($targets ?? $this->hasSpawned, [
-			PlayerSkinPacket::create($this->getUniqueId(), "", "", SkinAdapterSingleton::get()->toSkinData($this->skin))
+			PlayerSkinPacket::create($this->getUniqueId(), "", "", TypeConverter::getInstance()->getSkinAdapter()->toSkinData($this->skin))
 		]);
 	}
 
@@ -484,8 +483,9 @@ class Human extends Living implements ProjectileSource, InventoryHolder{
 
 	protected function sendSpawnPacket(Player $player) : void{
 		$networkSession = $player->getNetworkSession();
+		$typeConverter = $networkSession->getTypeConverter();
 		if(!($this instanceof Player)){
-			$networkSession->sendDataPacket(PlayerListPacket::add([PlayerListEntry::createAdditionEntry($this->uuid, $this->id, $this->getName(), SkinAdapterSingleton::get()->toSkinData($this->skin))]));
+			$networkSession->sendDataPacket(PlayerListPacket::add([PlayerListEntry::createAdditionEntry($this->uuid, $this->id, $this->getName(), $typeConverter->getSkinAdapter()->toSkinData($this->skin))]));
 		}
 
 		$networkSession->sendDataPacket(AddPlayerPacket::create(
@@ -498,7 +498,7 @@ class Human extends Living implements ProjectileSource, InventoryHolder{
 			$this->location->pitch,
 			$this->location->yaw,
 			$this->location->yaw, //TODO: head yaw
-			ItemStackWrapper::legacy(TypeConverter::getInstance($player->getNetworkSession()->getProtocolId())->coreItemStackToNet($this->getInventory()->getItemInHand())),
+			ItemStackWrapper::legacy($typeConverter->coreItemStackToNet($this->getInventory()->getItemInHand())),
 			GameMode::SURVIVAL,
 			$this->getAllNetworkData(),
 			new PropertySyncData([], []),

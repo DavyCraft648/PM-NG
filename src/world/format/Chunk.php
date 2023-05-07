@@ -99,10 +99,10 @@ class Chunk{
 	 * Returns the internal ID of the blockstate at the given coordinates.
 	 *
 	 * @param int $x 0-15
-	 * @param int $y 0-255
+	 * @param int $y dependent on the height of the world
 	 * @param int $z 0-15
 	 *
-	 * @return int bitmap, (id << 4) | meta
+	 * @return int the blockstate ID of the given block
 	 */
 	public function getBlockStateId(int $x, int $y, int $z, int $layer = 0) : int{
 		return $this->getSubChunk($y >> SubChunk::COORD_BIT_SIZE)->getBlockStateId($x, $y & SubChunk::COORD_MASK, $z, $layer);
@@ -122,7 +122,7 @@ class Chunk{
 	 * @param int $x 0-15
 	 * @param int $z 0-15
 	 *
-	 * @return int|null 0-255, or null if there are no blocks in the column
+	 * @return int|null the Y coordinate, or null if there are no blocks in the column
 	 */
 	public function getHighestBlockAt(int $x, int $z) : ?int{
 		for($y = self::MAX_SUBCHUNK_INDEX; $y >= self::MIN_SUBCHUNK_INDEX; --$y){
@@ -159,9 +159,10 @@ class Chunk{
 	 * Returns the biome ID at the specified X/Z chunk block coordinates
 	 *
 	 * @param int $x 0-15
+	 * @param int $y dependent on the height of the world
 	 * @param int $z 0-15
 	 *
-	 * @return int 0-255
+	 * @see BiomeIds
 	 */
 	public function getBiomeId(int $x, int $y, int $z) : int{
 		return $this->getSubChunk($y >> SubChunk::COORD_BIT_SIZE)->getBiomeArray()->get($x, $y, $z);
@@ -171,8 +172,11 @@ class Chunk{
 	 * Sets the biome ID at the specified X/Z chunk block coordinates
 	 *
 	 * @param int $x       0-15
+	 * @param int $y       dependent on the height of the world
 	 * @param int $z       0-15
-	 * @param int $biomeId 0-255
+	 * @param int $biomeId A valid biome ID
+	 *
+	 * @see BiomeIds
 	 */
 	public function setBiomeId(int $x, int $y, int $z, int $biomeId) : void{
 		$this->getSubChunk($y >> SubChunk::COORD_BIT_SIZE)->getBiomeArray()->set($x, $y, $z, $biomeId);
@@ -224,7 +228,7 @@ class Chunk{
 	 * Returns the tile at the specified chunk block coordinates, or null if no tile exists.
 	 *
 	 * @param int $x 0-15
-	 * @param int $y 0-255
+	 * @param int $y dependent on the height of the world
 	 * @param int $z 0-15
 	 */
 	public function getTile(int $x, int $y, int $z) : ?Tile{
@@ -345,7 +349,7 @@ class Chunk{
 	 * Hashes the given chunk block coordinates into a single integer.
 	 *
 	 * @param int $x 0-15
-	 * @param int $y 0-255
+	 * @param int $y dependent on the height of the world
 	 * @param int $z 0-15
 	 */
 	public static function blockHash(int $x, int $y, int $z) : int{

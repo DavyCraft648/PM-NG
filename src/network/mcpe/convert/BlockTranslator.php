@@ -34,7 +34,6 @@ use pocketmine\data\bedrock\block\upgrade\BlockStateUpgrader;
 use pocketmine\network\mcpe\protocol\ProtocolInfo;
 use pocketmine\utils\AssumptionFailedError;
 use pocketmine\utils\Filesystem;
-use pocketmine\utils\ProtocolSingletonTrait;
 use pocketmine\world\format\io\GlobalBlockStateHandlers;
 use Symfony\Component\Filesystem\Path;
 use function str_replace;
@@ -43,8 +42,7 @@ use const pocketmine\BEDROCK_BLOCK_UPGRADE_SCHEMA_PATH;
 /**
  * @internal
  */
-final class RuntimeBlockMapping{
-	use ProtocolSingletonTrait;
+final class BlockTranslator{
 
 	public const CANONICAL_BLOCK_STATES_PATH = 0;
 	public const BLOCK_STATE_META_MAP_PATH = 1;
@@ -98,7 +96,7 @@ final class RuntimeBlockMapping{
 	private BlockStateData $fallbackStateData;
 	private int $fallbackStateId;
 
-	private static function make(int $protocolId) : self{
+	public static function make(int $protocolId) : self{
 		$canonicalBlockStatesRaw = Filesystem::fileGetContents(str_replace(".nbt", self::PATHS[$protocolId][self::CANONICAL_BLOCK_STATES_PATH] . ".nbt", BedrockDataFiles::CANONICAL_BLOCK_STATES_NBT));
 		$metaMappingRaw = Filesystem::fileGetContents(str_replace(".json", self::PATHS[$protocolId][self::BLOCK_STATE_META_MAP_PATH] . ".json", BedrockDataFiles::BLOCK_STATE_META_MAP_JSON));
 
@@ -121,14 +119,12 @@ final class RuntimeBlockMapping{
 		private BlockStateSerializer $blockStateSerializer,
 		private ?BlockStateDowngrader $blockStateDowngrader
 	){
-		$this->fallbackStateId = $this->blockStateDictionary->lookupStateIdFromData(
-				BlockStateData::current(BlockTypeNames::INFO_UPDATE, [])
-			) ?? throw new AssumptionFailedError(BlockTypeNames::INFO_UPDATE . " should always exist");
-		//lookup the state data from the dictionary to avoid keeping two copies of the same data around
-		$this->fallbackStateData = $this->blockStateDictionary->getDataFromStateId($this->fallbackStateId) ?? throw new AssumptionFailedError("We just looked up this state data, so it must exist");
+		$this->fallbackStateData = BlockStateData::current(BlockTypeNames::INFO_UPDATE, []);
+		$this->fallbackStateId = $this->blockStateDictionary->lookupStateIdFromData($this->fallbackStateData) ??
+			throw new AssumptionFailedError(BlockTypeNames::INFO_UPDATE . " should always exist");
 	}
 
-	public function toRuntimeId(int $internalStateId) : int{
+	public function internalIdToNetworkId(int $internalStateId) : int{
 		if(isset($this->networkIdCache[$internalStateId])){
 			return $this->networkIdCache[$internalStateId];
 		}
@@ -158,13 +154,13 @@ final class RuntimeBlockMapping{
 	/**
 	 * Looks up the network state data associated with the given internal state ID.
 	 */
-	public function toStateData(int $internalStateId) : BlockStateData{
+	public function internalIdToNetworkStateData(int $internalStateId) : BlockStateData{
 		//we don't directly use the blockstate serializer here - we can't assume that the network blockstate NBT is the
 		//same as the disk blockstate NBT, in case we decide to have different world version than network version (or in
 		//case someone wants to implement multi version).
-		$networkRuntimeId = $this->toRuntimeId($internalStateId);
+		$networkRuntimeId = $this->internalIdToNetworkId($internalStateId);
 
-		return $this->blockStateDictionary->getDataFromStateId($networkRuntimeId) ?? throw new AssumptionFailedError("We just looked up this state ID, so it must exist");
+		return $this->blockStateDictionary->generateDataFromStateId($networkRuntimeId) ?? throw new AssumptionFailedError("We just looked up this state ID, so it must exist");
 	}
 
 	public function getBlockStateDictionary() : BlockStateDictionary{ return $this->blockStateDictionary; }

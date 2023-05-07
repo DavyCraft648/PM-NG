@@ -26,8 +26,6 @@ namespace pocketmine\network\mcpe\handler;
 use pocketmine\nbt\tag\CompoundTag;
 use pocketmine\network\mcpe\cache\CraftingDataCache;
 use pocketmine\network\mcpe\cache\StaticPacketCache;
-use pocketmine\network\mcpe\convert\GlobalItemTypeDictionary;
-use pocketmine\network\mcpe\convert\TypeConverter;
 use pocketmine\network\mcpe\InventoryManager;
 use pocketmine\network\mcpe\NetworkSession;
 use pocketmine\network\mcpe\protocol\PlayerAuthInputPacket;
@@ -67,11 +65,13 @@ class PreSpawnPacketHandler extends ChunkRequestPacketHandler{
 			$location = $this->player->getLocation();
 			$world = $location->getWorld();
 
+			$typeConverter = $this->session->getTypeConverter();
+
 			$this->session->getLogger()->debug("Preparing StartGamePacket");
 			$levelSettings = new LevelSettings();
 			$levelSettings->seed = -1;
 			$levelSettings->spawnSettings = new SpawnSettings(SpawnSettings::BIOME_TYPE_DEFAULT, "", DimensionIds::OVERWORLD); //TODO: implement this properly
-			$levelSettings->worldGamemode = TypeConverter::getInstance($protocolId)->coreGameModeToProtocol($this->server->getGamemode());
+			$levelSettings->worldGamemode = $typeConverter->coreGameModeToProtocol($this->server->getGamemode());
 			$levelSettings->difficulty = $world->getDifficulty();
 			$levelSettings->spawnPosition = BlockPosition::fromVector3($world->getSpawnLocation());
 			$levelSettings->hasAchievementsDisabled = true;
@@ -88,7 +88,7 @@ class PreSpawnPacketHandler extends ChunkRequestPacketHandler{
 			$this->session->sendDataPacket(StartGamePacket::create(
 				$this->player->getId(),
 				$this->player->getId(),
-				TypeConverter::getInstance($protocolId)->coreGameModeToProtocol($this->player->getGamemode()),
+				$typeConverter->coreGameModeToProtocol($this->player->getGamemode()),
 				$this->player->getOffsetPosition($location),
 				$location->pitch,
 				$location->yaw,
@@ -109,7 +109,7 @@ class PreSpawnPacketHandler extends ChunkRequestPacketHandler{
 				false,
 				[],
 				0,
-				GlobalItemTypeDictionary::getInstance($protocolId)->getDictionary()->getEntries(),
+				$typeConverter->getItemTypeDictionary()->getEntries(),
 			));
 
 			$this->session->getLogger()->debug("Sending actor identifiers");

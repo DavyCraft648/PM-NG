@@ -41,7 +41,8 @@ abstract class BaseWorldProvider implements WorldProvider{
 	protected BlockStateSerializer $blockStateSerializer;
 
 	public function __construct(
-		protected string $path
+		protected string $path,
+		protected \Logger $logger
 	){
 		if(!file_exists($path)){
 			throw new WorldException("World does not exist");
@@ -66,10 +67,11 @@ abstract class BaseWorldProvider implements WorldProvider{
 
 		$newPalette = [];
 		foreach($palette as $k => $legacyIdMeta){
-			$newStateData = $this->blockDataUpgrader->upgradeIntIdMeta($legacyIdMeta >> 4, $legacyIdMeta & 0xf);
-			if($newStateData === null){
-				\GlobalLogger::get()->warning("Unknown block " . $legacyIdMeta >> 4 . ":" . $legacyIdMeta & 0xf);
-				//TODO: remember data for unknown states so we can implement them later
+			//TODO: remember data for unknown states so we can implement them later
+			try{
+				$newStateData = $this->blockDataUpgrader->upgradeIntIdMeta($legacyIdMeta >> 4, $legacyIdMeta & 0xf);
+			}catch(BlockStateDeserializeException $e){
+				$this->logger->logException($e);
 				$newStateData = GlobalBlockStateHandlers::getUnknownBlockStateData();
 			}
 
