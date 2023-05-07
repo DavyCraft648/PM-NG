@@ -99,8 +99,9 @@ final class BlockTranslator{
 	private int $fallbackStateId;
 
 	private static function make(int $protocolId) : self{
-		$canonicalBlockStatesRaw = Filesystem::fileGetContents(str_replace(".nbt", self::PATHS[$protocolId][self::CANONICAL_BLOCK_STATES_PATH] . ".nbt", BedrockDataFiles::CANONICAL_BLOCK_STATES_NBT));
-		$metaMappingRaw = Filesystem::fileGetContents(str_replace(".json", self::PATHS[$protocolId][self::BLOCK_STATE_META_MAP_PATH] . ".json", BedrockDataFiles::BLOCK_STATE_META_MAP_JSON));
+		$dictionaryProtocol = self::getDictionaryProtocol($protocolId);
+		$canonicalBlockStatesRaw = Filesystem::fileGetContents(str_replace(".nbt", self::PATHS[$dictionaryProtocol][self::CANONICAL_BLOCK_STATES_PATH] . ".nbt", BedrockDataFiles::CANONICAL_BLOCK_STATES_NBT));
+		$metaMappingRaw = Filesystem::fileGetContents(str_replace(".json", self::PATHS[$dictionaryProtocol][self::BLOCK_STATE_META_MAP_PATH] . ".json", BedrockDataFiles::BLOCK_STATE_META_MAP_JSON));
 
 		if(($blockStateSchemaId = self::getBlockStateSchemaId($protocolId)) !== null){
 			$blockStateDowngrader = new BlockStateDowngrader(BlockStateDowngradeSchemaUtils::loadSchemas(
