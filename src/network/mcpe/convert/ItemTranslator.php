@@ -23,6 +23,7 @@ declare(strict_types=1);
 
 namespace pocketmine\network\mcpe\convert;
 
+use pocketmine\block\VanillaBlocks;
 use pocketmine\data\bedrock\BedrockDataFiles;
 use pocketmine\data\bedrock\item\downgrade\ItemIdMetaDowngrader;
 use pocketmine\data\bedrock\item\downgrade\ItemIdMetaDowngradeSchemaUtils;
@@ -113,8 +114,17 @@ final class ItemTranslator{
 			try {
 				$numericId = $this->itemTypeDictionary->fromStringId($name);
 			} catch (\InvalidArgumentException $e) {
-				$numericId = $this->itemTypeDictionary->fromStringId($itemData->getName());
-				$meta = $itemData->getMeta();
+				try{
+					$numericId = $this->itemTypeDictionary->fromStringId($itemData->getName());
+					$meta = $itemData->getMeta();
+				}catch(\InvalidArgumentException $e){
+					if($this === ItemTranslator::getInstance()){
+						throw $e;
+					}
+					$itemData = $this->itemSerializer->serializeType(VanillaBlocks::INFO_UPDATE()->asItem());
+					[$name, $meta] = $this->itemDataDowngrader->downgrade($itemData->getName(), $itemData->getMeta());
+					$numericId = $this->itemTypeDictionary->fromStringId($name);
+				}
 			}
 		} else {
 			$numericId = $this->itemTypeDictionary->fromStringId($itemData->getName());
@@ -129,7 +139,11 @@ final class ItemTranslator{
 
 			$blockRuntimeId = $this->blockTranslator->getBlockStateDictionary()->lookupStateIdFromData($blockStateData);
 			if($blockRuntimeId === null){
-				throw new AssumptionFailedError("Unmapped blockstate returned by blockstate serializer: " . $blockStateData->toNbt());
+				if($this === ItemTranslator::getInstance()){
+					throw new AssumptionFailedError("Unmapped blockstate returned by blockstate serializer: " . $blockStateData->toNbt());
+				}else{
+					$blockRuntimeId = self::NO_BLOCK_RUNTIME_ID;
+				}
 			}
 		}else{
 			$blockRuntimeId = self::NO_BLOCK_RUNTIME_ID; //this is technically a valid block runtime ID, but is used to represent "no block" (derp mojang)

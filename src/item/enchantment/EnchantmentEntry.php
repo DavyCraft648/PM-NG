@@ -59,7 +59,7 @@ final class EnchantmentEntry{
 		$map = EnchantmentIdMap::getInstance();
 		return new EnchantOption(
 			$this->getLevel(),
-			$this->enchantments[0]->getType()->getPrimaryItemFlags(),
+			($this->enchantments[0] ?? null)?->getType()->getPrimaryItemFlags() ?? 0,
 			[], [], array_map(fn(EnchantmentInstance $e) => new Enchant($map->toId($e->getType()), $e->getLevel()), $this->enchantments),
 			$this->displayName,
 			$this->getIndex()

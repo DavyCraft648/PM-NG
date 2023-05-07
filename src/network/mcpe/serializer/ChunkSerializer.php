@@ -44,6 +44,7 @@ use pocketmine\world\format\PalettedBlockArray;
 use pocketmine\world\format\SubChunk;
 use function count;
 use function get_class;
+use function min;
 
 final class ChunkSerializer{
 	private function __construct(){
@@ -80,14 +81,7 @@ final class ChunkSerializer{
 			default => throw new AssumptionFailedError("Unknown DimensionId " . $dimensionId)
 		};
 		$subChunkCount = self::getSubChunkCount($chunk);
-		for($y = Chunk::MIN_SUBCHUNK_INDEX, $writtenCount = 0; $writtenCount < $subChunkCount; ++$y, ++$writtenCount){
-			if($y < 0 && $dimensionId !== DimensionIds::OVERWORLD){
-				continue;
-			}
-			if($y > $maxSubChunkIndex){
-				break;
-			}
-
+		for($y = $dimensionId === DimensionIds::OVERWORLD ? Chunk::MIN_SUBCHUNK_INDEX : 0, $writtenCount = 0; $writtenCount < min($subChunkCount, $maxSubChunkIndex); ++$y, ++$writtenCount){
 			$subChunkStream = clone $stream;
 			self::serializeSubChunk($chunk->getSubChunk($y), $blockTranslator, $subChunkStream, false);
 			$subChunks[] = $subChunkStream->getBuffer();
