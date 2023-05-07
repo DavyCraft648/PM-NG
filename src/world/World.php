@@ -68,6 +68,8 @@ use pocketmine\math\Facing;
 use pocketmine\math\Vector3;
 use pocketmine\nbt\tag\IntTag;
 use pocketmine\nbt\tag\StringTag;
+use pocketmine\network\mcpe\convert\BlockTranslator;
+use pocketmine\network\mcpe\convert\ItemTranslator;
 use pocketmine\network\mcpe\convert\TypeConverter;
 use pocketmine\network\mcpe\NetworkBroadcastUtils;
 use pocketmine\network\mcpe\protocol\BlockActorDataPacket;
@@ -702,7 +704,7 @@ class World implements ChunkManager{
 
 		$players = $ev->getRecipients();
 		if($sound instanceof BlockSound){
-			foreach(RuntimeBlockMapping::sortByProtocol($this->filterViewersForPosition($pos, $players)) as $mappingProtocol => $pl){
+			foreach(BlockTranslator::sortByProtocol($this->filterViewersForPosition($pos, $players)) as $mappingProtocol => $pl){
 				$sound->setProtocolId($mappingProtocol);
 
 				$pk = $sound->encode($pos);
@@ -741,8 +743,8 @@ class World implements ChunkManager{
 
 		$players = $ev->getRecipients();
 		if($particle instanceof BlockParticle){
-			$sortedPlayers = RuntimeBlockMapping::sortByProtocol($this->filterViewersForPosition($pos, $players));
-		}elseif($particle instanceof ItemParticle){
+			$sortedPlayers = BlockTranslator::sortByProtocol($this->filterViewersForPosition($pos, $players));
+		} elseif($particle instanceof ItemParticle){
 			$sortedPlayers = ItemTranslator::sortByProtocol($this->filterViewersForPosition($pos, $players));
 		}else{
 			$pk = $particle->encode($pos);
@@ -1050,7 +1052,7 @@ class World implements ChunkManager{
 							$p->onChunkChanged($chunkX, $chunkZ, $chunk);
 						}
 					}else{
-						foreach(RuntimeBlockMapping::sortByProtocol($this->getChunkPlayers($chunkX, $chunkZ)) as $mappingProtocol => $players){
+						foreach(BlockTranslator::sortByProtocol($this->getChunkPlayers($chunkX, $chunkZ)) as $mappingProtocol => $players){
 							NetworkBroadcastUtils::broadcastPackets($players, $this->createBlockUpdatePackets($mappingProtocol, $blocks));
 						}
 					}

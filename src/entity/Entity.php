@@ -46,8 +46,8 @@ use pocketmine\nbt\tag\DoubleTag;
 use pocketmine\nbt\tag\FloatTag;
 use pocketmine\nbt\tag\ListTag;
 use pocketmine\nbt\tag\StringTag;
-use pocketmine\network\mcpe\convert\GlobalItemTypeDictionary;
-use pocketmine\network\mcpe\convert\RuntimeBlockMapping;
+use pocketmine\network\mcpe\convert\BlockTranslator;
+use pocketmine\network\mcpe\convert\ItemTranslator;
 use pocketmine\network\mcpe\EntityEventBroadcaster;
 use pocketmine\network\mcpe\NetworkBroadcastUtils;
 use pocketmine\network\mcpe\protocol\AddActorPacket;
@@ -1675,7 +1675,7 @@ abstract class Entity{
 		$targets = $targets ?? $this->getViewers();
 
 		if($animation instanceof ItemAnimation){
-			foreach(GlobalItemTypeDictionary::sortByProtocol($targets) as $dictionaryProtocol => $players){
+			foreach(ItemTranslator::sortByProtocol($targets) as $dictionaryProtocol => $players){
 				$animation->setProtocolId($dictionaryProtocol);
 
 				NetworkBroadcastUtils::broadcastPackets($players, $animation->encode());
@@ -1694,7 +1694,7 @@ abstract class Entity{
 			$targets = $targets ?? $this->getViewers();
 
 			if($sound instanceof BlockSound){
-				foreach(RuntimeBlockMapping::sortByProtocol($targets) as $mappingProtocol => $players){
+				foreach(BlockTranslator::sortByProtocol($targets) as $mappingProtocol => $players){
 					$sound->setProtocolId($mappingProtocol);
 
 					NetworkBroadcastUtils::broadcastPackets($players, $sound->encode($this->location));

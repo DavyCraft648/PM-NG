@@ -53,6 +53,7 @@ use pocketmine\network\mcpe\compression\CompressBatchPromise;
 use pocketmine\network\mcpe\compression\CompressBatchTask;
 use pocketmine\network\mcpe\compression\Compressor;
 use pocketmine\network\mcpe\compression\ZlibCompressor;
+use pocketmine\network\mcpe\convert\ItemTranslator;
 use pocketmine\network\mcpe\convert\TypeConverter;
 use pocketmine\network\mcpe\encryption\EncryptionContext;
 use pocketmine\network\mcpe\EntityEventBroadcaster;
@@ -1184,11 +1185,14 @@ class Server{
 		int $port,
 		bool $ipV6,
 		bool $useQuery,
+		PacketBroadcaster $packetBroadcaster,
+		EntityEventBroadcaster $entityEventBroadcaster,
+		PacketSerializerContext $packetSerializerContext,
 		TypeConverter $typeConverter
 	) : bool{
 		$prettyIp = $ipV6 ? "[$ip]" : $ip;
 		try{
-			$rakLibRegistered = $this->network->registerInterface(new RakLibInterface($this, $ip, $port, $ipV6, $typeConverter));
+			$rakLibRegistered = $this->network->registerInterface(new RakLibInterface($this, $ip, $port, $ipV6, $packetBroadcaster, $entityEventBroadcaster, $packetSerializerContext, $typeConverter));
 		}catch(NetworkInterfaceStartException $e){
 			$this->logger->emergency($this->language->translate(KnownTranslationFactory::pocketmine_server_networkStartFailed(
 				$ip,
@@ -1215,12 +1219,15 @@ class Server{
 		$useQuery = $this->configGroup->getConfigBool("enable-query", true);
 
 		$typeConverter = TypeConverter::getInstance();
+		$packetSerializerContext = self::getPacketSerializerContext();
+		$packetBroadcaster = self::getPacketBroadcaster();
+		$entityEventBroadcaster = self::getEntityEventBroadcaster();
 
 		if(
-			!$this->startupPrepareConnectableNetworkInterfaces($this->getIp(), $this->getPort(), false, $useQuery, $typeConverter) ||
+			!$this->startupPrepareConnectableNetworkInterfaces($this->getIp(), $this->getPort(), false, $useQuery, $packetBroadcaster, $entityEventBroadcaster, $packetSerializerContext, $typeConverter) ||
 			(
 				$this->configGroup->getConfigBool("enable-ipv6", true) &&
-				!$this->startupPrepareConnectableNetworkInterfaces($this->getIpV6(), $this->getPortV6(), true, $useQuery, $typeConverter)
+				!$this->startupPrepareConnectableNetworkInterfaces($this->getIpV6(), $this->getPortV6(), true, $useQuery, $packetBroadcaster, $entityEventBroadcaster, $packetSerializerContext, $typeConverter)
 			)
 		){
 			return false;
@@ -1854,7 +1861,7 @@ class Server{
 
 	public function getPacketSerializerContext(int $protocolId = ProtocolInfo::CURRENT_PROTOCOL) : PacketSerializerContext{
 		if(!isset($this->packetSerializerContexts[$protocolId])){
-			$this->packetSerializerContexts[$protocolId] = new PacketSerializerContext(GlobalItemTypeDictionary::getInstance($protocolId)->getDictionary(), $protocolId);
+			$this->packetSerializerContexts[$protocolId] = new PacketSerializerContext(ItemTranslator::getInstance($protocolId)->getDictionary(), $protocolId);
 		}
 
 		return $this->packetSerializerContexts[$protocolId];
@@ -1870,7 +1877,7 @@ class Server{
 
 	public function getEntityEventBroadcaster(int $protocolId = ProtocolInfo::CURRENT_PROTOCOL) : EntityEventBroadcaster{
 		if(!isset($this->entityEventBroadcasters[$protocolId])){
-			$this->entityEventBroadcasters[$protocolId] = new StandardEntityEventBroadcaster($this->getPacketBroadcaster($protocolId));
+			$this->entityEventBroadcasters[$protocolId] = new StandardEntityEventBroadcaster($this->getPacketBroadcaster($protocolId), TypeConverter::getInstance($protocolId));
 		}
 
 		return $this->entityEventBroadcasters[$protocolId];

@@ -1006,7 +1006,7 @@ class NetworkSession{
 				//TODO: dynamic flying speed! FINALLY!!!!!!!!!!!!!!!!!
 				new AbilitiesLayer(AbilitiesLayer::LAYER_BASE, $boolAbilities, 0.05, 0.1),
 			];
-			if($this->getProtocolId() >= ProtocolInfo::PROTOCOL_1_19_80 && !$for->hasBlockCollision()){
+			if(!$for->hasBlockCollision() && $this->getProtocolId() >= ProtocolInfo::PROTOCOL_1_19_80){
 				//TODO: HACK! In 1.19.80, the client starts falling in our faux spectator mode when it clips into a
 				//block. We can't seem to prevent this short of forcing the player to always fly when block collision is
 				//disabled. Also, for some reason the client always reads flight state from this layer if present, even
@@ -1017,12 +1017,12 @@ class NetworkSession{
 				], null, null);
 			}
 
-			$this->sendDataPacket(UpdateAbilitiesPacket::create(new AbilitiesData(
+			$pk = UpdateAbilitiesPacket::create(new AbilitiesData(
 				$isOp ? CommandPermissions::OPERATOR : CommandPermissions::NORMAL,
 				$isOp ? PlayerPermissions::OPERATOR : PlayerPermissions::MEMBER,
 				$for->getId(),
 				$layers
-			)));
+			));
 		}else{
 			$pk = AdventureSettingsPacket::create(
 				0,

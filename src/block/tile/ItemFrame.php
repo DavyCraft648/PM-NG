@@ -100,7 +100,7 @@ class ItemFrame extends Spawnable{
 		$nbt->setFloat(self::TAG_ITEM_DROP_CHANCE, $this->itemDropChance);
 		$nbt->setByte(self::TAG_ITEM_ROTATION, $this->itemRotation);
 		if(!$this->item->isNull()){
-			$nbt->setTag(self::TAG_ITEM, TypeConverter::getInstance()->getItemTranslator()->toNetworkNbt($this->item));
+			$nbt->setTag(self::TAG_ITEM, TypeConverter::getInstance($protocolId)->getItemTranslator()->toNetworkNbt($this->item));
 		}
 	}
 }

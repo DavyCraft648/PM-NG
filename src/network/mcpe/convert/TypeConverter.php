@@ -28,7 +28,6 @@ use pocketmine\crafting\ExactRecipeIngredient;
 use pocketmine\crafting\MetaWildcardRecipeIngredient;
 use pocketmine\crafting\RecipeIngredient;
 use pocketmine\crafting\TagWildcardRecipeIngredient;
-use pocketmine\data\bedrock\BedrockDataFiles;
 use pocketmine\data\bedrock\item\BlockItemIdMap;
 use pocketmine\item\Item;
 use pocketmine\item\VanillaItems;
@@ -43,10 +42,7 @@ use pocketmine\network\mcpe\protocol\types\recipe\StringIdMetaItemDescriptor;
 use pocketmine\network\mcpe\protocol\types\recipe\TagItemDescriptor;
 use pocketmine\player\GameMode;
 use pocketmine\utils\AssumptionFailedError;
-use pocketmine\utils\Filesystem;
 use pocketmine\utils\ProtocolSingletonTrait;
-use pocketmine\world\format\io\GlobalBlockStateHandlers;
-use pocketmine\world\format\io\GlobalItemDataHandlers;
 use function get_class;
 use function morton2d_encode;
 
@@ -62,24 +58,17 @@ class TypeConverter{
 	private ItemTranslator $itemTranslator;
 	private ItemTypeDictionary $itemTypeDictionary;
 	private int $shieldRuntimeId;
-
 	private SkinAdapter $skinAdapter;
 
-	public function __construct(private int $protocolId){
+	public function __construct(int $protocolId){
 		//TODO: inject stuff via constructor
 		$this->blockItemIdMap = BlockItemIdMap::getInstance();
 
-		$this->blockTranslator = BlockTranslator::make($this->protocolId);
+		$this->blockTranslator = BlockTranslator::getInstance($protocolId);
+		$this->itemTranslator = ItemTranslator::getInstance($protocolId);
 
-		$this->itemTypeDictionary = ItemTypeDictionaryFromDataHelper::loadFromString(Filesystem::fileGetContents(BedrockDataFiles::REQUIRED_ITEM_LIST_JSON));
+		$this->itemTypeDictionary = $this->itemTranslator->getDictionary();
 		$this->shieldRuntimeId = $this->itemTypeDictionary->fromStringId("minecraft:shield");
-
-		$this->itemTranslator = new ItemTranslator(
-			$this->itemTypeDictionary,
-			$this->blockTranslator->getBlockStateDictionary(),
-			GlobalItemDataHandlers::getSerializer(),
-			GlobalItemDataHandlers::getDeserializer()
-		);
 
 		$this->skinAdapter = new LegacySkinAdapter();
 	}

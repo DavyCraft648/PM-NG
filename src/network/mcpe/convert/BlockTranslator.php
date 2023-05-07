@@ -34,6 +34,7 @@ use pocketmine\data\bedrock\block\upgrade\BlockStateUpgrader;
 use pocketmine\network\mcpe\protocol\ProtocolInfo;
 use pocketmine\utils\AssumptionFailedError;
 use pocketmine\utils\Filesystem;
+use pocketmine\utils\ProtocolSingletonTrait;
 use pocketmine\world\format\io\GlobalBlockStateHandlers;
 use Symfony\Component\Filesystem\Path;
 use function str_replace;
@@ -43,6 +44,7 @@ use const pocketmine\BEDROCK_BLOCK_UPGRADE_SCHEMA_PATH;
  * @internal
  */
 final class BlockTranslator{
+	use ProtocolSingletonTrait;
 
 	public const CANONICAL_BLOCK_STATES_PATH = 0;
 	public const BLOCK_STATE_META_MAP_PATH = 1;
@@ -96,7 +98,7 @@ final class BlockTranslator{
 	private BlockStateData $fallbackStateData;
 	private int $fallbackStateId;
 
-	public static function make(int $protocolId) : self{
+	private static function make(int $protocolId) : self{
 		$canonicalBlockStatesRaw = Filesystem::fileGetContents(str_replace(".nbt", self::PATHS[$protocolId][self::CANONICAL_BLOCK_STATES_PATH] . ".nbt", BedrockDataFiles::CANONICAL_BLOCK_STATES_NBT));
 		$metaMappingRaw = Filesystem::fileGetContents(str_replace(".json", self::PATHS[$protocolId][self::BLOCK_STATE_META_MAP_PATH] . ".json", BedrockDataFiles::BLOCK_STATE_META_MAP_JSON));
 
@@ -137,7 +139,7 @@ final class BlockTranslator{
 
 			$networkId = $this->blockStateDictionary->lookupStateIdFromData($blockStateData);
 			if($networkId === null){
-				if($this !== RuntimeBlockMapping::getInstance() && RuntimeBlockMapping::getInstance()->blockStateDictionary->lookupStateIdFromData($blockStateData) !== null){
+				if($this !== BlockTranslator::getInstance() && BlockTranslator::getInstance()->blockStateDictionary->lookupStateIdFromData($blockStateData) !== null){
 					throw new BlockStateSerializeException();
 				}
 				throw new AssumptionFailedError("Unmapped blockstate returned by blockstate serializer: " . $blockStateData->toNbt());
@@ -171,7 +173,7 @@ final class BlockTranslator{
 
 	public function getBlockStateUpgrader() : ?BlockStateUpgrader{ return GlobalBlockStateHandlers::getUpgrader()->getBlockStateUpgrader(); }
 
-	public static function convertProtocol(int $protocolId) : int{
+	public static function getDictionaryProtocol(int $protocolId) : int{
 		return match ($protocolId) {
 			ProtocolInfo::PROTOCOL_1_19_60 => ProtocolInfo::PROTOCOL_1_19_63,
 
@@ -181,6 +183,13 @@ final class BlockTranslator{
 
 			default => $protocolId
 		};
+	}
+
+	public static function convertProtocol(int $protocolId) : int{
+		$dictionaryProtocol = self::getDictionaryProtocol($protocolId);
+		$schemaId = self::getBlockStateSchemaId($dictionaryProtocol);
+
+		return $schemaId === self::getBlockStateSchemaId($dictionaryProtocol) ? $dictionaryProtocol : $protocolId;
 	}
 
 	private static function getBlockStateSchemaId(int $protocolId) : ?int{

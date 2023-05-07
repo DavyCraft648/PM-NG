@@ -96,10 +96,10 @@ final class ChunkSerializer{
 		return $subChunks;
 	}
 
-	public static function serializeFullChunk(Chunk $chunk, RuntimeBlockMapping $blockMapper, PacketSerializerContext $encoderContext, ?string $tiles = null) : string{
+	public static function serializeFullChunk(Chunk $chunk, BlockTranslator $blockTranslator, PacketSerializerContext $encoderContext, ?string $tiles = null) : string{
 		$stream = PacketSerializer::encoder($encoderContext);
 
-		foreach(self::serializeSubChunks($chunk, $blockMapper, $encoderContext) as $subChunk){
+		foreach(self::serializeSubChunks($chunk, $blockTranslator, $encoderContext) as $subChunk){
 			$stream->put($subChunk);
 		}
 
