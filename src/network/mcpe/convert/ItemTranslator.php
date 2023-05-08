@@ -67,7 +67,7 @@ final class ItemTranslator{
 		}
 
 		return new ItemTranslator(
-			ItemTypeDictionaryFromDataHelper::loadFromString(Filesystem::fileGetContents(str_replace(".json", self::PATHS[$protocolId] . ".json", BedrockDataFiles::REQUIRED_ITEM_LIST_JSON))),
+			ItemTypeDictionaryFromDataHelper::loadFromString(Filesystem::fileGetContents(str_replace(".json", self::PATHS[self::getDictionaryProtocol($protocolId)] . ".json", BedrockDataFiles::REQUIRED_ITEM_LIST_JSON))),
 			BlockTranslator::getInstance($protocolId),
 			GlobalItemDataHandlers::getSerializer(),
 			GlobalItemDataHandlers::getDeserializer(),
