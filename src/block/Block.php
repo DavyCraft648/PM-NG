@@ -946,7 +946,7 @@ class Block{
 	}
 
 	public function canWaterlogged(Liquid $water) : bool{
-		return ($water->getDecay() === 0 && $this->getWaterloggingLevel() >= 1) ||
+		return (!$water->isFalling() && $water->getDecay() === 0 && $this->getWaterloggingLevel() >= 1) ||
 			($water->getDecay() > 0 && $this->getWaterloggingLevel() >= 2);
 	}
 
