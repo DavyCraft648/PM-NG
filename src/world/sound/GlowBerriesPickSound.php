@@ -21,29 +21,15 @@
 
 declare(strict_types=1);
 
-namespace pocketmine\event\block;
+namespace pocketmine\world\sound;
 
-use pocketmine\block\Block;
-use pocketmine\player\Player;
+use pocketmine\math\Vector3;
+use pocketmine\network\mcpe\protocol\LevelSoundEventPacket;
+use pocketmine\network\mcpe\protocol\types\LevelSoundEvent;
 
-/**
- * Called when plants or crops grow.
- */
-class BlockGrowEvent extends BaseBlockChangeEvent{
+class GlowBerriesPickSound implements Sound{
 
-	public function __construct(
-		Block $block,
-		Block $newState,
-		private ?Player $player = null,
-	){
-		parent::__construct($block, $newState);
-	}
-
-	/**
-	 * It returns the player which grows the crop.
-	 * It returns null when the crop grows by itself.
-	 */
-	public function getPlayer() : ?Player{
-		return $this->player;
+	public function encode(Vector3 $pos) : array{
+		return [LevelSoundEventPacket::nonActorSound(LevelSoundEvent::CAVE_VINES_PICK_BERRIES, $pos, false)];
 	}
 }

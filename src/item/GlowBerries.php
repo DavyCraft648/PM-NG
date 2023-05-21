@@ -21,29 +21,22 @@
 
 declare(strict_types=1);
 
-namespace pocketmine\event\block;
+namespace pocketmine\item;
 
 use pocketmine\block\Block;
-use pocketmine\player\Player;
+use pocketmine\block\VanillaBlocks;
 
-/**
- * Called when plants or crops grow.
- */
-class BlockGrowEvent extends BaseBlockChangeEvent{
+class GlowBerries extends Food{
 
-	public function __construct(
-		Block $block,
-		Block $newState,
-		private ?Player $player = null,
-	){
-		parent::__construct($block, $newState);
+	public function getFoodRestore() : int{
+		return 2;
 	}
 
-	/**
-	 * It returns the player which grows the crop.
-	 * It returns null when the crop grows by itself.
-	 */
-	public function getPlayer() : ?Player{
-		return $this->player;
+	public function getSaturationRestore() : float{
+		return 0.4;
+	}
+
+	public function getBlock(?int $clickedFace = null) : Block{
+		return VanillaBlocks::CAVE_VINES();
 	}
 }
