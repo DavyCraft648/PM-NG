@@ -82,7 +82,6 @@ use pocketmine\promise\PromiseResolver;
 use pocketmine\scheduler\AsyncPool;
 use pocketmine\Server;
 use pocketmine\ServerConfigGroup;
-use pocketmine\timings\Timings;
 use pocketmine\utils\AssumptionFailedError;
 use pocketmine\utils\Limits;
 use pocketmine\utils\ReversePriorityQueue;
@@ -1021,7 +1020,6 @@ class World implements ChunkManager{
 
 		$this->timings->entityTick->startTiming();
 		//Update entities that need update
-		Timings::$tickEntity->startTiming();
 		foreach($this->updateEntities as $id => $entity){
 			if($entity->isClosed() || $entity->isFlaggedForDespawn() || !$entity->onUpdate($currentTick)){
 				unset($this->updateEntities[$id]);
@@ -1030,7 +1028,6 @@ class World implements ChunkManager{
 				$entity->close();
 			}
 		}
-		Timings::$tickEntity->stopTiming();
 		$this->timings->entityTick->stopTiming();
 
 		$this->timings->randomChunkUpdates->startTiming();
@@ -1426,9 +1423,14 @@ class World implements ChunkManager{
 
 		(new WorldSaveEvent($this))->call();
 
+		$timings = $this->timings->syncDataSave;
+		$timings->startTiming();
+
 		$this->provider->getWorldData()->setTime($this->time);
 		$this->saveChunks();
 		$this->provider->getWorldData()->save();
+
+		$timings->stopTiming();
 
 		return true;
 	}
@@ -1439,10 +1441,11 @@ class World implements ChunkManager{
 			foreach($this->chunks as $chunkHash => $chunk){
 				self::getXZ($chunkHash, $chunkX, $chunkZ);
 				$this->provider->saveChunk($chunkX, $chunkZ, new ChunkData(
-					$chunk,
+					$chunk->getSubChunks(),
+					$chunk->isPopulated(),
 					array_map(fn(Entity $e) => $e->saveNBT(), array_filter($this->getChunkEntities($chunkX, $chunkZ), fn(Entity $e) => $e->canSaveWithChunk())),
 					array_map(fn(Tile $t) => $t->saveNBT(), $chunk->getTiles()),
-				));
+				), $chunk->getTerrainDirtyFlags());
 				$chunk->clearTerrainDirtyFlags();
 			}
 		}finally{
@@ -2774,25 +2777,32 @@ class World implements ChunkManager{
 
 		$this->timings->syncChunkLoadData->startTiming();
 
-		$chunk = null;
+		$loadedChunkData = null;
 
 		try{
-			$chunk = $this->provider->loadChunk($x, $z);
+			$loadedChunkData = $this->provider->loadChunk($x, $z);
 		}catch(CorruptedChunkException $e){
 			$this->logger->critical("Failed to load chunk x=$x z=$z: " . $e->getMessage());
 		}
 
 		$this->timings->syncChunkLoadData->stopTiming();
 
-		if($chunk === null){
+		if($loadedChunkData === null){
 			$this->timings->syncChunkLoad->stopTiming();
 			return null;
 		}
 
-		$this->chunks[$chunkHash] = $chunk->getChunk();
+		$chunkData = $loadedChunkData->getData();
+		$chunk = new Chunk($chunkData->getSubChunks(), $chunkData->isPopulated());
+		if(!$loadedChunkData->isUpgraded()){
+			$chunk->clearTerrainDirtyFlags();
+		}else{
+			$this->logger->debug("Chunk $x $z has been upgraded, will be saved at the next autosave opportunity");
+		}
+		$this->chunks[$chunkHash] = $chunk;
 		unset($this->blockCache[$chunkHash]);
 
-		$this->initChunk($x, $z, $chunk);
+		$this->initChunk($x, $z, $chunkData);
 
 		(new ChunkLoadEvent($this, $x, $z, $this->chunks[$chunkHash], false))->call();
 
@@ -2919,10 +2929,11 @@ class World implements ChunkManager{
 				$this->timings->syncChunkSave->startTiming();
 				try{
 					$this->provider->saveChunk($x, $z, new ChunkData(
-						$chunk,
+						$chunk->getSubChunks(),
+						$chunk->isPopulated(),
 						array_map(fn(Entity $e) => $e->saveNBT(), array_filter($this->getChunkEntities($x, $z), fn(Entity $e) => $e->canSaveWithChunk())),
 						array_map(fn(Tile $t) => $t->saveNBT(), $chunk->getTiles()),
-					));
+					), $chunk->getTerrainDirtyFlags());
 				}finally{
 					$this->timings->syncChunkSave->stopTiming();
 				}
@@ -3265,7 +3276,8 @@ class World implements ChunkManager{
 	private function internalOrderChunkPopulation(int $chunkX, int $chunkZ, ?ChunkLoader $associatedChunkLoader, ?PromiseResolver $resolver) : Promise{
 		$chunkHash = World::chunkHash($chunkX, $chunkZ);
 
-		Timings::$population->startTiming();
+		$timings = $this->timings->chunkPopulationOrder;
+		$timings->startTiming();
 
 		try{
 			for($xx = -1; $xx <= 1; ++$xx){
@@ -3322,7 +3334,7 @@ class World implements ChunkManager{
 
 			return $resolver->getPromise();
 		}finally{
-			Timings::$population->stopTiming();
+			$timings->stopTiming();
 		}
 	}
 
@@ -3331,7 +3343,8 @@ class World implements ChunkManager{
 	 * @phpstan-param array<int, Chunk> $adjacentChunks
 	 */
 	private function generateChunkCallback(ChunkLockId $chunkLockId, int $x, int $z, Chunk $chunk, array $adjacentChunks, ChunkLoader $temporaryChunkLoader) : void{
-		Timings::$generationCallback->startTiming();
+		$timings = $this->timings->chunkPopulationCompletion;
+		$timings->startTiming();
 
 		$dirtyChunks = 0;
 		for($xx = -1; $xx <= 1; ++$xx){
@@ -3400,7 +3413,7 @@ class World implements ChunkManager{
 
 			$this->drainPopulationRequestQueue();
 		}
-		Timings::$generationCallback->stopTiming();
+		$timings->stopTiming();
 	}
 
 	public function doChunkGarbageCollection() : void{

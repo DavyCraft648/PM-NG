@@ -27,7 +27,6 @@ declare(strict_types=1);
 namespace pocketmine\world\format;
 
 use pocketmine\block\Block;
-use pocketmine\block\BlockTypeIds;
 use pocketmine\block\tile\Tile;
 use pocketmine\data\bedrock\BiomeIds;
 use pocketmine\network\mcpe\protocol\types\DimensionIds;
@@ -37,6 +36,9 @@ class Chunk{
 	public const DIRTY_FLAG_BLOCKS = 1 << 0;
 	public const DIRTY_FLAG_BIOMES = 1 << 3;
 
+	public const DIRTY_FLAGS_ALL = ~0;
+	public const DIRTY_FLAGS_NONE = 0;
+
 	public const MIN_SUBCHUNK_INDEX = -4;
 	public const MAX_SUBCHUNK_INDEX = 19;
 	public const MAX_SUBCHUNKS = self::MAX_SUBCHUNK_INDEX - self::MIN_SUBCHUNK_INDEX + 1;
@@ -45,7 +47,7 @@ class Chunk{
 	public const COORD_BIT_SIZE = SubChunk::COORD_BIT_SIZE;
 	public const COORD_MASK = SubChunk::COORD_MASK;
 
-	private int $terrainDirtyFlags = 0;
+	private int $terrainDirtyFlags = self::DIRTY_FLAGS_ALL;
 
 	protected ?bool $lightPopulated = false;
 	protected bool $terrainPopulated = false;
@@ -72,7 +74,7 @@ class Chunk{
 
 		foreach($this->subChunks as $y => $null){
 			//TODO: we should probably require all subchunks to be provided here
-			$this->subChunks[$y] = $subChunks[$y + self::MIN_SUBCHUNK_INDEX] ?? new SubChunk(BlockTypeIds::AIR << Block::INTERNAL_STATE_DATA_BITS, [], new PalettedBlockArray(BiomeIds::OCEAN));
+			$this->subChunks[$y] = $subChunks[$y + self::MIN_SUBCHUNK_INDEX] ?? new SubChunk(Block::EMPTY_STATE_ID, [], new PalettedBlockArray(BiomeIds::OCEAN));
 		}
 
 		$val = (self::MAX_SUBCHUNK_INDEX + 1) * SubChunk::EDGE_LENGTH;
@@ -259,7 +261,7 @@ class Chunk{
 	}
 
 	public function isTerrainDirty() : bool{
-		return $this->terrainDirtyFlags !== 0;
+		return $this->terrainDirtyFlags !== self::DIRTY_FLAGS_NONE;
 	}
 
 	public function getTerrainDirtyFlag(int $flag) : bool{
@@ -279,11 +281,11 @@ class Chunk{
 	}
 
 	public function setTerrainDirty() : void{
-		$this->terrainDirtyFlags = ~0;
+		$this->terrainDirtyFlags = self::DIRTY_FLAGS_ALL;
 	}
 
 	public function clearTerrainDirtyFlags() : void{
-		$this->terrainDirtyFlags = 0;
+		$this->terrainDirtyFlags = self::DIRTY_FLAGS_NONE;
 	}
 
 	public function getDimensionId() : int{
@@ -312,8 +314,8 @@ class Chunk{
 			throw new \InvalidArgumentException("Invalid subchunk Y coordinate $y");
 		}
 
-		$this->subChunks[$y - self::MIN_SUBCHUNK_INDEX] = $subChunk ?? new SubChunk(BlockTypeIds::AIR << Block::INTERNAL_STATE_DATA_BITS, [], new PalettedBlockArray(BiomeIds::OCEAN));
-		$this->setTerrainDirtyFlag(self::DIRTY_FLAG_BLOCKS, true);
+		$this->subChunks[$y - self::MIN_SUBCHUNK_INDEX] = $subChunk ?? new SubChunk(Block::EMPTY_STATE_ID, [], new PalettedBlockArray(BiomeIds::OCEAN));
+		$this->terrainDirtyFlags |= self::DIRTY_FLAG_BLOCKS;
 	}
 
 	/**
