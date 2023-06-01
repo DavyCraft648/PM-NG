@@ -61,16 +61,6 @@
       "phpstan/phpstan-strict-rules": "^1.2.0",
       "phpunit/phpunit": "^10.1"
    },
-   "repositories": [
-      {
-         "type": "vcs",
-         "url":  "git@github.com:NetherGamesMC/BedrockProtocol.git"
-      },
-      {
-         "type": "vcs",
-         "url":  "git@github.com:NetherGamesMC/BedrockData.git"
-      }
-   ],
    "autoload": {
       "psr-4": {
          "pocketmine\\": "src/"
@@ -105,6 +95,14 @@
       ]
    },
    "repositories": [
+      {
+         "type": "vcs",
+         "url":  "git@github.com:NetherGamesMC/BedrockProtocol.git"
+      },
+      {
+         "type": "vcs",
+         "url":  "git@github.com:NetherGamesMC/BedrockData.git"
+      },
       {
          "type": "vcs",
          "url": "https://github.com/dktapps/JsonMapper.git"
