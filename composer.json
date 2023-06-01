@@ -5,7 +5,7 @@
    "homepage": "https://pmmp.io",
    "license": "LGPL-3.0",
    "require": {
-      "php": "^8.0",
+      "php": "^8.1",
       "php-64bit": "*",
       "ext-chunkutils2": "^0.3.1",
       "ext-crypto": "^0.3.1",
@@ -33,7 +33,7 @@
       "composer-runtime-api": "^2.0",
       "adhocore/json-comment": "^1.1",
       "fgrosse/phpasn1": "^2.3",
-      "netresearch/jsonmapper": "^4.0",
+      "netresearch/jsonmapper": "dev-array-in-string-property-error as 4.2.0",
       "pocketmine/bedrock-block-upgrade-schema": "~2.1.0+bedrock-1.19.80",
       "nethergamesmc/bedrock-data": "dev-master",
       "pocketmine/bedrock-item-upgrade-schema": "~1.2.0+bedrock-1.19.80",
@@ -59,7 +59,7 @@
       "phpstan/phpstan": "1.10.15",
       "phpstan/phpstan-phpunit": "^1.1.0",
       "phpstan/phpstan-strict-rules": "^1.2.0",
-      "phpunit/phpunit": "^9.2"
+      "phpunit/phpunit": "^10.1"
    },
    "repositories": [
       {
@@ -87,7 +87,7 @@
    },
    "config": {
       "platform": {
-         "php": "8.0.0"
+         "php": "8.1.0"
       },
       "sort-packages": true
    },
@@ -103,5 +103,11 @@
       "update-translation-apis": [
          "@php build/generate-known-translation-apis.php"
       ]
-   }
+   },
+   "repositories": [
+      {
+         "type": "vcs",
+         "url": "https://github.com/dktapps/JsonMapper.git"
+      }
+   ]
 }

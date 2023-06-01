@@ -136,23 +136,7 @@ final class RuntimeBlockMapping{
 	 * @param string[] $canonicalBlockStatesFiles
 	 * @param string[] $r12ToCurrentBlockMapFiles
 	 */
-	private function __construct(array $canonicalBlockStatesFiles, array $r12ToCurrentBlockMapFiles){
-		foreach($canonicalBlockStatesFiles as $mappingProtocol => $canonicalBlockStatesFile){
-			$stream = new BinaryStream(Filesystem::fileGetContents($canonicalBlockStatesFile));
-			$list = [];
-			$nbtReader = new NetworkNbtSerializer();
-
-			$keyIndex = [];
-			$valueIndex = [];
-			while(!$stream->feof()){
-				$offset = $stream->getOffset();
-				$blockState = $nbtReader->read($stream->getBuffer(), $offset)->mustGetCompoundTag();
-				$stream->setOffset($offset);
-				$list[] = self::deduplicateCompound($blockState, $keyIndex, $valueIndex);
-			}
-			$this->bedrockKnownStates[$mappingProtocol] = $list;
-		}
-
+	private function __construct(private array $canonicalBlockStatesFiles, array $r12ToCurrentBlockMapFiles){
 		foreach($r12ToCurrentBlockMapFiles as $mappingProtocol => $r12ToCurrentBlockMapFile){
 			$this->setupLegacyMappings($mappingProtocol, $r12ToCurrentBlockMapFile);
 		}
@@ -177,6 +161,25 @@ final class RuntimeBlockMapping{
 	}
 
 	/**
+	 * @return CompoundTag[]
+	 */
+	private function loadBedrockKnownStates(int $mappingProtocol) : array {
+		$stream = new BinaryStream(Filesystem::fileGetContents($this->canonicalBlockStatesFiles[$mappingProtocol]));
+		$list = [];
+		$nbtReader = new NetworkNbtSerializer();
+
+		$keyIndex = [];
+		$valueIndex = [];
+		while(!$stream->feof()){
+			$offset = $stream->getOffset();
+			$blockState = $nbtReader->read($stream->getBuffer(), $offset)->mustGetCompoundTag();
+			$stream->setOffset($offset);
+			$list[] = self::deduplicateCompound($blockState, $keyIndex, $valueIndex);
+		}
+		return $list;
+	}
+
+	/**
 	 * @param Player[] $players
 	 *
 	 * @return Player[][]
@@ -198,6 +201,8 @@ final class RuntimeBlockMapping{
 	}
 
 	private function setupLegacyMappings(int $mappingProtocol, string $r12ToCurrentBlockMapFile) : void{
+		$bedrockKnownStates = $this->loadBedrockKnownStates($mappingProtocol);
+
 		$legacyIdMap = LegacyBlockIdToStringIdMap::getInstance();
 		/** @var R12ToCurrentBlockMapEntry[] $legacyStateMap */
 		$legacyStateMap = [];
@@ -217,7 +222,7 @@ final class RuntimeBlockMapping{
 		 * @var int[][] $idToStatesMap string id -> int[] list of candidate state indices
 		 */
 		$idToStatesMap = [];
-		foreach($this->bedrockKnownStates[$mappingProtocol] as $k => $state){
+		foreach($bedrockKnownStates as $k => $state){
 			$idToStatesMap[$state->getString("name")][] = $k;
 		}
 		foreach($legacyStateMap as $pair){
@@ -236,7 +241,7 @@ final class RuntimeBlockMapping{
 				throw new \RuntimeException("Mapped new state does not appear in network table");
 			}
 			foreach($idToStatesMap[$mappedName] as $k){
-				$networkState = $this->bedrockKnownStates[$mappingProtocol][$k];
+				$networkState = $bedrockKnownStates[$k];
 				if($mappedState->equals($networkState)){
 					$this->registerMapping($mappingProtocol, $k, $id, $data);
 					continue 2;
@@ -260,9 +265,14 @@ final class RuntimeBlockMapping{
 	}
 
 	/**
+	 * WARNING: This method may load the palette from disk, which is a slow operation.
+	 * Afterwards, it will cache the palette in memory, which requires (in some cases) tens of MB of memory.
+	 * Avoid using this where possible.
+	 *
+	 * @deprecated
 	 * @return CompoundTag[]
 	 */
 	public function getBedrockKnownStates(int $mappingProtocol = ProtocolInfo::CURRENT_PROTOCOL) : array{
-		return $this->bedrockKnownStates[$mappingProtocol];
+		return $this->bedrockKnownStates[$mappingProtocol] ??= $this->loadBedrockKnownStates($mappingProtocol);
 	}
 }
