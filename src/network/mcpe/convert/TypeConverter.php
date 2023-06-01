@@ -44,7 +44,6 @@ use pocketmine\player\GameMode;
 use pocketmine\utils\AssumptionFailedError;
 use pocketmine\utils\ProtocolSingletonTrait;
 use function get_class;
-use function morton2d_encode;
 
 class TypeConverter{
 	use ProtocolSingletonTrait;
@@ -206,7 +205,7 @@ class TypeConverter{
 			if($nbt === null){
 				$nbt = new CompoundTag();
 			}
-			$nbt->setLong(self::PM_ID_TAG, morton2d_encode($itemStack->getTypeId(), $itemStack->computeTypeData()));
+			$nbt->setLong(self::PM_ID_TAG, $itemStack->getStateId());
 		}else{
 			[$id, $meta, $blockRuntimeId] = $idMeta;
 		}
