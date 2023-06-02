@@ -68,16 +68,14 @@ final class BlockStateDowngrader{
 			$oldState = $blockStateData->getStates();
 			if(isset($schema->remappedStates[$oldName])){
 				foreach($schema->remappedStates[$oldName] as $remap){
-					if(count($oldState) !== count($remap->oldState)){
-						continue; //try next state
-					}
-					foreach(Utils::stringifyKeys($oldState) as $k => $v){
-						if(!isset($remap->oldState[$k]) || !$remap->oldState[$k]->equals($v)){
-							continue 2; //try next state
+					$newState = $remap->newState;
+					foreach($remap->copiedState as $stateName){
+						if(isset($oldState[$stateName])){
+							$newState[$stateName] = $oldState[$stateName];
 						}
 					}
 
-					$blockStateData = new BlockStateData($remap->newName, $remap->newState, $resultVersion);
+					$blockStateData = new BlockStateData($remap->newName, $newState, $resultVersion);
 					continue 2; //try next schema
 				}
 			}

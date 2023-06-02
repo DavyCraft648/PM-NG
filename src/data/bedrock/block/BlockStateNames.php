@@ -52,6 +52,7 @@ final class BlockStateNames{
 	public const BUTTON_PRESSED_BIT = "button_pressed_bit";
 	public const CAN_SUMMON = "can_summon";
 	public const CANDLES = "candles";
+	public const CARDINAL_DIRECTION = "minecraft:cardinal_direction";
 	public const CAULDRON_LIQUID = "cauldron_liquid";
 	public const CHEMISTRY_TABLE_TYPE = "chemistry_table_type";
 	public const CHISEL_TYPE = "chisel_type";
@@ -122,6 +123,7 @@ final class BlockStateNames{
 	public const SAND_STONE_TYPE = "sand_stone_type";
 	public const SAND_TYPE = "sand_type";
 	public const SAPLING_TYPE = "sapling_type";
+	public const SCULK_SENSOR_PHASE = "sculk_sensor_phase";
 	public const SEA_GRASS_TYPE = "sea_grass_type";
 	public const SPONGE_TYPE = "sponge_type";
 	public const STABILITY = "stability";

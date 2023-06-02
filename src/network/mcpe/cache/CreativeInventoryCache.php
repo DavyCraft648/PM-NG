@@ -24,20 +24,23 @@ declare(strict_types=1);
 namespace pocketmine\network\mcpe\cache;
 
 use pocketmine\inventory\CreativeInventory;
+use pocketmine\network\mcpe\convert\ItemTranslator;
 use pocketmine\network\mcpe\convert\TypeConverter;
 use pocketmine\network\mcpe\protocol\CreativeContentPacket;
 use pocketmine\network\mcpe\protocol\types\inventory\CreativeContentEntry;
-use pocketmine\utils\SingletonTrait;
+use pocketmine\utils\ProtocolSingletonTrait;
 use function spl_object_id;
 
 final class CreativeInventoryCache{
-	use SingletonTrait;
+	use ProtocolSingletonTrait;
 
 	/**
 	 * @var CreativeContentPacket[]
 	 * @phpstan-var array<int, CreativeContentPacket>
 	 */
 	private array $caches = [];
+
+	public function __construct(private int $protocolId){}
 
 	public function getCache(CreativeInventory $inventory) : CreativeContentPacket{
 		$id = spl_object_id($inventory);
@@ -58,12 +61,16 @@ final class CreativeInventoryCache{
 	 */
 	private function buildCreativeInventoryCache(CreativeInventory $inventory) : CreativeContentPacket{
 		$entries = [];
-		$typeConverter = TypeConverter::getInstance();
+		$typeConverter = TypeConverter::getInstance($this->protocolId);
 		//creative inventory may have holes if items were unregistered - ensure network IDs used are always consistent
 		foreach($inventory->getAll() as $k => $item){
 			$entries[] = new CreativeContentEntry($k, $typeConverter->coreItemStackToNet($item));
 		}
 
 		return CreativeContentPacket::create($entries);
+	}
+
+	public static function convertProtocol(int $protocolId) : int{
+		return ItemTranslator::convertProtocol($protocolId);
 	}
 }
