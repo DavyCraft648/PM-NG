@@ -54,6 +54,10 @@ final class BlockTranslator{
 			self::CANONICAL_BLOCK_STATES_PATH => '',
 			self::BLOCK_STATE_META_MAP_PATH => '',
 		],
+		ProtocolInfo::PROTOCOL_1_19_80 => [
+			self::CANONICAL_BLOCK_STATES_PATH => '-1.19.80',
+			self::BLOCK_STATE_META_MAP_PATH => '-1.19.80',
+		],
 		ProtocolInfo::PROTOCOL_1_19_70 => [
 			self::CANONICAL_BLOCK_STATES_PATH => '-1.19.70',
 			self::BLOCK_STATE_META_MAP_PATH => '-1.19.70',
@@ -192,7 +196,9 @@ final class BlockTranslator{
 
 	private static function getBlockStateSchemaId(int $protocolId) : ?int{
 		return match($protocolId){
-			ProtocolInfo::PROTOCOL_1_19_80 => null,
+			ProtocolInfo::PROTOCOL_1_20_0 => null,
+
+			ProtocolInfo::PROTOCOL_1_19_80 => 191,
 
 			ProtocolInfo::PROTOCOL_1_19_70 => 181,
 
