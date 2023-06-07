@@ -88,11 +88,21 @@ class EnchantTransaction extends InventoryTransaction{
 			throw new TransactionValidationException("No such option exists.");
 		}
 
-		parent::execute();
+		$cost = $entry->getIndex() + 1;
+		if(!$this->source->isCreative() && $this->source->getXpManager()->getXpLevel() < $cost){
+			throw new TransactionValidationException("Not enough XP.");
+		}
+		try {
+			parent::execute();
+		} catch (TransactionValidationException) {
+			$networkSession = $this->source->getNetworkSession();
+			$networkSession->getEntityEventBroadcaster()->syncAttributes([$networkSession], $this->source, $this->source->getAttributeMap()->getAll());
+			return;
+		}
 
 		if($this->source->isCreative()){
 			return;
 		}
-		$this->source->getXpManager()->subtractXpLevels($entry->getIndex() + 1);
+		$this->source->getXpManager()->subtractXpLevels($cost);
 	}
 }
