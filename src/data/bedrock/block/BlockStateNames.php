@@ -52,7 +52,6 @@ final class BlockStateNames{
 	public const BUTTON_PRESSED_BIT = "button_pressed_bit";
 	public const CAN_SUMMON = "can_summon";
 	public const CANDLES = "candles";
-	public const CARDINAL_DIRECTION = "minecraft:cardinal_direction";
 	public const CAULDRON_LIQUID = "cauldron_liquid";
 	public const CHEMISTRY_TABLE_TYPE = "chemistry_table_type";
 	public const CHISEL_TYPE = "chisel_type";

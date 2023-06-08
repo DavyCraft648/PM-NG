@@ -48,11 +48,6 @@ final class BlockStateStringValues{
 	public const BIG_DRIPLEAF_TILT_PARTIAL_TILT = "partial_tilt";
 	public const BIG_DRIPLEAF_TILT_UNSTABLE = "unstable";
 
-	public const CARDINAL_DIRECTION_EAST = "east";
-	public const CARDINAL_DIRECTION_NORTH = "north";
-	public const CARDINAL_DIRECTION_SOUTH = "south";
-	public const CARDINAL_DIRECTION_WEST = "west";
-
 	public const CAULDRON_LIQUID_LAVA = "lava";
 	public const CAULDRON_LIQUID_POWDER_SNOW = "powder_snow";
 	public const CAULDRON_LIQUID_WATER = "water";
