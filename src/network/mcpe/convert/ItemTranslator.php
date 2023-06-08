@@ -52,6 +52,7 @@ final class ItemTranslator{
 
 	private const PATHS = [
 		ProtocolInfo::CURRENT_PROTOCOL => "",
+		ProtocolInfo::PROTOCOL_1_19_80 => "-1.19.80",
 		ProtocolInfo::PROTOCOL_1_19_70 => "-1.19.70",
 		ProtocolInfo::PROTOCOL_1_19_63 => "-1.19.63",
 		ProtocolInfo::PROTOCOL_1_19_50 => "-1.19.50",
@@ -217,7 +218,9 @@ final class ItemTranslator{
 
 	public static function getItemSchemaId(int $protocolId) : ?int{
 		return match($protocolId){
-			ProtocolInfo::PROTOCOL_1_19_80 => null,
+			ProtocolInfo::PROTOCOL_1_20_0 => null,
+
+			ProtocolInfo::PROTOCOL_1_19_80 => 111,
 
 			ProtocolInfo::PROTOCOL_1_19_70 => 101,
 
