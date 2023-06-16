@@ -24,6 +24,7 @@ declare(strict_types=1);
 namespace pocketmine\block\tile;
 
 use pocketmine\nbt\tag\CompoundTag;
+use pocketmine\network\mcpe\convert\TypeConverter;
 use function max;
 
 class EnderChest extends Spawnable{
