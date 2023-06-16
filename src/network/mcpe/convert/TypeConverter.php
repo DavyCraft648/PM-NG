@@ -65,6 +65,8 @@ class TypeConverter{
 	private SkinAdapter $skinAdapter;
 
 	public function __construct(int $protocolId){
+		parent::__construct($protocolId);
+
 		//TODO: inject stuff via constructor
 		$this->blockItemIdMap = BlockItemIdMap::getInstance();
 

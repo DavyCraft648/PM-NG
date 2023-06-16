@@ -60,8 +60,6 @@ final class CraftingDataCache{
 	 */
 	private array $caches = [];
 
-	public function __construct(private int $protocolId){}
-
 	public function getCache(CraftingManager $manager) : CraftingDataPacket{
 		$id = spl_object_id($manager);
 		if(!isset($this->caches[$id])){

@@ -142,7 +142,7 @@ class Sign extends Spawnable{
 	}
 
 	protected function addAdditionalSpawnData(CompoundTag $nbt, TypeConverter $typeConverter) : void{
-		if($protocolId >= ProtocolInfo::PROTOCOL_1_19_80){
+		if($typeConverter->getProtocolId() >= ProtocolInfo::PROTOCOL_1_19_80){
 			$nbt->setTag(self::TAG_FRONT_TEXT, CompoundTag::create()
 				->setString(self::TAG_TEXT_BLOB, implode("\n", $this->text->getLines()))
 				->setInt(self::TAG_TEXT_COLOR, Binary::signInt($this->text->getBaseColor()->toARGB()))

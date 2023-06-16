@@ -35,8 +35,16 @@ trait ProtocolSingletonTrait{
 		return new self($protocolId);
 	}
 
+	private function __construct(protected readonly int $protocolId){
+		//NOOP
+	}
+
 	public static function getInstance(int $protocolId = ProtocolInfo::CURRENT_PROTOCOL) : self{
 		return self::$instance[$protocolId] ??= self::make($protocolId);
+	}
+
+	public function getProtocolId() : int{
+		return $this->protocolId;
 	}
 
 	/**

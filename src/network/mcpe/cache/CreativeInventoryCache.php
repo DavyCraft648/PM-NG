@@ -39,10 +39,6 @@ final class CreativeInventoryCache{
 	 */
 	private array $caches = [];
 
-	public function __construct(private readonly int $protocolId){
-		//NOOP
-	}
-
 	public function getCache(CreativeInventory $inventory) : CreativeContentPacket{
 		$id = spl_object_id($inventory);
 		if(!isset($this->caches[$id])){

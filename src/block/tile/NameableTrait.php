@@ -26,6 +26,7 @@ namespace pocketmine\block\tile;
 use pocketmine\item\Item;
 use pocketmine\nbt\tag\CompoundTag;
 use pocketmine\nbt\tag\StringTag;
+use pocketmine\network\mcpe\convert\TypeConverter;
 
 /**
  * This trait implements most methods in the {@link Nameable} interface. It should only be used by Tiles.
