@@ -51,7 +51,9 @@ use function get_class;
 use const pocketmine\BEDROCK_ITEM_UPGRADE_SCHEMA_PATH;
 
 class TypeConverter{
-	use ProtocolSingletonTrait;
+	use ProtocolSingletonTrait {
+		__construct as private __protocolConstruct;
+	}
 
 	private const PM_ID_TAG = "___Id___";
 
@@ -65,7 +67,7 @@ class TypeConverter{
 	private SkinAdapter $skinAdapter;
 
 	public function __construct(int $protocolId){
-		parent::__construct($protocolId);
+		$this->__protocolConstruct($protocolId);
 
 		//TODO: inject stuff via constructor
 		$this->blockItemIdMap = BlockItemIdMap::getInstance();
