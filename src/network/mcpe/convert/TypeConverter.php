@@ -28,7 +28,12 @@ use pocketmine\crafting\ExactRecipeIngredient;
 use pocketmine\crafting\MetaWildcardRecipeIngredient;
 use pocketmine\crafting\RecipeIngredient;
 use pocketmine\crafting\TagWildcardRecipeIngredient;
+use pocketmine\data\bedrock\BedrockDataFiles;
+use pocketmine\data\bedrock\block\downgrade\BlockStateDowngrader;
+use pocketmine\data\bedrock\block\downgrade\BlockStateDowngradeSchemaUtils;
 use pocketmine\data\bedrock\item\BlockItemIdMap;
+use pocketmine\data\bedrock\item\downgrade\ItemIdMetaDowngrader;
+use pocketmine\data\bedrock\item\downgrade\ItemIdMetaDowngradeSchemaUtils;
 use pocketmine\item\Item;
 use pocketmine\item\VanillaItems;
 use pocketmine\nbt\NbtException;
@@ -42,8 +47,15 @@ use pocketmine\network\mcpe\protocol\types\recipe\StringIdMetaItemDescriptor;
 use pocketmine\network\mcpe\protocol\types\recipe\TagItemDescriptor;
 use pocketmine\player\GameMode;
 use pocketmine\utils\AssumptionFailedError;
+use pocketmine\utils\Filesystem;
 use pocketmine\utils\ProtocolSingletonTrait;
+use pocketmine\world\format\io\GlobalBlockStateHandlers;
+use pocketmine\world\format\io\GlobalItemDataHandlers;
+use Symfony\Component\Filesystem\Path;
 use function get_class;
+use function str_replace;
+use const pocketmine\BEDROCK_BLOCK_UPGRADE_SCHEMA_PATH;
+use const pocketmine\BEDROCK_ITEM_UPGRADE_SCHEMA_PATH;
 
 class TypeConverter{
 	use ProtocolSingletonTrait;
@@ -63,11 +75,35 @@ class TypeConverter{
 		//TODO: inject stuff via constructor
 		$this->blockItemIdMap = BlockItemIdMap::getInstance();
 
-		$this->blockTranslator = BlockTranslator::getInstance($protocolId);
-		$this->itemTranslator = ItemTranslator::getInstance($protocolId);
+		if(($blockStateSchemaId = BlockTranslator::getBlockStateSchemaId($protocolId)) !== null){
+			$blockStateDowngrader = new BlockStateDowngrader(BlockStateDowngradeSchemaUtils::loadSchemas(
+				Path::join(BEDROCK_BLOCK_UPGRADE_SCHEMA_PATH, 'nbt_upgrade_schema'),
+				$blockStateSchemaId
+			));
+		}
+		if(($itemSchemaId = ItemTranslator::getItemSchemaId($protocolId)) !== null){
+			$itemDataDowngradeSchema = new ItemIdMetaDowngrader(ItemIdMetaDowngradeSchemaUtils::loadSchemas(Path::join(BEDROCK_ITEM_UPGRADE_SCHEMA_PATH, 'id_meta_upgrade_schema'), $itemSchemaId));
+		}
 
-		$this->itemTypeDictionary = $this->itemTranslator->getDictionary();
+		$canonicalBlockStatesRaw = Filesystem::fileGetContents(str_replace(".nbt", BlockTranslator::PATHS[$protocolId][BlockTranslator::CANONICAL_BLOCK_STATES_PATH] . ".nbt", BedrockDataFiles::CANONICAL_BLOCK_STATES_NBT));
+		$metaMappingRaw = Filesystem::fileGetContents(str_replace(".json", BlockTranslator::PATHS[$protocolId][BlockTranslator::BLOCK_STATE_META_MAP_PATH] . ".json", BedrockDataFiles::BLOCK_STATE_META_MAP_JSON));
+		$this->blockTranslator = new BlockTranslator(
+			BlockStateDictionary::loadFromString($canonicalBlockStatesRaw, $metaMappingRaw),
+			GlobalBlockStateHandlers::getSerializer(),
+			$blockStateDowngrader ?? null
+		);
+
+		$this->itemTypeDictionary = ItemTypeDictionaryFromDataHelper::loadFromString(Filesystem::fileGetContents(str_replace(".json", ItemTranslator::PATHS[$protocolId] . ".json", BedrockDataFiles::REQUIRED_ITEM_LIST_JSON)));
 		$this->shieldRuntimeId = $this->itemTypeDictionary->fromStringId("minecraft:shield");
+
+		$this->itemTranslator = new ItemTranslator(
+			$this->itemTypeDictionary,
+			$this->blockTranslator,
+			GlobalItemDataHandlers::getSerializer(),
+			GlobalItemDataHandlers::getDeserializer(),
+			$this->blockItemIdMap,
+			$itemDataDowngradeSchema ?? null
+		);
 
 		$this->skinAdapter = new LegacySkinAdapter();
 	}
@@ -131,7 +167,7 @@ class TypeConverter{
 		}elseif($ingredient instanceof ExactRecipeIngredient){
 			$item = $ingredient->getItem();
 			[$id, $meta, $blockRuntimeId] = $this->itemTranslator->toNetworkId($item);
-			if($blockRuntimeId !== ItemTranslator::NO_BLOCK_RUNTIME_ID){
+			if($blockRuntimeId !== null){
 				$meta = $this->blockTranslator->getBlockStateDictionary()->getMetaFromStateId($blockRuntimeId);
 				if($meta === null){
 					throw new AssumptionFailedError("Every block state should have an associated meta value");
@@ -214,7 +250,7 @@ class TypeConverter{
 			$id,
 			$meta,
 			$itemStack->getCount(),
-			$blockRuntimeId,
+			$blockRuntimeId ?? ItemTranslator::NO_BLOCK_RUNTIME_ID,
 			$nbt,
 			[],
 			[],

@@ -23,9 +23,8 @@ declare(strict_types=1);
 
 namespace pocketmine\network\mcpe\convert;
 
-use pocketmine\data\bedrock\BedrockDataFiles;
 use pocketmine\data\bedrock\item\downgrade\ItemIdMetaDowngrader;
-use pocketmine\data\bedrock\item\downgrade\ItemIdMetaDowngradeSchemaUtils;
+use pocketmine\data\bedrock\item\BlockItemIdMap;
 use pocketmine\data\bedrock\item\ItemDeserializer;
 use pocketmine\data\bedrock\item\ItemSerializer;
 use pocketmine\data\bedrock\item\ItemTypeDeserializeException;
@@ -36,58 +35,51 @@ use pocketmine\nbt\tag\CompoundTag;
 use pocketmine\network\mcpe\protocol\ProtocolInfo;
 use pocketmine\network\mcpe\protocol\serializer\ItemTypeDictionary;
 use pocketmine\utils\AssumptionFailedError;
-use pocketmine\utils\Filesystem;
-use pocketmine\utils\ProtocolSingletonTrait;
 use pocketmine\world\format\io\GlobalItemDataHandlers;
-use Symfony\Component\Filesystem\Path;
-use function str_replace;
-use const pocketmine\BEDROCK_ITEM_UPGRADE_SCHEMA_PATH;
 
 /**
  * This class handles translation between network item ID+metadata to PocketMine-MP internal ID+metadata and vice versa.
  */
 final class ItemTranslator{
-	use ProtocolSingletonTrait;
-
-	private const PATHS = [
+	public const PATHS = [
 		ProtocolInfo::CURRENT_PROTOCOL => "",
+
 		ProtocolInfo::PROTOCOL_1_19_80 => "-1.19.80",
+
 		ProtocolInfo::PROTOCOL_1_19_70 => "-1.19.70",
-		ProtocolInfo::PROTOCOL_1_19_63 => "-1.19.63",
+
+		ProtocolInfo::PROTOCOL_1_19_63,
+		ProtocolInfo::PROTOCOL_1_19_60 => "-1.19.63",
+
 		ProtocolInfo::PROTOCOL_1_19_50 => "-1.19.50",
-		ProtocolInfo::PROTOCOL_1_19_40 => "-1.19.40",
+
+		ProtocolInfo::PROTOCOL_1_19_40,
+		ProtocolInfo::PROTOCOL_1_19_30,
+		ProtocolInfo::PROTOCOL_1_19_21,
+		ProtocolInfo::PROTOCOL_1_19_20,
+		ProtocolInfo::PROTOCOL_1_19_10 => "-1.19.40",
+
 		ProtocolInfo::PROTOCOL_1_19_0 => "-1.19.0",
+
 		ProtocolInfo::PROTOCOL_1_18_30 => "-1.18.30",
+
 		ProtocolInfo::PROTOCOL_1_18_10 => "-1.18.10",
 	];
 
-	private static function make(int $protocolId) : ItemTranslator{
-		if(($itemSchemaId = ItemTranslator::getItemSchemaId($protocolId)) !== null){
-			$itemDataDowngradeSchema = new ItemIdMetaDowngrader(ItemIdMetaDowngradeSchemaUtils::loadSchemas(Path::join(BEDROCK_ITEM_UPGRADE_SCHEMA_PATH, 'id_meta_upgrade_schema'), $itemSchemaId));
-		}
-
-		return new ItemTranslator(
-			ItemTypeDictionaryFromDataHelper::loadFromString(Filesystem::fileGetContents(str_replace(".json", self::PATHS[self::getDictionaryProtocol($protocolId)] . ".json", BedrockDataFiles::REQUIRED_ITEM_LIST_JSON))),
-			BlockTranslator::getInstance($protocolId),
-			GlobalItemDataHandlers::getSerializer(),
-			GlobalItemDataHandlers::getDeserializer(),
-			$itemDataDowngradeSchema ?? null
-		);
-	}
-
-	public const NO_BLOCK_RUNTIME_ID = 0;
+	public const NO_BLOCK_RUNTIME_ID = 0; //this is technically a valid block runtime ID, but is used to represent "no block" (derp mojang)
 
 	public function __construct(
 		private ItemTypeDictionary $itemTypeDictionary,
 		private BlockTranslator $blockTranslator,
 		private ItemSerializer $itemSerializer,
 		private ItemDeserializer $itemDeserializer,
+		private BlockItemIdMap $blockItemIdMap,
 		private ?ItemIdMetaDowngrader $itemDataDowngrader,
 	){}
 
 	/**
 	 * @return int[]|null
-	 * @phpstan-return array{int, int, int}|null
+	 * @phpstan-return array{int, int, ?int}|null
 	 */
 	public function toNetworkIdQuiet(Item $item) : ?array{
 		try{
@@ -99,7 +91,7 @@ final class ItemTranslator{
 
 	/**
 	 * @return int[]
-	 * @phpstan-return array{int, int, int}
+	 * @phpstan-return array{int, int, ?int}
 	 *
 	 * @throws ItemTypeSerializeException
 	 */
@@ -133,7 +125,7 @@ final class ItemTranslator{
 				throw new AssumptionFailedError("Unmapped blockstate returned by blockstate serializer: " . $blockStateData->toNbt());
 			}
 		}else{
-			$blockRuntimeId = self::NO_BLOCK_RUNTIME_ID; //this is technically a valid block runtime ID, but is used to represent "no block" (derp mojang)
+			$blockRuntimeId = null;
 		}
 
 		return [$numericId, $meta ?? $itemData->getMeta(), $blockRuntimeId];
@@ -161,7 +153,7 @@ final class ItemTranslator{
 		}
 
 		$blockStateData = null;
-		if($networkBlockRuntimeId !== self::NO_BLOCK_RUNTIME_ID){
+		if($this->blockItemIdMap->lookupBlockId($stringId) !== null){
 			$blockStateData = $this->blockTranslator->getBlockStateDictionary()->generateDataFromStateId($networkBlockRuntimeId);
 			if($blockStateData === null){
 				throw new TypeConversionException("Blockstate runtimeID $networkBlockRuntimeId does not correspond to any known blockstate");
@@ -170,6 +162,8 @@ final class ItemTranslator{
 			if(($blockStateUpgrader = $this->blockTranslator->getBlockStateUpgrader()) !== null){
 				$blockStateData = $blockStateUpgrader->upgrade($blockStateData);
 			}
+		}elseif($networkBlockRuntimeId !== self::NO_BLOCK_RUNTIME_ID){
+			throw new TypeConversionException("Item $stringId is not a blockitem, but runtime ID $networkBlockRuntimeId was provided");
 		}
 
 		[$stringId, $networkMeta] = GlobalItemDataHandlers::getUpgrader()->getIdMetaUpgrader()->upgrade($stringId, $networkMeta);
@@ -179,27 +173,6 @@ final class ItemTranslator{
 		}catch(ItemTypeDeserializeException $e){
 			throw TypeConversionException::wrap($e, "Invalid network itemstack data");
 		}
-	}
-
-	public static function getDictionaryProtocol(int $protocolId) : int{
-		return match ($protocolId) {
-			ProtocolInfo::PROTOCOL_1_19_60 => ProtocolInfo::PROTOCOL_1_19_63,
-
-			ProtocolInfo::PROTOCOL_1_19_30,
-			ProtocolInfo::PROTOCOL_1_19_21,
-			ProtocolInfo::PROTOCOL_1_19_20,
-			ProtocolInfo::PROTOCOL_1_19_10 => ProtocolInfo::PROTOCOL_1_19_40,
-
-			default => $protocolId
-		};
-	}
-
-	public static function convertProtocol(int $protocolId) : int{
-		$itemProtocol = self::getDictionaryProtocol($protocolId);
-		$mappingProtocol = BlockTranslator::convertProtocol($protocolId);
-		$itemSchemaId = self::getItemSchemaId($protocolId);
-
-		return $itemProtocol === $mappingProtocol && $itemSchemaId === self::getItemSchemaId($itemProtocol) ? $itemProtocol : $protocolId;
 	}
 
 	public static function getItemSchemaId(int $protocolId) : ?int{
@@ -225,9 +198,5 @@ final class ItemTranslator{
 			ProtocolInfo::PROTOCOL_1_18_10 => 71,
 			default => throw new AssumptionFailedError("Unknown protocol ID $protocolId"),
 		};
-	}
-
-	public function getDictionary() : ItemTypeDictionary{
-		return $this->itemTypeDictionary;
 	}
 }
