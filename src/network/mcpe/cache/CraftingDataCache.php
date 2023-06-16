@@ -83,7 +83,7 @@ final class CraftingDataCache{
 		Timings::$craftingDataCacheRebuild->startTiming();
 
 		$nullUUID = Uuid::fromString(Uuid::NIL);
-		$converter = TypeConverter::getInstance($protocolId);
+		$converter = TypeConverter::getInstance($this->protocolId);
 		$recipesWithTypeIds = [];
 
 		foreach($manager->getCraftingRecipeIndex() as $index => $recipe){
@@ -97,16 +97,16 @@ final class CraftingDataCache{
 				};
 
 				$inputs = array_map(function(RecipeIngredient $item) use ($converter) : ?ProtocolRecipeIngredient{
-					try {
+					try{
 						return $converter->coreRecipeIngredientToNet($item);
-					} catch(\InvalidArgumentException $e){
+					}catch(\InvalidArgumentException $e){
 						return null;
 					}
 				}, $recipe->getIngredientList());
 				$outputs = array_map(function(Item $item) use ($converter) : ?ItemStack{
-					try {
+					try{
 						return $converter->coreItemStackToNet($item);
-					} catch(\InvalidArgumentException $e){
+					}catch(\InvalidArgumentException $e){
 						return null;
 					}
 				}, $recipe->getResults());
@@ -128,20 +128,20 @@ final class CraftingDataCache{
 			}elseif($recipe instanceof ShapedRecipe){
 				$inputs = [];
 
-				try {
+				try{
 					for($row = 0, $height = $recipe->getHeight(); $row < $height; ++$row){
 						for($column = 0, $width = $recipe->getWidth(); $column < $width; ++$column){
 							$inputs[$row][$column] = $converter->coreRecipeIngredientToNet($recipe->getIngredient($column, $row));
 						}
 					}
-				} catch(\InvalidArgumentException $e){
+				}catch(\InvalidArgumentException $e){
 					continue;
 				}
 
 				$outputs = array_map(function(Item $item) use ($converter) : ?ItemStack{
-					try {
+					try{
 						return $converter->coreItemStackToNet($item);
-					} catch(\InvalidArgumentException $e){
+					}catch(\InvalidArgumentException $e){
 						return null;
 					}
 				}, $recipe->getResults());
@@ -173,10 +173,10 @@ final class CraftingDataCache{
 				default => throw new AssumptionFailedError("Unreachable"),
 			};
 			foreach($manager->getFurnaceRecipeManager($furnaceType)->getAll() as $recipe){
-				try {
+				try{
 					$input = $converter->coreRecipeIngredientToNet($recipe->getInput())->getDescriptor();
 					$output = $converter->coreItemStackToNet($recipe->getResult());
-				} catch(\InvalidArgumentException $e){
+				}catch(\InvalidArgumentException $e){
 					continue;
 				}
 
@@ -195,14 +195,14 @@ final class CraftingDataCache{
 
 		$potionTypeRecipes = [];
 		foreach($manager->getPotionTypeRecipes() as $recipe){
-			try {
+			try{
 				$input = $converter->coreRecipeIngredientToNet($recipe->getInput())->getDescriptor();
 				$ingredient = $converter->coreRecipeIngredientToNet($recipe->getIngredient())->getDescriptor();
 				if(!$input instanceof IntIdMetaItemDescriptor || !$ingredient instanceof IntIdMetaItemDescriptor){
 					throw new AssumptionFailedError();
 				}
 				$output = $converter->coreItemStackToNet($recipe->getOutput());
-			} catch(\InvalidArgumentException $e){
+			}catch(\InvalidArgumentException $e){
 				continue;
 			}
 
@@ -220,9 +220,9 @@ final class CraftingDataCache{
 		$itemTypeDictionary = $converter->getItemTypeDictionary();
 		foreach($manager->getPotionContainerChangeRecipes() as $recipe){
 			$input = $itemTypeDictionary->fromStringId($recipe->getInputItemId());
-			try {
+			try{
 				$ingredient = $converter->coreRecipeIngredientToNet($recipe->getIngredient())->getDescriptor();
-			} catch(\InvalidArgumentException $e){
+			}catch(\InvalidArgumentException $e){
 				continue;
 			}
 			if(!$ingredient instanceof IntIdMetaItemDescriptor){

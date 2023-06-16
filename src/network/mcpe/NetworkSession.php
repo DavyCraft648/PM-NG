@@ -1247,12 +1247,12 @@ class NetworkSession{
 	 */
 	public function syncPlayerList(array $players) : void{
 		$this->sendDataPacket(PlayerListPacket::add(array_map(function(Player $player) : PlayerListEntry{
-			return PlayerListEntry::createAdditionEntry($player->getUniqueId(), $player->getId(), $player->getDisplayName(), TypeConverter::getInstance()->getSkinAdapter()->toSkinData($player->getSkin()), $player->getXuid());
+			return PlayerListEntry::createAdditionEntry($player->getUniqueId(), $player->getId(), $player->getDisplayName(), TypeConverter::getInstance()->getSkinAdapter()->toSkinData($player->getSkin()), $player->getXuid()); //todo: use the right type converter
 		}, $players)));
 	}
 
 	public function onPlayerAdded(Player $p) : void{
-		$this->sendDataPacket(PlayerListPacket::add([PlayerListEntry::createAdditionEntry($p->getUniqueId(), $p->getId(), $p->getDisplayName(), TypeConverter::getInstance()->getSkinAdapter()->toSkinData($p->getSkin()), $p->getXuid())]));
+		$this->sendDataPacket(PlayerListPacket::add([PlayerListEntry::createAdditionEntry($p->getUniqueId(), $p->getId(), $p->getDisplayName(), TypeConverter::getInstance()->getSkinAdapter()->toSkinData($p->getSkin()), $p->getXuid())])); //todo: use the right type converter
 	}
 
 	public function onPlayerRemoved(Player $p) : void{

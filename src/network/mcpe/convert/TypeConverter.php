@@ -28,9 +28,6 @@ use pocketmine\crafting\ExactRecipeIngredient;
 use pocketmine\crafting\MetaWildcardRecipeIngredient;
 use pocketmine\crafting\RecipeIngredient;
 use pocketmine\crafting\TagWildcardRecipeIngredient;
-use pocketmine\data\bedrock\BedrockDataFiles;
-use pocketmine\data\bedrock\block\downgrade\BlockStateDowngrader;
-use pocketmine\data\bedrock\block\downgrade\BlockStateDowngradeSchemaUtils;
 use pocketmine\data\bedrock\item\BlockItemIdMap;
 use pocketmine\data\bedrock\item\downgrade\ItemIdMetaDowngrader;
 use pocketmine\data\bedrock\item\downgrade\ItemIdMetaDowngradeSchemaUtils;
@@ -47,14 +44,10 @@ use pocketmine\network\mcpe\protocol\types\recipe\StringIdMetaItemDescriptor;
 use pocketmine\network\mcpe\protocol\types\recipe\TagItemDescriptor;
 use pocketmine\player\GameMode;
 use pocketmine\utils\AssumptionFailedError;
-use pocketmine\utils\Filesystem;
 use pocketmine\utils\ProtocolSingletonTrait;
-use pocketmine\world\format\io\GlobalBlockStateHandlers;
 use pocketmine\world\format\io\GlobalItemDataHandlers;
 use Symfony\Component\Filesystem\Path;
 use function get_class;
-use function str_replace;
-use const pocketmine\BEDROCK_BLOCK_UPGRADE_SCHEMA_PATH;
 use const pocketmine\BEDROCK_ITEM_UPGRADE_SCHEMA_PATH;
 
 class TypeConverter{

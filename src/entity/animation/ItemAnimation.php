@@ -26,7 +26,6 @@ namespace pocketmine\entity\animation;
 use pocketmine\data\bedrock\item\ItemTypeSerializeException;
 use pocketmine\item\Item;
 use pocketmine\network\mcpe\convert\ItemTranslator;
-use pocketmine\network\mcpe\convert\TypeConverter;
 
 abstract class ItemAnimation implements Animation{
 
@@ -40,7 +39,7 @@ abstract class ItemAnimation implements Animation{
 
 	/**
 	 * @return int[]
-	 * @phpstan-return array{int, int, int}
+	 * @phpstan-return array{int, int, int|null}
 	 *
 	 * @throws ItemTypeSerializeException
 	 */

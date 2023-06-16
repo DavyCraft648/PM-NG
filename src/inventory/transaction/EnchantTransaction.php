@@ -92,9 +92,9 @@ class EnchantTransaction extends InventoryTransaction{
 		if(!$this->source->isCreative() && $this->source->getXpManager()->getXpLevel() < $cost){
 			throw new TransactionValidationException("Not enough XP.");
 		}
-		try {
+		try{
 			parent::execute();
-		} catch (TransactionValidationException) {
+		}catch(TransactionValidationException) {
 			$networkSession = $this->source->getNetworkSession();
 			$networkSession->getEntityEventBroadcaster()->syncAttributes([$networkSession], $this->source, $this->source->getAttributeMap()->getAll());
 			return;

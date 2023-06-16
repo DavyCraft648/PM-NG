@@ -78,13 +78,13 @@ final class ItemTranslator{
 		if($this->itemDataDowngrader !== null){
 			[$name, $meta] = $this->itemDataDowngrader->downgrade($itemData->getName(), $itemData->getMeta());
 
-			try {
+			try{
 				$numericId = $this->itemTypeDictionary->fromStringId($name);
-			} catch (\InvalidArgumentException $e) {
+			}catch(\InvalidArgumentException $e) {
 				$numericId = $this->itemTypeDictionary->fromStringId($itemData->getName());
 				$meta = $itemData->getMeta();
 			}
-		} else {
+		}else{
 			$numericId = $this->itemTypeDictionary->fromStringId($itemData->getName());
 		}
 

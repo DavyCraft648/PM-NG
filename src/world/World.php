@@ -1070,7 +1070,7 @@ class World implements ChunkManager{
 						$typeConverters = [];
 						/** @var Player[][] $converterRecipients */
 						$converterRecipients = [];
-						foreach($players as $recipient){
+						foreach($this->getChunkPlayers($chunkX, $chunkZ) as $recipient){
 							$typeConverter = $recipient->getNetworkSession()->getTypeConverter();
 							$typeConverters[spl_object_id($typeConverter)] = $typeConverter;
 							$converterRecipients[spl_object_id($typeConverter)][spl_object_id($recipient)] = $recipient;
@@ -1139,8 +1139,10 @@ class World implements ChunkManager{
 	 * @return ClientboundPacket[]
 	 * @phpstan-return list<ClientboundPacket>
 	 */
-	public function createBlockUpdatePackets(BlockTranslator $blockTranslator, array $blocks) : array{
+	public function createBlockUpdatePackets(TypeConverter $typeConverter, array $blocks) : array{
 		$packets = [];
+
+		$blockTranslator = $typeConverter->getBlockTranslator();
 
 		foreach($blocks as $b){
 			if(!($b instanceof Vector3)){
@@ -1173,7 +1175,7 @@ class World implements ChunkManager{
 			);
 
 			if($tile instanceof Spawnable){
-				$packets[] = BlockActorDataPacket::create($blockPosition, $tile->getSerializedSpawnCompound($protocolId));
+				$packets[] = BlockActorDataPacket::create($blockPosition, $tile->getSerializedSpawnCompound($typeConverter));
 			}
 		}
 

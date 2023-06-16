@@ -45,8 +45,6 @@ use pocketmine\nbt\tag\DoubleTag;
 use pocketmine\nbt\tag\FloatTag;
 use pocketmine\nbt\tag\ListTag;
 use pocketmine\nbt\tag\StringTag;
-use pocketmine\network\mcpe\convert\BlockTranslator;
-use pocketmine\network\mcpe\convert\ItemTranslator;
 use pocketmine\network\mcpe\convert\TypeConverter;
 use pocketmine\network\mcpe\EntityEventBroadcaster;
 use pocketmine\network\mcpe\NetworkBroadcastUtils;

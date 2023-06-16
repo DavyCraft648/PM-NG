@@ -25,7 +25,6 @@ namespace pocketmine\world\sound;
 
 use pocketmine\block\Block;
 use pocketmine\network\mcpe\convert\BlockTranslator;
-use pocketmine\network\mcpe\convert\TypeConverter;
 
 abstract class BlockSound implements Sound{
 

@@ -96,11 +96,11 @@ class ItemFrame extends Spawnable{
 		$this->itemDropChance = $chance;
 	}
 
-	protected function addAdditionalSpawnData(CompoundTag $nbt, int $protocolId) : void{
+	protected function addAdditionalSpawnData(CompoundTag $nbt, TypeConverter $typeConverter) : void{
 		$nbt->setFloat(self::TAG_ITEM_DROP_CHANCE, $this->itemDropChance);
 		$nbt->setByte(self::TAG_ITEM_ROTATION, $this->itemRotation);
 		if(!$this->item->isNull()){
-			$nbt->setTag(self::TAG_ITEM, TypeConverter::getInstance($protocolId)->getItemTranslator()->toNetworkNbt($this->item));
+			$nbt->setTag(self::TAG_ITEM, $typeConverter->getItemTranslator()->toNetworkNbt($this->item));
 		}
 	}
 }

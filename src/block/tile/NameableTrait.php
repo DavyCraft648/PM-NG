@@ -52,7 +52,7 @@ trait NameableTrait{
 		return $this->customName !== null;
 	}
 
-	public function addAdditionalSpawnData(CompoundTag $nbt, int $protocolId) : void{
+	public function addAdditionalSpawnData(CompoundTag $nbt, TypeConverter $typeConverter) : void{
 		if($this->customName !== null){
 			$nbt->setString(Nameable::TAG_CUSTOM_NAME, $this->customName);
 		}

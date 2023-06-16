@@ -26,7 +26,6 @@ namespace pocketmine\world\particle;
 use pocketmine\data\bedrock\item\ItemTypeSerializeException;
 use pocketmine\item\Item;
 use pocketmine\network\mcpe\convert\ItemTranslator;
-use pocketmine\network\mcpe\convert\TypeConverter;
 
 abstract class ItemParticle implements Particle{
 
@@ -40,7 +39,7 @@ abstract class ItemParticle implements Particle{
 
 	/**
 	 * @return int[]
-	 * @phpstan-return array{int, int, int}
+	 * @phpstan-return array{int, int, int|null}
 	 *
 	 * @throws ItemTypeSerializeException
 	 */
