@@ -23,8 +23,8 @@ declare(strict_types=1);
 
 namespace pocketmine\network\mcpe\convert;
 
-use pocketmine\data\bedrock\item\downgrade\ItemIdMetaDowngrader;
 use pocketmine\data\bedrock\item\BlockItemIdMap;
+use pocketmine\data\bedrock\item\downgrade\ItemIdMetaDowngrader;
 use pocketmine\data\bedrock\item\ItemDeserializer;
 use pocketmine\data\bedrock\item\ItemSerializer;
 use pocketmine\data\bedrock\item\ItemTypeDeserializeException;
@@ -41,31 +41,6 @@ use pocketmine\world\format\io\GlobalItemDataHandlers;
  * This class handles translation between network item ID+metadata to PocketMine-MP internal ID+metadata and vice versa.
  */
 final class ItemTranslator{
-	public const PATHS = [
-		ProtocolInfo::CURRENT_PROTOCOL => "",
-
-		ProtocolInfo::PROTOCOL_1_19_80 => "-1.19.80",
-
-		ProtocolInfo::PROTOCOL_1_19_70 => "-1.19.70",
-
-		ProtocolInfo::PROTOCOL_1_19_63,
-		ProtocolInfo::PROTOCOL_1_19_60 => "-1.19.63",
-
-		ProtocolInfo::PROTOCOL_1_19_50 => "-1.19.50",
-
-		ProtocolInfo::PROTOCOL_1_19_40,
-		ProtocolInfo::PROTOCOL_1_19_30,
-		ProtocolInfo::PROTOCOL_1_19_21,
-		ProtocolInfo::PROTOCOL_1_19_20,
-		ProtocolInfo::PROTOCOL_1_19_10 => "-1.19.40",
-
-		ProtocolInfo::PROTOCOL_1_19_0 => "-1.19.0",
-
-		ProtocolInfo::PROTOCOL_1_18_30 => "-1.18.30",
-
-		ProtocolInfo::PROTOCOL_1_18_10 => "-1.18.10",
-	];
-
 	public const NO_BLOCK_RUNTIME_ID = 0; //this is technically a valid block runtime ID, but is used to represent "no block" (derp mojang)
 
 	public function __construct(

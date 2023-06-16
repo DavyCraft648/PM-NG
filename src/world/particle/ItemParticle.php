@@ -26,15 +26,16 @@ namespace pocketmine\world\particle;
 use pocketmine\data\bedrock\item\ItemTypeSerializeException;
 use pocketmine\item\Item;
 use pocketmine\network\mcpe\convert\ItemTranslator;
+use pocketmine\network\mcpe\convert\TypeConverter;
 
 abstract class ItemParticle implements Particle{
 
-	private int $protocolId;
+	private ItemTranslator $itemTranslator;
 
 	public function __construct(private Item $item){}
 
-	public function setProtocolId(int $protocolId) : void{
-		$this->protocolId = $protocolId;
+	public function setItemTranslator(ItemTranslator $itemTranslator) : void{
+		$this->itemTranslator = $itemTranslator;
 	}
 
 	/**
@@ -44,6 +45,6 @@ abstract class ItemParticle implements Particle{
 	 * @throws ItemTypeSerializeException
 	 */
 	public function toNetworkId() : array{
-		return ItemTranslator::getInstance($this->protocolId)->toNetworkId($this->item);
+		return $this->itemTranslator->toNetworkId($this->item);
 	}
 }

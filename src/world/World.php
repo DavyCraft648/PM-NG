@@ -72,8 +72,11 @@ use pocketmine\network\mcpe\convert\BlockTranslator;
 use pocketmine\network\mcpe\convert\ItemTranslator;
 use pocketmine\network\mcpe\convert\TypeConverter;
 use pocketmine\network\mcpe\NetworkBroadcastUtils;
+use pocketmine\network\mcpe\NetworkSession;
+use pocketmine\network\mcpe\PacketBroadcaster;
 use pocketmine\network\mcpe\protocol\BlockActorDataPacket;
 use pocketmine\network\mcpe\protocol\ClientboundPacket;
+use pocketmine\network\mcpe\protocol\serializer\PacketSerializerContext;
 use pocketmine\network\mcpe\protocol\types\BlockPosition;
 use pocketmine\network\mcpe\protocol\UpdateBlockPacket;
 use pocketmine\player\Player;
@@ -703,13 +706,23 @@ class World implements ChunkManager{
 
 		$players = $ev->getRecipients();
 		if($sound instanceof BlockSound){
-			foreach(BlockTranslator::sortByProtocol($this->filterViewersForPosition($pos, $players)) as $mappingProtocol => $pl){
-				$sound->setProtocolId($mappingProtocol);
+			/** @var TypeConverter[] $typeConverters */
+			$typeConverters = [];
+			/** @var Player[][] $converterRecipients */
+			$converterRecipients = [];
+			foreach($players as $recipient){
+				$typeConverter = $recipient->getNetworkSession()->getTypeConverter();
+				$typeConverters[spl_object_id($typeConverter)] = $typeConverter;
+				$converterRecipients[spl_object_id($typeConverter)][spl_object_id($recipient)] = $recipient;
+			}
+
+			foreach($typeConverters as $key => $typeConverter){
+				$sound->setBlockTranslator($typeConverter->getBlockTranslator());
 
 				$pk = $sound->encode($pos);
 
 				if(count($pk) > 0){
-					NetworkBroadcastUtils::broadcastPackets($pl, $pk);
+					NetworkBroadcastUtils::broadcastPackets($converterRecipients[$key], $pk);
 				}
 			}
 		}else{
@@ -741,10 +754,29 @@ class World implements ChunkManager{
 		}
 
 		$players = $ev->getRecipients();
-		if($particle instanceof BlockParticle){
-			$sortedPlayers = BlockTranslator::sortByProtocol($this->filterViewersForPosition($pos, $players));
-		} elseif($particle instanceof ItemParticle){
-			$sortedPlayers = ItemTranslator::sortByProtocol($this->filterViewersForPosition($pos, $players));
+		if($particle instanceof BlockParticle || $particle instanceof ItemParticle){
+			/** @var TypeConverter[] $typeConverters */
+			$typeConverters = [];
+			/** @var Player[][] $converterRecipients */
+			$converterRecipients = [];
+			foreach($players as $recipient){
+				$typeConverter = $recipient->getNetworkSession()->getTypeConverter();
+				$typeConverters[spl_object_id($typeConverter)] = $typeConverter;
+				$converterRecipients[spl_object_id($typeConverter)][spl_object_id($recipient)] = $recipient;
+			}
+
+			foreach($typeConverters as $key => $typeConverter){
+				if($particle instanceof ItemParticle){
+					$particle->setItemTranslator($typeConverter->getItemTranslator());
+				}else{
+					$particle->setBlockTranslator($typeConverter->getBlockTranslator());
+				}
+
+				$pk = $particle->encode($pos);
+				if(count($pk) > 0){
+					NetworkBroadcastUtils::broadcastPackets($converterRecipients[$key], $pk);
+				}
+			}
 		}else{
 			$pk = $particle->encode($pos);
 
@@ -756,17 +788,6 @@ class World implements ChunkManager{
 				}else{
 					NetworkBroadcastUtils::broadcastPackets($this->filterViewersForPosition($pos, $ev->getRecipients()), $pk);
 				}
-			}
-			return;
-		}
-
-		foreach($sortedPlayers as $protocolId => $pl){
-			$particle->setProtocolId($protocolId);
-
-			$pk = $particle->encode($pos);
-
-			if(count($pk) > 0){
-				NetworkBroadcastUtils::broadcastPackets($pl, $pk);
 			}
 		}
 	}
@@ -1045,8 +1066,18 @@ class World implements ChunkManager{
 							$p->onChunkChanged($chunkX, $chunkZ, $chunk);
 						}
 					}else{
-						foreach(BlockTranslator::sortByProtocol($this->getChunkPlayers($chunkX, $chunkZ)) as $mappingProtocol => $players){
-							NetworkBroadcastUtils::broadcastPackets($players, $this->createBlockUpdatePackets($mappingProtocol, $blocks));
+						/** @var TypeConverter[] $typeConverters */
+						$typeConverters = [];
+						/** @var Player[][] $converterRecipients */
+						$converterRecipients = [];
+						foreach($players as $recipient){
+							$typeConverter = $recipient->getNetworkSession()->getTypeConverter();
+							$typeConverters[spl_object_id($typeConverter)] = $typeConverter;
+							$converterRecipients[spl_object_id($typeConverter)][spl_object_id($recipient)] = $recipient;
+						}
+
+						foreach($typeConverters as $key => $typeConverter){
+							NetworkBroadcastUtils::broadcastPackets($converterRecipients[$key], $this->createBlockUpdatePackets($typeConverter, $blocks));
 						}
 					}
 				}
@@ -1108,10 +1139,8 @@ class World implements ChunkManager{
 	 * @return ClientboundPacket[]
 	 * @phpstan-return list<ClientboundPacket>
 	 */
-	public function createBlockUpdatePackets(int $protocolId, array $blocks) : array{
+	public function createBlockUpdatePackets(BlockTranslator $blockTranslator, array $blocks) : array{
 		$packets = [];
-
-		$blockTranslator = TypeConverter::getInstance($protocolId)->getBlockTranslator();
 
 		foreach($blocks as $b){
 			if(!($b instanceof Vector3)){

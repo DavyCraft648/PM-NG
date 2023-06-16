@@ -30,7 +30,6 @@ use pocketmine\crafting\ShapedRecipe;
 use pocketmine\crafting\ShapelessRecipe;
 use pocketmine\crafting\ShapelessRecipeType;
 use pocketmine\item\Item;
-use pocketmine\network\mcpe\convert\ItemTranslator;
 use pocketmine\network\mcpe\convert\TypeConverter;
 use pocketmine\network\mcpe\protocol\CraftingDataPacket;
 use pocketmine\network\mcpe\protocol\types\inventory\ItemStack;
@@ -61,11 +60,7 @@ final class CraftingDataCache{
 	 */
 	private array $caches = [];
 
-	private int $protocolId;
-
-	public function __construct(int $protocolId){
-		$this->protocolId = $protocolId;
-	}
+	public function __construct(private int $protocolId){}
 
 	public function getCache(CraftingManager $manager) : CraftingDataPacket{
 		$id = spl_object_id($manager);
@@ -88,7 +83,7 @@ final class CraftingDataCache{
 		Timings::$craftingDataCacheRebuild->startTiming();
 
 		$nullUUID = Uuid::fromString(Uuid::NIL);
-		$converter = TypeConverter::getInstance($this->protocolId);
+		$converter = TypeConverter::getInstance($protocolId);
 		$recipesWithTypeIds = [];
 
 		foreach($manager->getCraftingRecipeIndex() as $index => $recipe){
@@ -222,7 +217,7 @@ final class CraftingDataCache{
 		}
 
 		$potionContainerChangeRecipes = [];
-		$itemTypeDictionary = TypeConverter::getInstance($this->protocolId)->getItemTypeDictionary();
+		$itemTypeDictionary = $converter->getItemTypeDictionary();
 		foreach($manager->getPotionContainerChangeRecipes() as $recipe){
 			$input = $itemTypeDictionary->fromStringId($recipe->getInputItemId());
 			try {
@@ -243,9 +238,5 @@ final class CraftingDataCache{
 
 		Timings::$craftingDataCacheRebuild->stopTiming();
 		return CraftingDataPacket::create($recipesWithTypeIds, $potionTypeRecipes, $potionContainerChangeRecipes, [], true);
-	}
-
-	public static function convertProtocol(int $protocolId) : int{
-		return ItemTranslator::convertProtocol($protocolId);
 	}
 }

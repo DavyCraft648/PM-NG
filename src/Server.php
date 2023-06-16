@@ -154,6 +154,7 @@ use function register_shutdown_function;
 use function rename;
 use function round;
 use function sleep;
+use function spl_object_hash;
 use function spl_object_id;
 use function sprintf;
 use function str_repeat;
@@ -1228,9 +1229,9 @@ class Server{
 		$useQuery = $this->configGroup->getConfigBool("enable-query", true);
 
 		$typeConverter = TypeConverter::getInstance();
-		$packetSerializerContext = self::getPacketSerializerContext();
-		$packetBroadcaster = self::getPacketBroadcaster();
-		$entityEventBroadcaster = self::getEntityEventBroadcaster();
+		$packetSerializerContext = $this->getPacketSerializerContext($typeConverter);
+		$packetBroadcaster = $this->getPacketBroadcaster($packetSerializerContext);
+		$entityEventBroadcaster = $this->getEntityEventBroadcaster($packetBroadcaster, $typeConverter);
 
 		if(
 			!$this->startupPrepareConnectableNetworkInterfaces($this->getIp(), $this->getPort(), false, $useQuery, $packetBroadcaster, $entityEventBroadcaster, $packetSerializerContext, $typeConverter) ||
@@ -1868,27 +1869,15 @@ class Server{
 		}
 	}
 
-	public function getPacketSerializerContext(int $protocolId = ProtocolInfo::CURRENT_PROTOCOL) : PacketSerializerContext{
-		if(!isset($this->packetSerializerContexts[$protocolId])){
-			$this->packetSerializerContexts[$protocolId] = new PacketSerializerContext(ItemTranslator::getInstance($protocolId)->getDictionary(), $protocolId);
-		}
-
-		return $this->packetSerializerContexts[$protocolId];
+	public function getPacketSerializerContext(TypeConverter $typeConverter) : PacketSerializerContext{
+		return $this->packetSerializerContexts[spl_object_id($typeConverter)] ??= new PacketSerializerContext($typeConverter->getItemTypeDictionary());
 	}
 
-	public function getPacketBroadcaster(int $protocolId = ProtocolInfo::CURRENT_PROTOCOL) : PacketBroadcaster{
-		if(!isset($this->packetBroadcasters[$protocolId])){
-			$this->packetBroadcasters[$protocolId] = new StandardPacketBroadcaster($this, $this->getPacketSerializerContext($protocolId));
-		}
-
-		return $this->packetBroadcasters[$protocolId];
+	public function getPacketBroadcaster(PacketSerializerContext $packetSerializerContext) : PacketBroadcaster{
+		return $this->packetBroadcasters[spl_object_id($packetSerializerContext)] ??= new StandardPacketBroadcaster($this, $packetSerializerContext);
 	}
 
-	public function getEntityEventBroadcaster(int $protocolId = ProtocolInfo::CURRENT_PROTOCOL) : EntityEventBroadcaster{
-		if(!isset($this->entityEventBroadcasters[$protocolId])){
-			$this->entityEventBroadcasters[$protocolId] = new StandardEntityEventBroadcaster($this->getPacketBroadcaster($protocolId), TypeConverter::getInstance($protocolId));
-		}
-
-		return $this->entityEventBroadcasters[$protocolId];
+	public function getEntityEventBroadcaster(PacketBroadcaster $packetBroadcaster, TypeConverter $typeConverter) : EntityEventBroadcaster{
+		return $this->entityEventBroadcasters[spl_object_id($typeConverter)] ??= new StandardEntityEventBroadcaster($packetBroadcaster, $typeConverter);
 	}
 }

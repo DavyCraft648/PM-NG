@@ -369,10 +369,10 @@ class NetworkSession{
 	public function setProtocolId(int $protocolId) : void{
 		$this->protocolId = $protocolId;
 
-		$this->entityEventBroadcaster = $this->server->getEntityEventBroadcaster($protocolId);
-		$this->broadcaster = $this->server->getPacketBroadcaster($protocolId);
-		$this->packetSerializerContext = $this->server->getPacketSerializerContext($protocolId);
 		$this->typeConverter = TypeConverter::getInstance($protocolId);
+		$this->packetSerializerContext = $this->server->getPacketSerializerContext($this->typeConverter);
+		$this->broadcaster = $this->server->getPacketBroadcaster($this->packetSerializerContext);
+		$this->entityEventBroadcaster = $this->server->getEntityEventBroadcaster($this->broadcaster, $this->typeConverter);
 	}
 
 	public function getProtocolId() : int{

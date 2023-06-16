@@ -47,6 +47,7 @@ use pocketmine\nbt\tag\ListTag;
 use pocketmine\nbt\tag\StringTag;
 use pocketmine\network\mcpe\convert\BlockTranslator;
 use pocketmine\network\mcpe\convert\ItemTranslator;
+use pocketmine\network\mcpe\convert\TypeConverter;
 use pocketmine\network\mcpe\EntityEventBroadcaster;
 use pocketmine\network\mcpe\NetworkBroadcastUtils;
 use pocketmine\network\mcpe\protocol\AddActorPacket;
@@ -1680,10 +1681,19 @@ abstract class Entity{
 		$targets = $targets ?? $this->getViewers();
 
 		if($animation instanceof ItemAnimation){
-			foreach(ItemTranslator::sortByProtocol($targets) as $dictionaryProtocol => $players){
-				$animation->setProtocolId($dictionaryProtocol);
+			/** @var TypeConverter[] $typeConverters */
+			$typeConverters = [];
+			/** @var Player[][] $converterTargets */
+			$converterTargets = [];
+			foreach($targets as $target){
+				$typeConverter = $target->getNetworkSession()->getTypeConverter();
+				$typeConverters[spl_object_id($typeConverter)] = $typeConverter;
+				$converterTargets[spl_object_id($typeConverter)][spl_object_id($target)] = $target;
+			}
 
-				NetworkBroadcastUtils::broadcastPackets($players, $animation->encode());
+			foreach($typeConverters as $key => $typeConverter){
+				$animation->setItemTranslator($typeConverter->getItemTranslator());
+				NetworkBroadcastUtils::broadcastPackets($converterTargets[$key], $animation->encode());
 			}
 		}else{
 			NetworkBroadcastUtils::broadcastPackets($targets, $animation->encode());
@@ -1699,10 +1709,19 @@ abstract class Entity{
 			$targets = $targets ?? $this->getViewers();
 
 			if($sound instanceof BlockSound){
-				foreach(BlockTranslator::sortByProtocol($targets) as $mappingProtocol => $players){
-					$sound->setProtocolId($mappingProtocol);
+				/** @var TypeConverter[] $typeConverters */
+				$typeConverters = [];
+				/** @var Player[][] $converterTargets */
+				$converterTargets = [];
+				foreach($targets as $target){
+					$typeConverter = $target->getNetworkSession()->getTypeConverter();
+					$typeConverters[spl_object_id($typeConverter)] = $typeConverter;
+					$converterTargets[spl_object_id($typeConverter)][spl_object_id($target)] = $target;
+				}
 
-					NetworkBroadcastUtils::broadcastPackets($players, $sound->encode($this->location));
+				foreach($typeConverters as $key => $typeConverter){
+					$sound->setBlockTranslator($typeConverter->getBlockTranslator());
+					NetworkBroadcastUtils::broadcastPackets($converterTargets[$key], $sound->encode($this->location));
 				}
 			}else{
 				NetworkBroadcastUtils::broadcastPackets($targets, $sound->encode($this->location));

@@ -75,27 +75,14 @@ class TypeConverter{
 		//TODO: inject stuff via constructor
 		$this->blockItemIdMap = BlockItemIdMap::getInstance();
 
-		if(($blockStateSchemaId = BlockTranslator::getBlockStateSchemaId($protocolId)) !== null){
-			$blockStateDowngrader = new BlockStateDowngrader(BlockStateDowngradeSchemaUtils::loadSchemas(
-				Path::join(BEDROCK_BLOCK_UPGRADE_SCHEMA_PATH, 'nbt_upgrade_schema'),
-				$blockStateSchemaId
-			));
-		}
+		$this->blockTranslator = BlockTranslator::loadFromProtocolId($protocolId);
+
+		$this->itemTypeDictionary = ItemTypeDictionaryFromDataHelper::loadFromProtocolId($protocolId);
+		$this->shieldRuntimeId = $this->itemTypeDictionary->fromStringId("minecraft:shield");
+
 		if(($itemSchemaId = ItemTranslator::getItemSchemaId($protocolId)) !== null){
 			$itemDataDowngradeSchema = new ItemIdMetaDowngrader(ItemIdMetaDowngradeSchemaUtils::loadSchemas(Path::join(BEDROCK_ITEM_UPGRADE_SCHEMA_PATH, 'id_meta_upgrade_schema'), $itemSchemaId));
 		}
-
-		$canonicalBlockStatesRaw = Filesystem::fileGetContents(str_replace(".nbt", BlockTranslator::PATHS[$protocolId][BlockTranslator::CANONICAL_BLOCK_STATES_PATH] . ".nbt", BedrockDataFiles::CANONICAL_BLOCK_STATES_NBT));
-		$metaMappingRaw = Filesystem::fileGetContents(str_replace(".json", BlockTranslator::PATHS[$protocolId][BlockTranslator::BLOCK_STATE_META_MAP_PATH] . ".json", BedrockDataFiles::BLOCK_STATE_META_MAP_JSON));
-		$this->blockTranslator = new BlockTranslator(
-			BlockStateDictionary::loadFromString($canonicalBlockStatesRaw, $metaMappingRaw),
-			GlobalBlockStateHandlers::getSerializer(),
-			$blockStateDowngrader ?? null
-		);
-
-		$this->itemTypeDictionary = ItemTypeDictionaryFromDataHelper::loadFromString(Filesystem::fileGetContents(str_replace(".json", ItemTranslator::PATHS[$protocolId] . ".json", BedrockDataFiles::REQUIRED_ITEM_LIST_JSON)));
-		$this->shieldRuntimeId = $this->itemTypeDictionary->fromStringId("minecraft:shield");
-
 		$this->itemTranslator = new ItemTranslator(
 			$this->itemTypeDictionary,
 			$this->blockTranslator,
@@ -283,9 +270,5 @@ class TypeConverter{
 		}
 
 		return $itemResult;
-	}
-
-	public static function convertProtocol(int $protocolId) : int{
-		return ItemTranslator::convertProtocol($protocolId);
 	}
 }

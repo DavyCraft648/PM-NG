@@ -74,8 +74,4 @@ final class CreativeInventoryCache{
 
 		return CreativeContentPacket::create($entries);
 	}
-
-	public static function convertProtocol(int $protocolId) : int{
-		return TypeConverter::convertProtocol($protocolId);
-	}
 }
