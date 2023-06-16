@@ -23,29 +23,20 @@ declare(strict_types=1);
 
 namespace pocketmine\network\mcpe\convert;
 
-use pocketmine\data\bedrock\BedrockDataFiles;
 use pocketmine\data\bedrock\block\BlockStateData;
 use pocketmine\data\bedrock\block\BlockStateSerializeException;
 use pocketmine\data\bedrock\block\BlockStateSerializer;
 use pocketmine\data\bedrock\block\BlockTypeNames;
 use pocketmine\data\bedrock\block\downgrade\BlockStateDowngrader;
-use pocketmine\data\bedrock\block\downgrade\BlockStateDowngradeSchemaUtils;
 use pocketmine\data\bedrock\block\upgrade\BlockStateUpgrader;
 use pocketmine\network\mcpe\protocol\ProtocolInfo;
 use pocketmine\utils\AssumptionFailedError;
-use pocketmine\utils\Filesystem;
-use pocketmine\utils\ProtocolSingletonTrait;
 use pocketmine\world\format\io\GlobalBlockStateHandlers;
-use Symfony\Component\Filesystem\Path;
-use function str_replace;
-use const pocketmine\BEDROCK_BLOCK_UPGRADE_SCHEMA_PATH;
 
 /**
  * @internal
  */
 final class BlockTranslator{
-	use ProtocolSingletonTrait;
-
 	public const CANONICAL_BLOCK_STATES_PATH = 0;
 	public const BLOCK_STATE_META_MAP_PATH = 1;
 
@@ -62,7 +53,8 @@ final class BlockTranslator{
 			self::CANONICAL_BLOCK_STATES_PATH => '-1.19.70',
 			self::BLOCK_STATE_META_MAP_PATH => '-1.19.70',
 		],
-		ProtocolInfo::PROTOCOL_1_19_63 => [
+		ProtocolInfo::PROTOCOL_1_19_63,
+		ProtocolInfo::PROTOCOL_1_19_60 => [
 			self::CANONICAL_BLOCK_STATES_PATH => '-1.19.63',
 			self::BLOCK_STATE_META_MAP_PATH => '-1.19.63',
 		],
@@ -70,7 +62,10 @@ final class BlockTranslator{
 			self::CANONICAL_BLOCK_STATES_PATH => '-1.19.50',
 			self::BLOCK_STATE_META_MAP_PATH => '-1.19.50',
 		],
-		ProtocolInfo::PROTOCOL_1_19_40 => [
+		ProtocolInfo::PROTOCOL_1_19_40,
+		ProtocolInfo::PROTOCOL_1_19_30,
+		ProtocolInfo::PROTOCOL_1_19_21,
+		ProtocolInfo::PROTOCOL_1_19_20 => [
 			self::CANONICAL_BLOCK_STATES_PATH => '-1.19.40',
 			self::BLOCK_STATE_META_MAP_PATH => '-1.19.40',
 		],
@@ -101,25 +96,6 @@ final class BlockTranslator{
 	/** Used when a blockstate can't be correctly serialized (e.g. because it's unknown) */
 	private BlockStateData $fallbackStateData;
 	private int $fallbackStateId;
-
-	private static function make(int $protocolId) : self{
-		$dictionaryProtocol = self::getDictionaryProtocol($protocolId);
-		$canonicalBlockStatesRaw = Filesystem::fileGetContents(str_replace(".nbt", self::PATHS[$dictionaryProtocol][self::CANONICAL_BLOCK_STATES_PATH] . ".nbt", BedrockDataFiles::CANONICAL_BLOCK_STATES_NBT));
-		$metaMappingRaw = Filesystem::fileGetContents(str_replace(".json", self::PATHS[$dictionaryProtocol][self::BLOCK_STATE_META_MAP_PATH] . ".json", BedrockDataFiles::BLOCK_STATE_META_MAP_JSON));
-
-		if(($blockStateSchemaId = self::getBlockStateSchemaId($protocolId)) !== null){
-			$blockStateDowngrader = new BlockStateDowngrader(BlockStateDowngradeSchemaUtils::loadSchemas(
-				Path::join(BEDROCK_BLOCK_UPGRADE_SCHEMA_PATH, 'nbt_upgrade_schema'),
-				$blockStateSchemaId
-			));
-		}
-
-		return new self(
-			BlockStateDictionary::loadFromString($canonicalBlockStatesRaw, $metaMappingRaw),
-			GlobalBlockStateHandlers::getSerializer(),
-			$blockStateDowngrader ?? null
-		);
-	}
 
 	public function __construct(
 		private BlockStateDictionary $blockStateDictionary,
@@ -175,26 +151,7 @@ final class BlockTranslator{
 
 	public function getBlockStateUpgrader() : ?BlockStateUpgrader{ return GlobalBlockStateHandlers::getUpgrader()->getBlockStateUpgrader(); }
 
-	public static function getDictionaryProtocol(int $protocolId) : int{
-		return match ($protocolId) {
-			ProtocolInfo::PROTOCOL_1_19_60 => ProtocolInfo::PROTOCOL_1_19_63,
-
-			ProtocolInfo::PROTOCOL_1_19_30,
-			ProtocolInfo::PROTOCOL_1_19_21,
-			ProtocolInfo::PROTOCOL_1_19_20 => ProtocolInfo::PROTOCOL_1_19_40,
-
-			default => $protocolId
-		};
-	}
-
-	public static function convertProtocol(int $protocolId) : int{
-		$dictionaryProtocol = self::getDictionaryProtocol($protocolId);
-		$schemaId = self::getBlockStateSchemaId($dictionaryProtocol);
-
-		return $schemaId === self::getBlockStateSchemaId($dictionaryProtocol) ? $dictionaryProtocol : $protocolId;
-	}
-
-	private static function getBlockStateSchemaId(int $protocolId) : ?int{
+	public static function getBlockStateSchemaId(int $protocolId) : ?int{
 		return match($protocolId){
 			ProtocolInfo::PROTOCOL_1_20_0 => null,
 
