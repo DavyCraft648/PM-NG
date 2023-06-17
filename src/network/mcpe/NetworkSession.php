@@ -1205,7 +1205,7 @@ class NetworkSession{
 								if(!($tile instanceof Spawnable)){
 									continue;
 								}
-								$this->sendDataPacket(BlockActorDataPacket::create(BlockPosition::fromVector3($tile->getPosition()), $tile->getSerializedSpawnCompound($this->getProtocolId())));
+								$this->sendDataPacket(BlockActorDataPacket::create(BlockPosition::fromVector3($tile->getPosition()), $tile->getSerializedSpawnCompound($this->getTypeConverter())));
 							}
 						}
 					}

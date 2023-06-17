@@ -31,6 +31,7 @@ use pocketmine\data\bedrock\LegacyBiomeIdToStringIdMap;
 use pocketmine\nbt\tag\CompoundTag;
 use pocketmine\nbt\TreeRoot;
 use pocketmine\network\mcpe\convert\BlockTranslator;
+use pocketmine\network\mcpe\convert\TypeConverter;
 use pocketmine\network\mcpe\protocol\ProtocolInfo;
 use pocketmine\network\mcpe\protocol\serializer\NetworkNbtSerializer;
 use pocketmine\network\mcpe\protocol\serializer\PacketSerializer;
@@ -81,15 +82,15 @@ final class ChunkSerializer{
 		return $subChunks;
 	}
 
-	public static function serializeFullChunk(Chunk $chunk, BlockTranslator $blockTranslator, PacketSerializerContext $encoderContext, ?string $tiles = null) : string{
+	public static function serializeFullChunk(Chunk $chunk, TypeConverter $converter, PacketSerializerContext $encoderContext, ?string $tiles = null) : string{
 		$stream = PacketSerializer::encoder($encoderContext);
 
-		foreach(self::serializeSubChunks($chunk, $blockTranslator, $encoderContext) as $subChunk){
+		foreach(self::serializeSubChunks($chunk, $converter->getBlockTranslator(), $encoderContext) as $subChunk){
 			$stream->put($subChunk);
 		}
 
 		self::serializeBiomes($chunk, $stream);
-		self::serializeChunkData($chunk, $stream, $tiles);
+		self::serializeChunkData($chunk, $stream, $converter, $tiles);
 
 		return $stream->getBuffer();
 	}
@@ -107,13 +108,13 @@ final class ChunkSerializer{
 		//Border block entry format: 1 byte (4 bits X, 4 bits Z). These are however useless since they crash the regular client.
 	}
 
-	public static function serializeChunkData(Chunk $chunk, PacketSerializer $stream, ?string $tiles = null) : void{
+	public static function serializeChunkData(Chunk $chunk, PacketSerializer $stream, TypeConverter $typeConverter, ?string $tiles = null) : void{
 		self::serializeBorderBlocks($stream);
 
 		if($tiles !== null){
 			$stream->put($tiles);
 		}else{
-			$stream->put(self::serializeTiles($chunk, $stream->getProtocolId()));
+			$stream->put(self::serializeTiles($chunk, $typeConverter));
 		}
 	}
 
@@ -179,12 +180,12 @@ final class ChunkSerializer{
 		}
 	}
 
-	public static function serializeTiles(Chunk $chunk, int $mappingProtocol) : string{
+	public static function serializeTiles(Chunk $chunk, TypeConverter $typeConverter) : string{
 		$stream = new BinaryStream();
 		$nbtSerializer = new NetworkNbtSerializer();
 		foreach($chunk->getTiles() as $tile){
 			if($tile instanceof Spawnable){
-				if($mappingProtocol === ProtocolInfo::PROTOCOL_1_19_10){
+				if($typeConverter->getProtocolId() === ProtocolInfo::PROTOCOL_1_19_10){
 					//TODO: HACK! we send only the bare essentials to create a tile in the chunk itself, due to a bug in
 					//1.19.10 which causes items in tiles (item frames, lecterns) to not load properly when they are sent in
 					//a chunk via the classic chunk sending mechanism. We workaround this bug by sendingBlockActorDataPacket
@@ -196,7 +197,7 @@ final class ChunkSerializer{
 						->setInt(Tile::TAG_Z, $tile->getPosition()->getFloorZ());
 					$stream->put($nbtSerializer->write(new TreeRoot($nbt)));
 				}else{
-					$stream->put($tile->getSerializedSpawnCompound($mappingProtocol)->getEncodedNbt());
+					$stream->put($tile->getSerializedSpawnCompound($typeConverter)->getEncodedNbt());
 				}
 			}
 		}
