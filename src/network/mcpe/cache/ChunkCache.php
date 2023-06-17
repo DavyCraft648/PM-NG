@@ -27,6 +27,7 @@ use pocketmine\math\Vector3;
 use pocketmine\network\mcpe\CachedChunkPromise;
 use pocketmine\network\mcpe\ChunkRequestTask;
 use pocketmine\network\mcpe\compression\Compressor;
+use pocketmine\network\mcpe\convert\TypeConverter;
 use pocketmine\network\mcpe\protocol\ProtocolInfo;
 use pocketmine\world\ChunkListener;
 use pocketmine\world\ChunkListenerNoOpTrait;
@@ -96,13 +97,14 @@ class ChunkCache implements ChunkListener{
 	 *
 	 * @return CachedChunkPromise a promise of resolution which will contain a compressed chunk packet.
 	 */
-	public function request(int $chunkX, int $chunkZ, int $protocolId = ProtocolInfo::CURRENT_PROTOCOL) : CachedChunkPromise{
+	public function request(int $chunkX, int $chunkZ, TypeConverter $typeConverter) : CachedChunkPromise{
 		$this->world->registerChunkListener($this, $chunkX, $chunkZ);
 		$chunk = $this->world->getChunk($chunkX, $chunkZ);
 		if($chunk === null){
 			throw new \InvalidArgumentException("Cannot request an unloaded chunk");
 		}
 		$chunkHash = World::chunkHash($chunkX, $chunkZ);
+		$protocolId = $typeConverter->getProtocolId();
 
 		if(isset($this->caches[$chunkHash][$protocolId])){
 			++$this->hits;
@@ -120,7 +122,7 @@ class ChunkCache implements ChunkListener{
 					$chunkX,
 					$chunkZ,
 					$chunk,
-					$protocolId,
+					$typeConverter,
 					$this->caches[$chunkHash][$protocolId],
 					$this->compressor,
 					function() use ($chunkHash, $chunkX, $chunkZ, $protocolId) : void{
@@ -173,7 +175,7 @@ class ChunkCache implements ChunkListener{
 		$existing->cancel();
 		unset($this->caches[$chunkHash][$protocolId]);
 
-		$this->request($chunkX, $chunkZ, $protocolId)->onResolve(...$existing->getResolveCallbacks());
+		$this->request($chunkX, $chunkZ, TypeConverter::getInstance($protocolId))->onResolve(...$existing->getResolveCallbacks());
 	}
 
 	/**
