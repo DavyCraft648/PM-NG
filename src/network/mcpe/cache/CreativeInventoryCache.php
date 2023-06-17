@@ -24,7 +24,6 @@ declare(strict_types=1);
 namespace pocketmine\network\mcpe\cache;
 
 use pocketmine\inventory\CreativeInventory;
-use pocketmine\network\mcpe\convert\ItemTranslator;
 use pocketmine\network\mcpe\convert\TypeConverter;
 use pocketmine\network\mcpe\protocol\CreativeContentPacket;
 use pocketmine\network\mcpe\protocol\types\inventory\CreativeContentEntry;
@@ -40,7 +39,9 @@ final class CreativeInventoryCache{
 	 */
 	private array $caches = [];
 
-	public function __construct(private int $protocolId){}
+	public function __construct(private readonly int $protocolId){
+		//NOOP
+	}
 
 	public function getCache(CreativeInventory $inventory) : CreativeContentPacket{
 		$id = spl_object_id($inventory);
@@ -71,6 +72,6 @@ final class CreativeInventoryCache{
 	}
 
 	public static function convertProtocol(int $protocolId) : int{
-		return ItemTranslator::convertProtocol($protocolId);
+		return TypeConverter::convertProtocol($protocolId);
 	}
 }
