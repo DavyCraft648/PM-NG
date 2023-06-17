@@ -26,8 +26,8 @@ declare(strict_types=1);
  */
 namespace pocketmine\entity;
 
-use pocketmine\block\Air;
 use pocketmine\block\Block;
+use pocketmine\block\BlockTypeIds;
 use pocketmine\block\Water;
 use pocketmine\entity\animation\Animation;
 use pocketmine\entity\animation\ItemAnimation;
@@ -46,8 +46,7 @@ use pocketmine\nbt\tag\DoubleTag;
 use pocketmine\nbt\tag\FloatTag;
 use pocketmine\nbt\tag\ListTag;
 use pocketmine\nbt\tag\StringTag;
-use pocketmine\network\mcpe\convert\BlockTranslator;
-use pocketmine\network\mcpe\convert\ItemTranslator;
+use pocketmine\network\mcpe\convert\TypeConverter;
 use pocketmine\network\mcpe\EntityEventBroadcaster;
 use pocketmine\network\mcpe\NetworkBroadcastUtils;
 use pocketmine\network\mcpe\protocol\AddActorPacket;
@@ -781,7 +780,11 @@ abstract class Entity{
 			$this->location->yaw,
 			$this->location->yaw,
 			(
-				($teleport ? MoveActorAbsolutePacket::FLAG_TELEPORT : 0) |
+				//TODO: We should be setting FLAG_TELEPORT here to disable client-side movement interpolation, but it
+				//breaks player teleporting (observers see the player rubberband back to the pre-teleport position while
+				//the teleported player sees themselves at the correct position), and does nothing whatsoever for
+				//non-player entities (movement is still interpolated). Both of these are client bugs.
+				//See https://github.com/pmmp/PocketMine-MP/issues/4394
 				($this->onGround ? MoveActorAbsolutePacket::FLAG_GROUND : 0)
 			)
 		)]);
@@ -1268,7 +1271,7 @@ abstract class Entity{
 				for($y = $minY; $y <= $maxY; ++$y){
 					foreach([0, 1] as $layer){
 						$block = $world->getBlockAtLayer($x, $y, $z, $layer);
-						if($layer !== 0 && $block instanceof Air){
+						if($layer !== 0 && $block->getTypeId() === BlockTypeIds::AIR){
 							continue 2;
 						}
 						yield $block;
@@ -1690,10 +1693,19 @@ abstract class Entity{
 		$targets = $targets ?? $this->getViewers();
 
 		if($animation instanceof ItemAnimation){
-			foreach(ItemTranslator::sortByProtocol($targets) as $dictionaryProtocol => $players){
-				$animation->setProtocolId($dictionaryProtocol);
+			/** @var TypeConverter[] $typeConverters */
+			$typeConverters = [];
+			/** @var Player[][] $converterTargets */
+			$converterTargets = [];
+			foreach($targets as $target){
+				$typeConverter = $target->getNetworkSession()->getTypeConverter();
+				$typeConverters[spl_object_id($typeConverter)] = $typeConverter;
+				$converterTargets[spl_object_id($typeConverter)][spl_object_id($target)] = $target;
+			}
 
-				NetworkBroadcastUtils::broadcastPackets($players, $animation->encode());
+			foreach($typeConverters as $key => $typeConverter){
+				$animation->setItemTranslator($typeConverter->getItemTranslator());
+				NetworkBroadcastUtils::broadcastPackets($converterTargets[$key], $animation->encode());
 			}
 		}else{
 			NetworkBroadcastUtils::broadcastPackets($targets, $animation->encode());
@@ -1709,10 +1721,19 @@ abstract class Entity{
 			$targets = $targets ?? $this->getViewers();
 
 			if($sound instanceof BlockSound){
-				foreach(BlockTranslator::sortByProtocol($targets) as $mappingProtocol => $players){
-					$sound->setProtocolId($mappingProtocol);
+				/** @var TypeConverter[] $typeConverters */
+				$typeConverters = [];
+				/** @var Player[][] $converterTargets */
+				$converterTargets = [];
+				foreach($targets as $target){
+					$typeConverter = $target->getNetworkSession()->getTypeConverter();
+					$typeConverters[spl_object_id($typeConverter)] = $typeConverter;
+					$converterTargets[spl_object_id($typeConverter)][spl_object_id($target)] = $target;
+				}
 
-					NetworkBroadcastUtils::broadcastPackets($players, $sound->encode($this->location));
+				foreach($typeConverters as $key => $typeConverter){
+					$sound->setBlockTranslator($typeConverter->getBlockTranslator());
+					NetworkBroadcastUtils::broadcastPackets($converterTargets[$key], $sound->encode($this->location));
 				}
 			}else{
 				NetworkBroadcastUtils::broadcastPackets($targets, $sound->encode($this->location));

@@ -28,10 +28,11 @@ use pocketmine\nbt\tag\ByteTag;
 use pocketmine\nbt\tag\CompoundTag;
 use pocketmine\nbt\tag\IntTag;
 use pocketmine\nbt\tag\StringTag;
-use pocketmine\network\mcpe\protocol\ProtocolInfo;
+use pocketmine\network\mcpe\convert\TypeConverter;
 use pocketmine\network\mcpe\protocol\types\CacheableNbt;
 use function count;
 use function get_class;
+use function spl_object_id;
 
 abstract class Spawnable extends Tile{
 	/** @phpstan-var array<int, CacheableNbt<\pocketmine\nbt\tag\CompoundTag>|null> */
@@ -77,17 +78,17 @@ abstract class Spawnable extends Tile{
 	 *
 	 * @phpstan-return CacheableNbt<\pocketmine\nbt\tag\CompoundTag>
 	 */
-	final public function getSerializedSpawnCompound(int $protocolId) : CacheableNbt{
-		return $this->spawnCompoundCaches[$protocolId] ??= new CacheableNbt($this->getSpawnCompound($protocolId));
+	final public function getSerializedSpawnCompound(TypeConverter $typeConverter) : CacheableNbt{
+		return $this->spawnCompoundCaches[spl_object_id($typeConverter)] ??= new CacheableNbt($this->getSpawnCompound($typeConverter));
 	}
 
-	final public function getSpawnCompound(int $protocolId = ProtocolInfo::CURRENT_PROTOCOL) : CompoundTag{
+	final public function getSpawnCompound(TypeConverter $typeConverter) : CompoundTag{
 		$nbt = CompoundTag::create()
 			->setString(self::TAG_ID, TileFactory::getInstance()->getSaveId(get_class($this))) //TODO: disassociate network ID from save ID
 			->setInt(self::TAG_X, $this->position->x)
 			->setInt(self::TAG_Y, $this->position->y)
 			->setInt(self::TAG_Z, $this->position->z);
-		$this->addAdditionalSpawnData($nbt, $protocolId);
+		$this->addAdditionalSpawnData($nbt, $typeConverter);
 		return $nbt;
 	}
 
@@ -95,5 +96,5 @@ abstract class Spawnable extends Tile{
 	 * An extension to getSpawnCompound() for
 	 * further modifying the generic tile NBT.
 	 */
-	abstract protected function addAdditionalSpawnData(CompoundTag $nbt, int $protocolId) : void;
+	abstract protected function addAdditionalSpawnData(CompoundTag $nbt, TypeConverter $typeConverter) : void;
 }

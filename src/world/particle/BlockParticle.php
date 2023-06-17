@@ -24,18 +24,18 @@ declare(strict_types=1);
 namespace pocketmine\world\particle;
 
 use pocketmine\block\Block;
-use pocketmine\network\mcpe\convert\TypeConverter;
+use pocketmine\network\mcpe\convert\BlockTranslator;
 
 abstract class BlockParticle implements Particle{
 
-	private int $protocolId;
+	private BlockTranslator $blockTranslator;
 
 	public function __construct(protected Block $b){}
 
-	public function setProtocolId(int $protocolId) : void{
-		$this->protocolId = $protocolId;
+	public function setBlockTranslator(BlockTranslator $blockTranslator) : void{
+		$this->blockTranslator = $blockTranslator;
 	}
 	public function toRuntimeId() : int{
-		return TypeConverter::getInstance($this->protocolId)->getBlockTranslator()->internalIdToNetworkId($this->b->getStateId());
+		return $this->blockTranslator->internalIdToNetworkId($this->b->getStateId());
 	}
 }

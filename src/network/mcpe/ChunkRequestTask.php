@@ -51,14 +51,14 @@ class ChunkRequestTask extends AsyncTask{
 	/**
 	 * @phpstan-param (\Closure() : void)|null $onError
 	 */
-	public function __construct(int $chunkX, int $chunkZ, Chunk $chunk, int $mappingProtocol, CachedChunkPromise $promise, Compressor $compressor, ?\Closure $onError = null){
+	public function __construct(int $chunkX, int $chunkZ, Chunk $chunk, TypeConverter $typeConverter, CachedChunkPromise $promise, Compressor $compressor, ?\Closure $onError = null){
 		$this->compressor = new NonThreadSafeValue($compressor);
-		$this->mappingProtocol = $mappingProtocol;
+		$this->mappingProtocol = $typeConverter->getProtocolId();
 
 		$this->chunk = FastChunkSerializer::serializeTerrain($chunk);
 		$this->chunkX = $chunkX;
 		$this->chunkZ = $chunkZ;
-		$this->tiles = ChunkSerializer::serializeTiles($chunk, $mappingProtocol);
+		$this->tiles = ChunkSerializer::serializeTiles($chunk, $typeConverter);
 
 		$this->storeLocal(self::TLS_KEY_PROMISE, $promise);
 		$this->storeLocal(self::TLS_KEY_ERROR_HOOK, $onError);
@@ -84,7 +84,7 @@ class ChunkRequestTask extends AsyncTask{
 		$cache->setBiomes(Binary::readLong(xxhash64($chunkBuffer = $biomeEncoder->getBuffer())), $chunkBuffer);
 
 		$chunkDataEncoder = clone $encoder;
-		ChunkSerializer::serializeChunkData($chunk, $chunkDataEncoder, $this->tiles);
+		ChunkSerializer::serializeChunkData($chunk, $chunkDataEncoder, $converter, $this->tiles);
 
 		$cache->compressPackets(
 			$this->chunkX,

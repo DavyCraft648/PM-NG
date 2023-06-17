@@ -28,6 +28,7 @@ use pocketmine\data\bedrock\DyeColorIdMap;
 use pocketmine\math\Vector3;
 use pocketmine\nbt\tag\ByteTag;
 use pocketmine\nbt\tag\CompoundTag;
+use pocketmine\network\mcpe\convert\TypeConverter;
 use pocketmine\world\World;
 
 class Bed extends Spawnable{
@@ -63,7 +64,7 @@ class Bed extends Spawnable{
 		$nbt->setByte(self::TAG_COLOR, DyeColorIdMap::getInstance()->toId($this->color));
 	}
 
-	protected function addAdditionalSpawnData(CompoundTag $nbt, int $protocolId) : void{
+	protected function addAdditionalSpawnData(CompoundTag $nbt, TypeConverter $typeConverter) : void{
 		$nbt->setByte(self::TAG_COLOR, DyeColorIdMap::getInstance()->toId($this->color));
 	}
 }

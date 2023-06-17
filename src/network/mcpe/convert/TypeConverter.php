@@ -29,6 +29,8 @@ use pocketmine\crafting\MetaWildcardRecipeIngredient;
 use pocketmine\crafting\RecipeIngredient;
 use pocketmine\crafting\TagWildcardRecipeIngredient;
 use pocketmine\data\bedrock\item\BlockItemIdMap;
+use pocketmine\data\bedrock\item\downgrade\ItemIdMetaDowngrader;
+use pocketmine\data\bedrock\item\downgrade\ItemIdMetaDowngradeSchemaUtils;
 use pocketmine\item\Item;
 use pocketmine\item\VanillaItems;
 use pocketmine\nbt\NbtException;
@@ -43,10 +45,15 @@ use pocketmine\network\mcpe\protocol\types\recipe\TagItemDescriptor;
 use pocketmine\player\GameMode;
 use pocketmine\utils\AssumptionFailedError;
 use pocketmine\utils\ProtocolSingletonTrait;
+use pocketmine\world\format\io\GlobalItemDataHandlers;
+use Symfony\Component\Filesystem\Path;
 use function get_class;
+use const pocketmine\BEDROCK_ITEM_UPGRADE_SCHEMA_PATH;
 
 class TypeConverter{
-	use ProtocolSingletonTrait;
+	use ProtocolSingletonTrait {
+		__construct as private __protocolConstruct;
+	}
 
 	private const PM_ID_TAG = "___Id___";
 
@@ -60,14 +67,27 @@ class TypeConverter{
 	private SkinAdapter $skinAdapter;
 
 	public function __construct(int $protocolId){
+		$this->__protocolConstruct($protocolId);
+
 		//TODO: inject stuff via constructor
 		$this->blockItemIdMap = BlockItemIdMap::getInstance();
 
-		$this->blockTranslator = BlockTranslator::getInstance($protocolId);
-		$this->itemTranslator = ItemTranslator::getInstance($protocolId);
+		$this->blockTranslator = BlockTranslator::loadFromProtocolId($protocolId);
 
-		$this->itemTypeDictionary = $this->itemTranslator->getDictionary();
+		$this->itemTypeDictionary = ItemTypeDictionaryFromDataHelper::loadFromProtocolId($protocolId);
 		$this->shieldRuntimeId = $this->itemTypeDictionary->fromStringId("minecraft:shield");
+
+		if(($itemSchemaId = ItemTranslator::getItemSchemaId($protocolId)) !== null){
+			$itemDataDowngradeSchema = new ItemIdMetaDowngrader(ItemIdMetaDowngradeSchemaUtils::loadSchemas(Path::join(BEDROCK_ITEM_UPGRADE_SCHEMA_PATH, 'id_meta_upgrade_schema'), $itemSchemaId));
+		}
+		$this->itemTranslator = new ItemTranslator(
+			$this->itemTypeDictionary,
+			$this->blockTranslator,
+			GlobalItemDataHandlers::getSerializer(),
+			GlobalItemDataHandlers::getDeserializer(),
+			$this->blockItemIdMap,
+			$itemDataDowngradeSchema ?? null
+		);
 
 		$this->skinAdapter = new LegacySkinAdapter();
 	}
@@ -131,7 +151,7 @@ class TypeConverter{
 		}elseif($ingredient instanceof ExactRecipeIngredient){
 			$item = $ingredient->getItem();
 			[$id, $meta, $blockRuntimeId] = $this->itemTranslator->toNetworkId($item);
-			if($blockRuntimeId !== ItemTranslator::NO_BLOCK_RUNTIME_ID){
+			if($blockRuntimeId !== null){
 				$meta = $this->blockTranslator->getBlockStateDictionary()->getMetaFromStateId($blockRuntimeId);
 				if($meta === null){
 					throw new AssumptionFailedError("Every block state should have an associated meta value");
@@ -214,7 +234,7 @@ class TypeConverter{
 			$id,
 			$meta,
 			$itemStack->getCount(),
-			$blockRuntimeId,
+			$blockRuntimeId ?? ItemTranslator::NO_BLOCK_RUNTIME_ID,
 			$nbt,
 			[],
 			[],
@@ -247,9 +267,5 @@ class TypeConverter{
 		}
 
 		return $itemResult;
-	}
-
-	public static function convertProtocol(int $protocolId) : int{
-		return ItemTranslator::convertProtocol($protocolId);
 	}
 }

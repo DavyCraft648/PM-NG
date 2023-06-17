@@ -65,7 +65,11 @@ final class CreativeInventoryCache{
 		$typeConverter = TypeConverter::getInstance($this->protocolId);
 		//creative inventory may have holes if items were unregistered - ensure network IDs used are always consistent
 		foreach($inventory->getAll() as $k => $item){
-			$entries[] = new CreativeContentEntry($k, $typeConverter->coreItemStackToNet($item));
+			try{
+				$entries[] = new CreativeContentEntry($k, $typeConverter->coreItemStackToNet($item));
+			}catch(\InvalidArgumentException $e){
+				//Item is not supported on this protocol, skip it
+			}
 		}
 
 		return CreativeContentPacket::create($entries);

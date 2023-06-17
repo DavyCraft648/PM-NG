@@ -41,10 +41,6 @@ final class StandardPacketBroadcaster implements PacketBroadcaster{
 		private PacketSerializerContext $protocolContext
 	){}
 
-	public function getProtocolId() : int{
-		return $this->protocolContext->getProtocolId();
-	}
-
 	public function broadcastPackets(array $recipients, array $packets) : void{
 		//TODO: this shouldn't really be called here, since the broadcaster might be replaced by an alternative
 		//implementation that doesn't fire events

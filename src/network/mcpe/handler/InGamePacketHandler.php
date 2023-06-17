@@ -537,7 +537,7 @@ class InGamePacketHandler extends ChunkRequestPacketHandler{
 			}else{
 				$blocks[] = $blockPos;
 			}
-			foreach($this->player->getWorld()->createBlockUpdatePackets($this->session->getProtocolId(), $blocks) as $packet){
+			foreach($this->player->getWorld()->createBlockUpdatePackets($this->session->getTypeConverter(), $blocks) as $packet){
 				$this->session->sendDataPacket($packet);
 			}
 		}
@@ -786,7 +786,7 @@ class InGamePacketHandler extends ChunkRequestPacketHandler{
 
 				try{
 					if(!$block->updateText($this->player, $text)){
-						foreach($this->player->getWorld()->createBlockUpdatePackets($this->session->getProtocolId(), [$pos]) as $updatePacket){
+						foreach($this->player->getWorld()->createBlockUpdatePackets($this->session->getTypeConverter(), [$pos]) as $updatePacket){
 							$this->session->sendDataPacket($updatePacket);
 						}
 					}

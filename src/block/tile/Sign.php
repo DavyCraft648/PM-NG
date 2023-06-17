@@ -30,6 +30,7 @@ use pocketmine\nbt\tag\ByteTag;
 use pocketmine\nbt\tag\CompoundTag;
 use pocketmine\nbt\tag\IntTag;
 use pocketmine\nbt\tag\StringTag;
+use pocketmine\network\mcpe\convert\TypeConverter;
 use pocketmine\network\mcpe\protocol\ProtocolInfo;
 use pocketmine\utils\Binary;
 use pocketmine\world\World;
@@ -140,8 +141,8 @@ class Sign extends Spawnable{
 		$this->editorEntityRuntimeId = $editorEntityRuntimeId;
 	}
 
-	protected function addAdditionalSpawnData(CompoundTag $nbt, int $protocolId) : void{
-		if($protocolId >= ProtocolInfo::PROTOCOL_1_19_80){
+	protected function addAdditionalSpawnData(CompoundTag $nbt, TypeConverter $typeConverter) : void{
+		if($typeConverter->getProtocolId() >= ProtocolInfo::PROTOCOL_1_19_80){
 			$nbt->setTag(self::TAG_FRONT_TEXT, CompoundTag::create()
 				->setString(self::TAG_TEXT_BLOB, implode("\n", $this->text->getLines()))
 				->setInt(self::TAG_TEXT_COLOR, Binary::signInt($this->text->getBaseColor()->toARGB()))

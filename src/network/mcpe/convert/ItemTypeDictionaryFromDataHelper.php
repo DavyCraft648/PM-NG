@@ -40,30 +40,29 @@ final class ItemTypeDictionaryFromDataHelper{
 
 	private const PATHS = [
 		ProtocolInfo::CURRENT_PROTOCOL => "",
+
 		ProtocolInfo::PROTOCOL_1_19_70 => "-1.19.70",
+
 		ProtocolInfo::PROTOCOL_1_19_63 => "-1.19.63",
+		ProtocolInfo::PROTOCOL_1_19_60 => "-1.19.63",
+
 		ProtocolInfo::PROTOCOL_1_19_50 => "-1.19.50",
+
 		ProtocolInfo::PROTOCOL_1_19_40 => "-1.19.40",
+		ProtocolInfo::PROTOCOL_1_19_30 => "-1.19.40",
+		ProtocolInfo::PROTOCOL_1_19_21 => "-1.19.40",
+		ProtocolInfo::PROTOCOL_1_19_20 => "-1.19.40",
+		ProtocolInfo::PROTOCOL_1_19_10 => "-1.19.40",
+
 		ProtocolInfo::PROTOCOL_1_19_0 => "-1.19.0",
+
 		ProtocolInfo::PROTOCOL_1_18_30 => "-1.18.30",
+
 		ProtocolInfo::PROTOCOL_1_18_10 => "-1.18.10",
 	];
 
 	public static function loadFromProtocolId(int $protocolId) : ItemTypeDictionary{
-		return self::loadFromString(Filesystem::fileGetContents(str_replace(".json", self::PATHS[self::convertProtocol($protocolId)] . ".json", BedrockDataFiles::REQUIRED_ITEM_LIST_JSON)));
-	}
-
-	public static function convertProtocol(int $protocolId) : int{
-		return match ($protocolId) {
-			ProtocolInfo::PROTOCOL_1_19_60 => ProtocolInfo::PROTOCOL_1_19_63,
-
-			ProtocolInfo::PROTOCOL_1_19_30,
-			ProtocolInfo::PROTOCOL_1_19_21,
-			ProtocolInfo::PROTOCOL_1_19_20,
-			ProtocolInfo::PROTOCOL_1_19_10 => ProtocolInfo::PROTOCOL_1_19_40,
-
-			default => $protocolId
-		};
+		return self::loadFromString(Filesystem::fileGetContents(str_replace(".json", self::PATHS[$protocolId] . ".json", BedrockDataFiles::REQUIRED_ITEM_LIST_JSON)));
 	}
 
 	public static function loadFromString(string $data) : ItemTypeDictionary{

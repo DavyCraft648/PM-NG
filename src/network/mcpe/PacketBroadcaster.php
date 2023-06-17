@@ -27,8 +27,6 @@ use pocketmine\network\mcpe\protocol\ClientboundPacket;
 
 interface PacketBroadcaster{
 
-	public function getProtocolId() : int;
-
 	/**
 	 * @param NetworkSession[]    $recipients
 	 * @param ClientboundPacket[] $packets

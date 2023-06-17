@@ -29,21 +29,21 @@ use pocketmine\network\mcpe\convert\ItemTranslator;
 
 abstract class ItemParticle implements Particle{
 
-	private int $protocolId;
+	private ItemTranslator $itemTranslator;
 
 	public function __construct(private Item $item){}
 
-	public function setProtocolId(int $protocolId) : void{
-		$this->protocolId = $protocolId;
+	public function setItemTranslator(ItemTranslator $itemTranslator) : void{
+		$this->itemTranslator = $itemTranslator;
 	}
 
 	/**
 	 * @return int[]
-	 * @phpstan-return array{int, int, int}
+	 * @phpstan-return array{int, int, int|null}
 	 *
 	 * @throws ItemTypeSerializeException
 	 */
 	public function toNetworkId() : array{
-		return ItemTranslator::getInstance($this->protocolId)->toNetworkId($this->item);
+		return $this->itemTranslator->toNetworkId($this->item);
 	}
 }

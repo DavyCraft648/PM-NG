@@ -25,6 +25,7 @@ namespace pocketmine\utils;
 
 use pocketmine\network\mcpe\protocol\ProtocolInfo;
 use pocketmine\player\Player;
+use function spl_object_id;
 
 trait ProtocolSingletonTrait{
 	/** @var self[] */
@@ -34,13 +35,16 @@ trait ProtocolSingletonTrait{
 		return new self($protocolId);
 	}
 
-	public static function getInstance(int $protocolId = ProtocolInfo::CURRENT_PROTOCOL) : self{
-		$protocolId = self::convertProtocol($protocolId);
+	private function __construct(protected readonly int $protocolId){
+		//NOOP
+	}
 
-		if(!isset(self::$instance[$protocolId])){
-			self::$instance[$protocolId] = self::make($protocolId);
-		}
-		return self::$instance[$protocolId];
+	public static function getInstance(int $protocolId = ProtocolInfo::CURRENT_PROTOCOL) : self{
+		return self::$instance[$protocolId] ??= self::make($protocolId);
+	}
+
+	public function getProtocolId() : int{
+		return $this->protocolId;
 	}
 
 	/**
@@ -65,19 +69,12 @@ trait ProtocolSingletonTrait{
 		$sortPlayers = [];
 
 		foreach($players as $player){
-			$protocolId = self::convertProtocol($player->getNetworkSession()->getProtocolId());
-
-			if(isset($sortPlayers[$protocolId])){
-				$sortPlayers[$protocolId][] = $player;
-			}else{
-				$sortPlayers[$protocolId] = [$player];
-			}
+			$protocolId = $player->getNetworkSession()->getProtocolId();
+			$sortPlayers[$protocolId][spl_object_id($player)] = $player;
 		}
 
 		return $sortPlayers;
 	}
-
-	abstract public static function convertProtocol(int $protocolId) : int;
 
 	public static function setInstance(self $instance, int $protocolId) : void{
 		self::$instance[$protocolId] = $instance;
