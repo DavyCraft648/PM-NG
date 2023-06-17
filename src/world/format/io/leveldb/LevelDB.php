@@ -25,11 +25,13 @@ namespace pocketmine\world\format\io\leveldb;
 
 use pocketmine\block\Block;
 use pocketmine\data\bedrock\BiomeIds;
+use pocketmine\data\bedrock\block\BlockStateData;
 use pocketmine\data\bedrock\block\BlockStateDeserializeException;
 use pocketmine\nbt\LittleEndianNbtSerializer;
 use pocketmine\nbt\NbtDataException;
 use pocketmine\nbt\tag\CompoundTag;
 use pocketmine\nbt\TreeRoot;
+use pocketmine\network\mcpe\convert\BlockTranslator;
 use pocketmine\utils\Binary;
 use pocketmine\utils\BinaryDataException;
 use pocketmine\utils\BinaryStream;
@@ -169,7 +171,7 @@ class LevelDB extends BaseWorldProvider implements WritableWorldProvider{
 
 			//TODO: remember data for unknown states so we can implement them later
 			try{
-				$blockStateData = $this->blockDataUpgrader->upgradeBlockStateNbt($blockStateNbt);
+				$blockStateData = $this->blockDataUpgrader->upgradeBlockStateNbt($blockStateNbt->setInt(BlockStateData::TAG_VERSION, 0));
 			}catch(BlockStateDeserializeException $e){
 				//while not ideal, this is not a fatal error
 				$logger->error("Failed to upgrade blockstate: " . $e->getMessage() . " offset $i in palette, blockstate NBT: " . $blockStateNbt->toString());
@@ -177,7 +179,16 @@ class LevelDB extends BaseWorldProvider implements WritableWorldProvider{
 				continue;
 			}
 			try{
-				$palette[] = $this->blockStateDeserializer->deserialize($blockStateData);
+				try{
+					$palette[] = $this->blockStateDeserializer->deserialize($blockStateData);
+				}catch(BlockStateDeserializeException $e){
+					$dictionary = BlockTranslator::getInstance()->getBlockStateDictionary();
+					$palette[] = $this->blockStateDeserializer->deserialize(
+						$dictionary->generateDataFromStateId(
+							$dictionary->lookupStateIdFromIdMeta($blockStateData->getName(), 0) ?? throw $e
+						) ?? throw $e
+					);
+				}
 			}catch(BlockStateDeserializeException $e){
 				$logger->error("Failed to deserialize blockstate: " . $e->getMessage() . " offset $i in palette, blockstate NBT: " . $blockStateNbt->toString());
 				$palette[] = $this->blockStateDeserializer->deserialize(GlobalBlockStateHandlers::getUnknownBlockStateData());
@@ -283,7 +294,7 @@ class LevelDB extends BaseWorldProvider implements WritableWorldProvider{
 		}
 		if(!$stream->feof()){
 			//maybe bad output produced by a third-party conversion tool like Chunker
-			$logger->error("Unexpected trailing data after 3D biomes data");
+			//$logger->error("Unexpected trailing data after 3D biomes data");
 		}
 
 		return $result;
