@@ -31,7 +31,7 @@ use pocketmine\nbt\LittleEndianNbtSerializer;
 use pocketmine\nbt\NbtDataException;
 use pocketmine\nbt\tag\CompoundTag;
 use pocketmine\nbt\TreeRoot;
-use pocketmine\network\mcpe\convert\BlockTranslator;
+use pocketmine\network\mcpe\convert\TypeConverter;
 use pocketmine\utils\Binary;
 use pocketmine\utils\BinaryDataException;
 use pocketmine\utils\BinaryStream;
@@ -182,7 +182,7 @@ class LevelDB extends BaseWorldProvider implements WritableWorldProvider{
 				try{
 					$palette[] = $this->blockStateDeserializer->deserialize($blockStateData);
 				}catch(BlockStateDeserializeException $e){
-					$dictionary = BlockTranslator::getInstance()->getBlockStateDictionary();
+					$dictionary = TypeConverter::getInstance()->getBlockTranslator()->getBlockStateDictionary();
 					$palette[] = $this->blockStateDeserializer->deserialize(
 						$dictionary->generateDataFromStateId(
 							$dictionary->lookupStateIdFromIdMeta($blockStateData->getName(), 0) ?? throw $e

@@ -155,9 +155,6 @@ final class BlockTranslator{
 
 			$networkId = $this->blockStateDictionary->lookupStateIdFromData($blockStateData);
 			if($networkId === null){
-				if($this !== BlockTranslator::getInstance() && BlockTranslator::getInstance()->blockStateDictionary->lookupStateIdFromData($blockStateData) !== null){
-					throw new BlockStateSerializeException();
-				}
 				throw new AssumptionFailedError("Unmapped blockstate returned by blockstate serializer: " . $blockStateData->toNbt());
 			}
 		}catch(BlockStateSerializeException){
@@ -202,6 +199,9 @@ final class BlockTranslator{
 
 			ProtocolInfo::PROTOCOL_1_19_50,
 			ProtocolInfo::PROTOCOL_1_19_40,
+			ProtocolInfo::PROTOCOL_1_19_30,
+			ProtocolInfo::PROTOCOL_1_19_21,
+			ProtocolInfo::PROTOCOL_1_19_20,
 			ProtocolInfo::PROTOCOL_1_19_10 => 161,
 
 			ProtocolInfo::PROTOCOL_1_19_0 => 151,
