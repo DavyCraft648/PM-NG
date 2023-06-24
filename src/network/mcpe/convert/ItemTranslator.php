@@ -45,7 +45,7 @@ final class ItemTranslator{
 
 	public function __construct(
 		private ItemTypeDictionary $itemTypeDictionary,
-		private BlockTranslator $blockTranslator,
+		private BlockStateDictionary $blockStateDictionary,
 		private ItemSerializer $itemSerializer,
 		private ItemDeserializer $itemDeserializer,
 		private BlockItemIdMap $blockItemIdMap,
@@ -85,7 +85,7 @@ final class ItemTranslator{
 		$blockStateData = $itemData->getBlock();
 
 		if($blockStateData !== null){
-			$blockRuntimeId = $this->blockTranslator->getBlockStateDictionary()->lookupStateIdFromData($blockStateData);
+			$blockRuntimeId = $this->blockStateDictionary->lookupStateIdFromData($blockStateData);
 			if($blockRuntimeId === null){
 				throw new AssumptionFailedError("Unmapped blockstate returned by blockstate serializer: " . $blockStateData->toNbt());
 			}
@@ -119,13 +119,9 @@ final class ItemTranslator{
 
 		$blockStateData = null;
 		if($this->blockItemIdMap->lookupBlockId($stringId) !== null){
-			$blockStateData = $this->blockTranslator->getBlockStateDictionary()->generateDataFromStateId($networkBlockRuntimeId);
+			$blockStateData = $this->blockStateDictionary->generateCurrentDataFromStateId($networkBlockRuntimeId);
 			if($blockStateData === null){
 				throw new TypeConversionException("Blockstate runtimeID $networkBlockRuntimeId does not correspond to any known blockstate");
-			}
-
-			if(($blockStateUpgrader = $this->blockTranslator->getBlockStateUpgrader()) !== null){
-				$blockStateData = $blockStateUpgrader->upgrade($blockStateData);
 			}
 		}elseif($networkBlockRuntimeId !== self::NO_BLOCK_RUNTIME_ID){
 			throw new TypeConversionException("Item $stringId is not a blockitem, but runtime ID $networkBlockRuntimeId was provided");

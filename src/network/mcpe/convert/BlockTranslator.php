@@ -122,7 +122,7 @@ final class BlockTranslator{
 
 	public function __construct(
 		private BlockStateDictionary $blockStateDictionary,
-		private BlockStateSerializer $blockStateSerializer,
+		private BlockStateSerializer $blockStateSerializer
 	){
 		$this->fallbackStateData = BlockStateData::current(BlockTypeNames::INFO_UPDATE, []);
 		$this->fallbackStateId = $this->blockStateDictionary->lookupStateIdFromData($this->fallbackStateData) ??
@@ -165,6 +165,4 @@ final class BlockTranslator{
 	public function getBlockStateDictionary() : BlockStateDictionary{ return $this->blockStateDictionary; }
 
 	public function getFallbackStateData() : BlockStateData{ return $this->fallbackStateData; }
-
-	public function getBlockStateUpgrader() : ?BlockStateUpgrader{ return GlobalBlockStateHandlers::getUpgrader()->getBlockStateUpgrader(); }
 }

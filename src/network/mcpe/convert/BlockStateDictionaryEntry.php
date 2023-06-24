@@ -59,7 +59,11 @@ final class BlockStateDictionaryEntry{
 	public function getRawStateProperties() : string{ return $this->rawStateProperties; }
 
 	public function generateStateData() : BlockStateData{
-		return $this->oldBlockStateData ?? new BlockStateData(
+		return $this->oldBlockStateData ?? $this->generateCurrentStateData();
+	}
+
+	public function generateCurrentStateData() : BlockStateData{
+		return new BlockStateData(
 			$this->stateName,
 			self::decodeStateProperties($this->rawStateProperties),
 			BlockStateData::CURRENT_VERSION

@@ -61,6 +61,7 @@ class TypeConverter{
 	private ItemTranslator $itemTranslator;
 	private ItemTypeDictionary $itemTypeDictionary;
 	private int $shieldRuntimeId;
+
 	private SkinAdapter $skinAdapter;
 
 	public function __construct(int $protocolId){
@@ -76,7 +77,7 @@ class TypeConverter{
 
 		$this->itemTranslator = new ItemTranslator(
 			$this->itemTypeDictionary,
-			$this->blockTranslator,
+			$this->blockTranslator->getBlockStateDictionary(),
 			GlobalItemDataHandlers::getSerializer(),
 			GlobalItemDataHandlers::getDeserializer(),
 			$this->blockItemIdMap,

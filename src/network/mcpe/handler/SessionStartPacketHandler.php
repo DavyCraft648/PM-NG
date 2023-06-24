@@ -49,6 +49,7 @@ final class SessionStartPacketHandler extends PacketHandler{
 		}
 		$this->session->setProtocolId($protocolVersion);
 
+		//TODO: we're filling in the defaults to get pre-1.19.30 behaviour back for now, but we should explore the new options in the future
 		$this->session->sendDataPacket(NetworkSettingsPacket::create(
 			NetworkSettingsPacket::COMPRESS_EVERYTHING,
 			CompressionAlgorithm::ZLIB,

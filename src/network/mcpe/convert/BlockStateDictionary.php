@@ -110,6 +110,10 @@ final class BlockStateDictionary{
 		return ($this->states[$networkRuntimeId] ?? null)?->generateStateData();
 	}
 
+	public function generateCurrentDataFromStateId(int $networkRuntimeId) : ?BlockStateData{
+		return ($this->states[$networkRuntimeId] ?? null)?->generateCurrentStateData();
+	}
+
 	/**
 	 * Searches for the appropriate state ID which matches the given blockstate NBT.
 	 * Returns null if there were no matches.
