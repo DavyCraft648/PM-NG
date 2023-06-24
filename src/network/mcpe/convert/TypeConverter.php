@@ -309,7 +309,7 @@ class TypeConverter{
 
 		foreach($typeConverters as $key => $typeConverter){
 			$packets = $closure($typeConverter);
-			if($packets > 0){
+			if(count($packets) > 0){
 				NetworkBroadcastUtils::broadcastPackets($converterRecipients[$key], $packets);
 			}
 		}
