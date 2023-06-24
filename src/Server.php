@@ -1868,7 +1868,7 @@ class Server{
 	}
 
 	public function getPacketSerializerContext(TypeConverter $typeConverter) : PacketSerializerContext{
-		return $this->packetSerializerContexts[spl_object_id($typeConverter)] ??= new PacketSerializerContext($typeConverter->getItemTypeDictionary());
+		return $this->packetSerializerContexts[spl_object_id($typeConverter)] ??= new PacketSerializerContext($typeConverter->getItemTypeDictionary(), $typeConverter->getProtocolId());
 	}
 
 	public function getPacketBroadcaster(PacketSerializerContext $packetSerializerContext) : PacketBroadcaster{

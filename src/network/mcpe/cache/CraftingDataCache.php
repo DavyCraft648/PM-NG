@@ -29,6 +29,7 @@ use pocketmine\crafting\RecipeIngredient;
 use pocketmine\crafting\ShapedRecipe;
 use pocketmine\crafting\ShapelessRecipe;
 use pocketmine\crafting\ShapelessRecipeType;
+use pocketmine\data\bedrock\item\ItemTypeSerializeException;
 use pocketmine\item\Item;
 use pocketmine\network\mcpe\convert\TypeConverter;
 use pocketmine\network\mcpe\protocol\CraftingDataPacket;
@@ -97,14 +98,14 @@ final class CraftingDataCache{
 				$inputs = array_map(function(RecipeIngredient $item) use ($converter) : ?ProtocolRecipeIngredient{
 					try{
 						return $converter->coreRecipeIngredientToNet($item);
-					}catch(\InvalidArgumentException $e){
+					}catch(\InvalidArgumentException|ItemTypeSerializeException){
 						return null;
 					}
 				}, $recipe->getIngredientList());
 				$outputs = array_map(function(Item $item) use ($converter) : ?ItemStack{
 					try{
 						return $converter->coreItemStackToNet($item);
-					}catch(\InvalidArgumentException $e){
+					}catch(\InvalidArgumentException|ItemTypeSerializeException){
 						return null;
 					}
 				}, $recipe->getResults());
@@ -132,14 +133,14 @@ final class CraftingDataCache{
 							$inputs[$row][$column] = $converter->coreRecipeIngredientToNet($recipe->getIngredient($column, $row));
 						}
 					}
-				}catch(\InvalidArgumentException $e){
+				}catch(\InvalidArgumentException|ItemTypeSerializeException){
 					continue;
 				}
 
 				$outputs = array_map(function(Item $item) use ($converter) : ?ItemStack{
 					try{
 						return $converter->coreItemStackToNet($item);
-					}catch(\InvalidArgumentException $e){
+					}catch(\InvalidArgumentException|ItemTypeSerializeException){
 						return null;
 					}
 				}, $recipe->getResults());
@@ -174,7 +175,7 @@ final class CraftingDataCache{
 				try{
 					$input = $converter->coreRecipeIngredientToNet($recipe->getInput())->getDescriptor();
 					$output = $converter->coreItemStackToNet($recipe->getResult());
-				}catch(\InvalidArgumentException $e){
+				}catch(\InvalidArgumentException|ItemTypeSerializeException){
 					continue;
 				}
 
@@ -200,7 +201,7 @@ final class CraftingDataCache{
 					throw new AssumptionFailedError();
 				}
 				$output = $converter->coreItemStackToNet($recipe->getOutput());
-			}catch(\InvalidArgumentException $e){
+			}catch(\InvalidArgumentException|ItemTypeSerializeException){
 				continue;
 			}
 
@@ -220,7 +221,7 @@ final class CraftingDataCache{
 			$input = $itemTypeDictionary->fromStringId($recipe->getInputItemId());
 			try{
 				$ingredient = $converter->coreRecipeIngredientToNet($recipe->getIngredient())->getDescriptor();
-			}catch(\InvalidArgumentException $e){
+			}catch(\InvalidArgumentException|ItemTypeSerializeException){
 				continue;
 			}
 			if(!$ingredient instanceof IntIdMetaItemDescriptor){

@@ -30,7 +30,6 @@ use pocketmine\crafting\RecipeIngredient;
 use pocketmine\crafting\TagWildcardRecipeIngredient;
 use pocketmine\data\bedrock\item\BlockItemIdMap;
 use pocketmine\data\bedrock\item\downgrade\ItemIdMetaDowngrader;
-use pocketmine\data\bedrock\item\downgrade\ItemIdMetaDowngradeSchemaUtils;
 use pocketmine\item\Item;
 use pocketmine\item\VanillaItems;
 use pocketmine\nbt\NbtException;
@@ -46,13 +45,11 @@ use pocketmine\player\GameMode;
 use pocketmine\utils\AssumptionFailedError;
 use pocketmine\utils\ProtocolSingletonTrait;
 use pocketmine\world\format\io\GlobalItemDataHandlers;
-use Symfony\Component\Filesystem\Path;
 use function get_class;
-use const pocketmine\BEDROCK_ITEM_UPGRADE_SCHEMA_PATH;
 
 class TypeConverter{
 	use ProtocolSingletonTrait {
-		__construct as private __protocolConstruct;
+		ProtocolSingletonTrait::__construct as private __protocolConstruct;
 	}
 
 	private const PM_ID_TAG = "___Id___";
@@ -77,16 +74,13 @@ class TypeConverter{
 		$this->itemTypeDictionary = ItemTypeDictionaryFromDataHelper::loadFromProtocolId($protocolId);
 		$this->shieldRuntimeId = $this->itemTypeDictionary->fromStringId("minecraft:shield");
 
-		if(($itemSchemaId = ItemTranslator::getItemSchemaId($protocolId)) !== null){
-			$itemDataDowngradeSchema = new ItemIdMetaDowngrader(ItemIdMetaDowngradeSchemaUtils::loadSchemas(Path::join(BEDROCK_ITEM_UPGRADE_SCHEMA_PATH, 'id_meta_upgrade_schema'), $itemSchemaId));
-		}
 		$this->itemTranslator = new ItemTranslator(
 			$this->itemTypeDictionary,
 			$this->blockTranslator,
 			GlobalItemDataHandlers::getSerializer(),
 			GlobalItemDataHandlers::getDeserializer(),
 			$this->blockItemIdMap,
-			$itemDataDowngradeSchema ?? null
+			new ItemIdMetaDowngrader($this->itemTypeDictionary, ItemTranslator::getItemSchemaId($protocolId))
 		);
 
 		$this->skinAdapter = new LegacySkinAdapter();
