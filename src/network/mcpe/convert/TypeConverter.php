@@ -53,6 +53,7 @@ use pocketmine\utils\AssumptionFailedError;
 use pocketmine\utils\ProtocolSingletonTrait;
 use pocketmine\utils\Utils;
 use pocketmine\world\format\io\GlobalItemDataHandlers;
+use function count;
 use function get_class;
 use function spl_object_id;
 
