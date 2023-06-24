@@ -169,6 +169,7 @@ final class CraftingDataCache{
 				FurnaceType::FURNACE()->id() => FurnaceRecipeBlockName::FURNACE,
 				FurnaceType::BLAST_FURNACE()->id() => FurnaceRecipeBlockName::BLAST_FURNACE,
 				FurnaceType::SMOKER()->id() => FurnaceRecipeBlockName::SMOKER,
+				ShapelessRecipeType::SMITHING()->id() => CraftingRecipeBlockName::SMITHING_TABLE,
 				default => throw new AssumptionFailedError("Unreachable"),
 			};
 			foreach($manager->getFurnaceRecipeManager($furnaceType)->getAll() as $recipe){

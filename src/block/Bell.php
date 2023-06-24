@@ -35,7 +35,6 @@ use pocketmine\math\Facing;
 use pocketmine\math\RayTraceResult;
 use pocketmine\math\Vector3;
 use pocketmine\network\mcpe\convert\TypeConverter;
-use pocketmine\network\mcpe\NetworkBroadcastUtils;
 use pocketmine\player\Player;
 use pocketmine\world\BlockTransaction;
 use pocketmine\world\sound\BellRingSound;
