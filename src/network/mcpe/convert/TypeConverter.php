@@ -23,6 +23,10 @@ declare(strict_types=1);
 
 namespace pocketmine\network\mcpe\convert;
 
+use DaveRandom\CallbackValidator\BuiltInTypes;
+use DaveRandom\CallbackValidator\CallbackType;
+use DaveRandom\CallbackValidator\ParameterType;
+use DaveRandom\CallbackValidator\ReturnType;
 use pocketmine\block\VanillaBlocks;
 use pocketmine\crafting\ExactRecipeIngredient;
 use pocketmine\crafting\MetaWildcardRecipeIngredient;
@@ -34,6 +38,8 @@ use pocketmine\item\Item;
 use pocketmine\item\VanillaItems;
 use pocketmine\nbt\NbtException;
 use pocketmine\nbt\tag\CompoundTag;
+use pocketmine\network\mcpe\NetworkBroadcastUtils;
+use pocketmine\network\mcpe\protocol\ClientboundPacket;
 use pocketmine\network\mcpe\protocol\serializer\ItemTypeDictionary;
 use pocketmine\network\mcpe\protocol\types\GameMode as ProtocolGameMode;
 use pocketmine\network\mcpe\protocol\types\inventory\ItemStack;
@@ -42,10 +48,13 @@ use pocketmine\network\mcpe\protocol\types\recipe\RecipeIngredient as ProtocolRe
 use pocketmine\network\mcpe\protocol\types\recipe\StringIdMetaItemDescriptor;
 use pocketmine\network\mcpe\protocol\types\recipe\TagItemDescriptor;
 use pocketmine\player\GameMode;
+use pocketmine\player\Player;
 use pocketmine\utils\AssumptionFailedError;
 use pocketmine\utils\ProtocolSingletonTrait;
+use pocketmine\utils\Utils;
 use pocketmine\world\format\io\GlobalItemDataHandlers;
 use function get_class;
+use function spl_object_id;
 
 class TypeConverter{
 	use ProtocolSingletonTrait {
@@ -262,5 +271,47 @@ class TypeConverter{
 		}
 
 		return $itemResult;
+	}
+
+	/**
+	 * @param Player[] $players
+	 *
+	 * @phpstan-return array{TypeConverter[], Player[][]}
+	 */
+	public static function sortByConverter(array $players) : array{
+		/** @var TypeConverter[] $typeConverters */
+		$typeConverters = [];
+		/** @var Player[][] $converterRecipients */
+		$converterRecipients = [];
+		foreach($players as $recipient){
+			$typeConverter = $recipient->getNetworkSession()->getTypeConverter();
+			$typeConverters[spl_object_id($typeConverter)] = $typeConverter;
+			$converterRecipients[spl_object_id($typeConverter)][spl_object_id($recipient)] = $recipient;
+		}
+
+		return [
+			$typeConverters,
+			$converterRecipients
+		];
+	}
+
+	/**
+	 * @param Player[] $players
+	 * @phpstan-param \Closure(TypeConverter) : ClientboundPacket[] $closure
+	 */
+	public static function broadcastByTypeConverter(array $players, \Closure $closure) : void{
+		Utils::validateCallableSignature(new CallbackType(
+			new ReturnType(BuiltInTypes::ARRAY, ReturnType::COVARIANT),
+			new ParameterType('typeConverter', TypeConverter::class),
+		), $closure);
+
+		[$typeConverters, $converterRecipients] = self::sortByConverter($players);
+
+		foreach($typeConverters as $key => $typeConverter){
+			$packets = $closure($typeConverter, $converterRecipients[$key]);
+			if($packets > 0){
+				NetworkBroadcastUtils::broadcastPackets($converterRecipients[$key], $packets);
+			}
+		}
 	}
 }

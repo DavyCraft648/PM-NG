@@ -78,8 +78,8 @@ final class Bell extends Spawnable{
 	 * simpler as a BlockEventPacket. It's simpler to implement bells with this hack than to follow Mojang's complicated
 	 * mess.
 	 */
-	public function createFakeUpdatePacket(int $bellHitFace) : BlockActorDataPacket{
-		$nbt = $this->getSpawnCompound(TypeConverter::getInstance()); //todo: use the right type converter
+	public function createFakeUpdatePacket(int $bellHitFace, TypeConverter $typeConverter) : BlockActorDataPacket{
+		$nbt = $this->getSpawnCompound($typeConverter);
 		$nbt->setByte(self::TAG_RINGING, 1);
 		$nbt->setInt(self::TAG_DIRECTION, match($bellHitFace){
 			Facing::SOUTH => 0,

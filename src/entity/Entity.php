@@ -1679,20 +1679,10 @@ abstract class Entity{
 		$targets = $targets ?? $this->getViewers();
 
 		if($animation instanceof ItemAnimation){
-			/** @var TypeConverter[] $typeConverters */
-			$typeConverters = [];
-			/** @var Player[][] $converterTargets */
-			$converterTargets = [];
-			foreach($targets as $target){
-				$typeConverter = $target->getNetworkSession()->getTypeConverter();
-				$typeConverters[spl_object_id($typeConverter)] = $typeConverter;
-				$converterTargets[spl_object_id($typeConverter)][spl_object_id($target)] = $target;
-			}
-
-			foreach($typeConverters as $key => $typeConverter){
+			TypeConverter::broadcastByTypeConverter($targets, function(TypeConverter $typeConverter) use ($animation) : array{
 				$animation->setItemTranslator($typeConverter->getItemTranslator());
-				NetworkBroadcastUtils::broadcastPackets($converterTargets[$key], $animation->encode());
-			}
+				return $animation->encode();
+			});
 		}else{
 			NetworkBroadcastUtils::broadcastPackets($targets, $animation->encode());
 		}
@@ -1707,20 +1697,10 @@ abstract class Entity{
 			$targets = $targets ?? $this->getViewers();
 
 			if($sound instanceof BlockSound){
-				/** @var TypeConverter[] $typeConverters */
-				$typeConverters = [];
-				/** @var Player[][] $converterTargets */
-				$converterTargets = [];
-				foreach($targets as $target){
-					$typeConverter = $target->getNetworkSession()->getTypeConverter();
-					$typeConverters[spl_object_id($typeConverter)] = $typeConverter;
-					$converterTargets[spl_object_id($typeConverter)][spl_object_id($target)] = $target;
-				}
-
-				foreach($typeConverters as $key => $typeConverter){
+				TypeConverter::broadcastByTypeConverter($targets, function(TypeConverter $typeConverter) use ($sound) : array{
 					$sound->setBlockTranslator($typeConverter->getBlockTranslator());
-					NetworkBroadcastUtils::broadcastPackets($converterTargets[$key], $sound->encode($this->location));
-				}
+					return $sound->encode($this->location);
+				});
 			}else{
 				NetworkBroadcastUtils::broadcastPackets($targets, $sound->encode($this->location));
 			}
