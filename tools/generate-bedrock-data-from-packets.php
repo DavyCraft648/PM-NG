@@ -120,8 +120,7 @@ class ParserPacketHandler extends PacketHandler{
 				Filesystem::fileGetContents(Path::join($this->bedrockDataPath, "canonical_block_states.nbt")),
 				Filesystem::fileGetContents(Path::join($this->bedrockDataPath, "block_state_meta_map.json")),
 			),
-			GlobalBlockStateHandlers::getSerializer(),
-			null
+			GlobalBlockStateHandlers::getSerializer()
 		);
 		$this->blockItemIdMap = BlockItemIdMap::getInstance();
 	}

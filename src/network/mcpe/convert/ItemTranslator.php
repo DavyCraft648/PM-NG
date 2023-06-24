@@ -49,7 +49,7 @@ final class ItemTranslator{
 		private ItemSerializer $itemSerializer,
 		private ItemDeserializer $itemDeserializer,
 		private BlockItemIdMap $blockItemIdMap,
-		private ?ItemIdMetaDowngrader $itemDataDowngrader,
+		private ItemIdMetaDowngrader $itemDataDowngrader,
 	){}
 
 	/**

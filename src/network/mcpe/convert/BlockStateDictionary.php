@@ -25,13 +25,11 @@ namespace pocketmine\network\mcpe\convert;
 
 use pocketmine\data\bedrock\block\BlockStateData;
 use pocketmine\data\bedrock\block\BlockTypeNames;
-use pocketmine\data\bedrock\block\upgrade\BlockStateUpgrader;
 use pocketmine\nbt\NbtDataException;
 use pocketmine\nbt\TreeRoot;
 use pocketmine\network\mcpe\protocol\serializer\NetworkNbtSerializer;
 use pocketmine\utils\Utils;
 use pocketmine\world\format\io\GlobalBlockStateHandlers;
-use pocketmine\world\format\io\GlobalItemDataHandlers;
 use function array_key_first;
 use function array_map;
 use function count;

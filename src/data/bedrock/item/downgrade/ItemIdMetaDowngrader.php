@@ -34,13 +34,13 @@ use function is_array;
 final class ItemIdMetaDowngrader{
 
 	/**
-	 * @param string[]   $renamedIds
-	 * @phpstan-param array<string, string> $renamedIds
+	 * @var string[] $renamedIds
+	 * @phpstan-var array<string, string> $renamedIds
 	 */
 	private array $renamedIds = [];
 	/**
-	 * @param string[][] $remappedMetas
-	 * @phpstan-param array<string, array{string, int}> $remappedMetas
+	 * @var string[][] $remappedMetas
+	 * @phpstan-var array<string, array{string, int}> $remappedMetas
 	 */
 	private array $remappedMetas = [];
 
@@ -88,7 +88,7 @@ final class ItemIdMetaDowngrader{
 			}
 		}
 
-		foreach($networkIds as $newStringId => $oldId){
+		foreach(Utils::stringifyKeys($networkIds) as $newStringId => $oldId){
 			if(is_array($oldId)){
 				$this->remappedMetas[$newStringId] = $oldId;
 			}else{
