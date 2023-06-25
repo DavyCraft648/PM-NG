@@ -45,11 +45,11 @@ final class ItemTranslator{
 
 	public function __construct(
 		private ItemTypeDictionary $itemTypeDictionary,
-		private BlockTranslator $blockTranslator,
+		private BlockStateDictionary $blockStateDictionary,
 		private ItemSerializer $itemSerializer,
 		private ItemDeserializer $itemDeserializer,
 		private BlockItemIdMap $blockItemIdMap,
-		private ?ItemIdMetaDowngrader $itemDataDowngrader,
+		private ItemIdMetaDowngrader $itemDataDowngrader,
 	){}
 
 	/**
@@ -75,27 +75,17 @@ final class ItemTranslator{
 
 		$itemData = $this->itemSerializer->serializeType($item);
 
-		if($this->itemDataDowngrader !== null){
-			[$name, $meta] = $this->itemDataDowngrader->downgrade($itemData->getName(), $itemData->getMeta());
-
-			try{
-				$numericId = $this->itemTypeDictionary->fromStringId($name);
-			}catch(\InvalidArgumentException $e) {
-				$numericId = $this->itemTypeDictionary->fromStringId($itemData->getName());
-				$meta = $itemData->getMeta();
-			}
-		}else{
-			$numericId = $this->itemTypeDictionary->fromStringId($itemData->getName());
+		[$name, $meta] = $this->itemDataDowngrader->downgrade($itemData->getName(), $itemData->getMeta());
+		try {
+			$numericId = $this->itemTypeDictionary->fromStringId($name);
+		} catch (\InvalidArgumentException) {
+			throw new ItemTypeSerializeException("Unknown item type $name");
 		}
 
 		$blockStateData = $itemData->getBlock();
 
 		if($blockStateData !== null){
-			if(($blockStateDowngrader = $this->blockTranslator->getBlockStateDowngrader()) !== null){
-				$blockStateData = $blockStateDowngrader->downgrade($blockStateData);
-			}
-
-			$blockRuntimeId = $this->blockTranslator->getBlockStateDictionary()->lookupStateIdFromData($blockStateData);
+			$blockRuntimeId = $this->blockStateDictionary->lookupStateIdFromData($blockStateData);
 			if($blockRuntimeId === null){
 				throw new AssumptionFailedError("Unmapped blockstate returned by blockstate serializer: " . $blockStateData->toNbt());
 			}
@@ -129,13 +119,9 @@ final class ItemTranslator{
 
 		$blockStateData = null;
 		if($this->blockItemIdMap->lookupBlockId($stringId) !== null){
-			$blockStateData = $this->blockTranslator->getBlockStateDictionary()->generateDataFromStateId($networkBlockRuntimeId);
+			$blockStateData = $this->blockStateDictionary->generateCurrentDataFromStateId($networkBlockRuntimeId);
 			if($blockStateData === null){
 				throw new TypeConversionException("Blockstate runtimeID $networkBlockRuntimeId does not correspond to any known blockstate");
-			}
-
-			if(($blockStateUpgrader = $this->blockTranslator->getBlockStateUpgrader()) !== null){
-				$blockStateData = $blockStateUpgrader->upgrade($blockStateData);
 			}
 		}elseif($networkBlockRuntimeId !== self::NO_BLOCK_RUNTIME_ID){
 			throw new TypeConversionException("Item $stringId is not a blockitem, but runtime ID $networkBlockRuntimeId was provided");
@@ -150,27 +136,27 @@ final class ItemTranslator{
 		}
 	}
 
-	public static function getItemSchemaId(int $protocolId) : ?int{
+	public static function getItemSchemaId(int $protocolId) : int{
 		return match($protocolId){
-			ProtocolInfo::PROTOCOL_1_20_0 => null,
+			ProtocolInfo::PROTOCOL_1_20_0 => 111,
 
-			ProtocolInfo::PROTOCOL_1_19_80 => 111,
+			ProtocolInfo::PROTOCOL_1_19_80 => 101,
 
-			ProtocolInfo::PROTOCOL_1_19_70 => 101,
+			ProtocolInfo::PROTOCOL_1_19_70 => 91,
 
 			ProtocolInfo::PROTOCOL_1_19_63,
 			ProtocolInfo::PROTOCOL_1_19_60,
 			ProtocolInfo::PROTOCOL_1_19_50,
 			ProtocolInfo::PROTOCOL_1_19_40,
-			ProtocolInfo::PROTOCOL_1_19_30 => 91,
+			ProtocolInfo::PROTOCOL_1_19_30 => 81,
 
 			ProtocolInfo::PROTOCOL_1_19_21,
 			ProtocolInfo::PROTOCOL_1_19_20,
 			ProtocolInfo::PROTOCOL_1_19_10,
 			ProtocolInfo::PROTOCOL_1_19_0,
-			ProtocolInfo::PROTOCOL_1_18_30 => 81,
+			ProtocolInfo::PROTOCOL_1_18_30 => 71,
 
-			ProtocolInfo::PROTOCOL_1_18_10 => 71,
+			ProtocolInfo::PROTOCOL_1_18_10 => 61,
 			default => throw new AssumptionFailedError("Unknown protocol ID $protocolId"),
 		};
 	}

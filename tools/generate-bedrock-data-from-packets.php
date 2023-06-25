@@ -120,8 +120,7 @@ class ParserPacketHandler extends PacketHandler{
 				Filesystem::fileGetContents(Path::join($this->bedrockDataPath, "canonical_block_states.nbt")),
 				Filesystem::fileGetContents(Path::join($this->bedrockDataPath, "block_state_meta_map.json")),
 			),
-			GlobalBlockStateHandlers::getSerializer(),
-			null
+			GlobalBlockStateHandlers::getSerializer()
 		);
 		$this->blockItemIdMap = BlockItemIdMap::getInstance();
 	}
@@ -358,7 +357,7 @@ class ParserPacketHandler extends PacketHandler{
 
 	private function smithingRecipeToJson(SmithingTransformRecipe $recipe) : SmithingTransformRecipeData{
 		return new SmithingTransformRecipeData(
-			$this->recipeIngredientToJson($recipe->getTemplate()), // @phpstan-ignore-line
+			$this->recipeIngredientToJson($recipe->getTemplate() ?? throw new \UnexpectedValueException("Smithing recipe has no template")),
 			$this->recipeIngredientToJson($recipe->getInput()),
 			$this->recipeIngredientToJson($recipe->getAddition()),
 			$this->itemStackToJson($recipe->getOutput()),

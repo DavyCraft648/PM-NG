@@ -701,25 +701,10 @@ class World implements ChunkManager{
 
 		$players = $ev->getRecipients();
 		if($sound instanceof BlockSound){
-			/** @var TypeConverter[] $typeConverters */
-			$typeConverters = [];
-			/** @var Player[][] $converterRecipients */
-			$converterRecipients = [];
-			foreach($players as $recipient){
-				$typeConverter = $recipient->getNetworkSession()->getTypeConverter();
-				$typeConverters[spl_object_id($typeConverter)] = $typeConverter;
-				$converterRecipients[spl_object_id($typeConverter)][spl_object_id($recipient)] = $recipient;
-			}
-
-			foreach($typeConverters as $key => $typeConverter){
+			TypeConverter::broadcastByTypeConverter($players, function(TypeConverter $typeConverter) use ($sound, $pos) : array{
 				$sound->setBlockTranslator($typeConverter->getBlockTranslator());
-
-				$pk = $sound->encode($pos);
-
-				if(count($pk) > 0){
-					NetworkBroadcastUtils::broadcastPackets($converterRecipients[$key], $pk);
-				}
-			}
+				return $sound->encode($pos);
+			});
 		}else{
 			$pk = $sound->encode($pos);
 
@@ -750,28 +735,15 @@ class World implements ChunkManager{
 
 		$players = $ev->getRecipients();
 		if($particle instanceof BlockParticle || $particle instanceof ItemParticle){
-			/** @var TypeConverter[] $typeConverters */
-			$typeConverters = [];
-			/** @var Player[][] $converterRecipients */
-			$converterRecipients = [];
-			foreach($players as $recipient){
-				$typeConverter = $recipient->getNetworkSession()->getTypeConverter();
-				$typeConverters[spl_object_id($typeConverter)] = $typeConverter;
-				$converterRecipients[spl_object_id($typeConverter)][spl_object_id($recipient)] = $recipient;
-			}
-
-			foreach($typeConverters as $key => $typeConverter){
+			TypeConverter::broadcastByTypeConverter($players, function(TypeConverter $typeConverter) use ($particle, $pos) : array{
 				if($particle instanceof ItemParticle){
 					$particle->setItemTranslator($typeConverter->getItemTranslator());
 				}else{
 					$particle->setBlockTranslator($typeConverter->getBlockTranslator());
 				}
 
-				$pk = $particle->encode($pos);
-				if(count($pk) > 0){
-					NetworkBroadcastUtils::broadcastPackets($converterRecipients[$key], $pk);
-				}
-			}
+				return $particle->encode($pos);
+			});
 		}else{
 			$pk = $particle->encode($pos);
 
@@ -1065,19 +1037,9 @@ class World implements ChunkManager{
 							$p->onChunkChanged($chunkX, $chunkZ, $chunk);
 						}
 					}else{
-						/** @var TypeConverter[] $typeConverters */
-						$typeConverters = [];
-						/** @var Player[][] $converterRecipients */
-						$converterRecipients = [];
-						foreach($this->getChunkPlayers($chunkX, $chunkZ) as $recipient){
-							$typeConverter = $recipient->getNetworkSession()->getTypeConverter();
-							$typeConverters[spl_object_id($typeConverter)] = $typeConverter;
-							$converterRecipients[spl_object_id($typeConverter)][spl_object_id($recipient)] = $recipient;
-						}
-
-						foreach($typeConverters as $key => $typeConverter){
-							NetworkBroadcastUtils::broadcastPackets($converterRecipients[$key], $this->createBlockUpdatePackets($typeConverter, $blocks));
-						}
+						TypeConverter::broadcastByTypeConverter($this->getChunkPlayers($chunkX, $chunkZ), function(TypeConverter $typeConverter) use ($blocks) : array{
+							return $this->createBlockUpdatePackets($typeConverter, $blocks);
+						});
 					}
 				}
 			}
@@ -2132,6 +2094,12 @@ class World implements ChunkManager{
 
 		if($clickVector === null){
 			$clickVector = new Vector3(0.0, 0.0, 0.0);
+		}else{
+			$clickVector = new Vector3(
+				min(1.0, max(0.0, $clickVector->x)),
+				min(1.0, max(0.0, $clickVector->y)),
+				min(1.0, max(0.0, $clickVector->z))
+			);
 		}
 
 		if(!$this->isInWorld($blockReplace->getPosition()->x, $blockReplace->getPosition()->y, $blockReplace->getPosition()->z)){

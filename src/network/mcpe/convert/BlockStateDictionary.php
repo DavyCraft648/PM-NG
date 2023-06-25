@@ -29,6 +29,7 @@ use pocketmine\nbt\NbtDataException;
 use pocketmine\nbt\TreeRoot;
 use pocketmine\network\mcpe\protocol\serializer\NetworkNbtSerializer;
 use pocketmine\utils\Utils;
+use pocketmine\world\format\io\GlobalBlockStateHandlers;
 use function array_key_first;
 use function array_map;
 use function count;
@@ -109,6 +110,10 @@ final class BlockStateDictionary{
 		return ($this->states[$networkRuntimeId] ?? null)?->generateStateData();
 	}
 
+	public function generateCurrentDataFromStateId(int $networkRuntimeId) : ?BlockStateData{
+		return ($this->states[$networkRuntimeId] ?? null)?->generateCurrentStateData();
+	}
+
 	/**
 	 * Searches for the appropriate state ID which matches the given blockstate NBT.
 	 * Returns null if there were no matches.
@@ -166,6 +171,7 @@ final class BlockStateDictionary{
 	}
 
 	public static function loadFromString(string $blockPaletteContents, string $metaMapContents) : self{
+		$upgrader = GlobalBlockStateHandlers::getUpgrader()->getBlockStateUpgrader();
 		$metaMap = json_decode($metaMapContents, flags: JSON_THROW_ON_ERROR);
 		if(!is_array($metaMap)){
 			throw new \InvalidArgumentException("Invalid metaMap, expected array for root type, got " . get_debug_type($metaMap));
@@ -191,8 +197,9 @@ final class BlockStateDictionary{
 			if(!is_int($meta)){
 				throw new \InvalidArgumentException("Invalid metaMap offset $i, expected int, got " . get_debug_type($meta));
 			}
-			$uniqueName = $uniqueNames[$state->getName()] ??= $state->getName();
-			$entries[$i] = new BlockStateDictionaryEntry($uniqueName, $state->getStates(), $meta);
+			$newState = $upgrader->upgrade($state);
+			$uniqueName = $uniqueNames[$newState->getName()] ??= $newState->getName();
+			$entries[$i] = new BlockStateDictionaryEntry($uniqueName, $newState->getStates(), $meta, $newState->equals($state) ? null : $state);
 		}
 
 		return new self($entries);

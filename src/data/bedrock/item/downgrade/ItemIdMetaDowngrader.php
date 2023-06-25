@@ -23,38 +23,79 @@ declare(strict_types=1);
 
 namespace pocketmine\data\bedrock\item\downgrade;
 
-use function ksort;
-use const SORT_NUMERIC;
+use pocketmine\network\mcpe\protocol\serializer\ItemTypeDictionary;
+use pocketmine\utils\AssumptionFailedError;
+use pocketmine\utils\Utils;
+use pocketmine\world\format\io\GlobalItemDataHandlers;
+use function is_array;
 
 /**
- * Downgrades old item string IDs and metas to newer ones according to the given schemas.
+ * Downgrades new item string IDs to older ones according to the given schemas.
  */
 final class ItemIdMetaDowngrader{
 
 	/**
-	 * @var ItemIdMetaDowngradeSchema[]
-	 * @phpstan-var array<int, ItemIdMetaDowngradeSchema>
+	 * @var string[] $renamedIds
+	 * @phpstan-var array<string, string> $renamedIds
 	 */
-	private array $idMetaDowngradeSchemas = [];
-
+	private array $renamedIds = [];
 	/**
-	 * @param ItemIdMetaDowngradeSchema[] $idMetaDowngradeSchemas
-	 * @phpstan-param array<int, ItemIdMetaDowngradeSchema> $idMetaDowngradeSchemas
+	 * @var string[][] $remappedMetas
+	 * @phpstan-var array<string, array{string, int}> $remappedMetas
 	 */
-	public function __construct(
-		array $idMetaDowngradeSchemas,
-	){
-		foreach($idMetaDowngradeSchemas as $schema){
-			$this->addSchema($schema);
-		}
-	}
+	private array $remappedMetas = [];
 
-	public function addSchema(ItemIdMetaDowngradeSchema $schema) : void{
-		if(isset($this->idMetaDowngradeSchemas[$schema->getSchemaId()])){
-			throw new \InvalidArgumentException("Already have a schema with priority " . $schema->getSchemaId());
+	public function __construct(ItemTypeDictionary $dictionary, int $schemaId){
+		$upgrader = GlobalItemDataHandlers::getUpgrader()->getIdMetaUpgrader();
+
+		$networkIds = [];
+		foreach($upgrader->getSchemas() as $id => $schema){
+			if($id <= $schemaId){
+				continue;
+			}
+
+			foreach(Utils::stringifyKeys($schema->getRenamedIds()) as $oldId => $newStringId){
+				if(isset($networkIds[$oldId])){
+					$networkIds[$newStringId] = $networkIds[$oldId];
+				}else{
+					try{
+						$dictionary->fromStringId($oldId);
+						$networkIds[$newStringId] = $oldId;
+					}catch(\InvalidArgumentException $e){
+						//ignore
+					}
+				}
+			}
+
+			foreach(Utils::stringifyKeys($schema->getRemappedMetas()) as $oldId => $metaToNewId){
+				if(isset($networkIds[$oldId])){
+					foreach($metaToNewId as $oldMeta => $newStringId){
+						if(is_array($networkIds[$oldId])){
+							throw new AssumptionFailedError("Can't flatten IDs twice");
+						}else{
+							$networkIds[$newStringId] = [$networkIds[$oldId], $oldMeta];
+						}
+					}
+				}else{
+					try{
+						$dictionary->fromStringId($oldId);
+						foreach($metaToNewId as $oldMeta => $newStringId){
+							$networkIds[$newStringId] = [$oldId, $oldMeta];
+						}
+					}catch(\InvalidArgumentException $e){
+						//ignore
+					}
+				}
+			}
 		}
-		$this->idMetaDowngradeSchemas[$schema->getSchemaId()] = $schema;
-		ksort($this->idMetaDowngradeSchemas, SORT_NUMERIC);
+
+		foreach(Utils::stringifyKeys($networkIds) as $newStringId => $oldId){
+			if(is_array($oldId)){
+				$this->remappedMetas[$newStringId] = $oldId;
+			}else{
+				$this->renamedIds[$newStringId] = $oldId;
+			}
+		}
 	}
 
 	/**
@@ -63,12 +104,11 @@ final class ItemIdMetaDowngrader{
 	public function downgrade(string $id, int $meta) : array{
 		$newId = $id;
 		$newMeta = $meta;
-		foreach($this->idMetaDowngradeSchemas as $schema){
-			if(($remappedMeta = $schema->remapMeta($newId)) !== null){
-				[$newId, $newMeta] = $remappedMeta;
-			}elseif(($renamedId = $schema->renameId($newId)) !== null){
-				$newId = $renamedId;
-			}
+
+		if(isset($this->remappedMetas[$newId])){
+			[$newId, $newMeta] = $this->remappedMetas[$newId];
+		}elseif(isset($this->renamedIds[$newId])){
+			$newId = $this->renamedIds[$newId];
 		}
 
 		return [$newId, $newMeta];
