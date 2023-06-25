@@ -189,7 +189,7 @@ class NetworkSession{
 		private NetworkSessionManager $manager,
 		private PacketPool $packetPool,
 		private PacketSerializerContext $packetSerializerContext,
-		private PacketSender $sender,
+		protected PacketSender $sender,
 		private PacketBroadcaster $broadcaster,
 		private EntityEventBroadcaster $entityEventBroadcaster,
 		private Compressor $compressor,
