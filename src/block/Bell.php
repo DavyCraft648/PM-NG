@@ -156,7 +156,7 @@ final class Bell extends Transparent{
 		$tile = $world->getTile($this->position);
 		if($tile instanceof TileBell){
 			$players = $world->getViewersForPosition($this->position);
-			TypeConverter::broadcastByTypeConverter($players, fn($typeConverter) => [$tile->createFakeUpdatePacket($faceHit, $typeConverter)]);
+			TypeConverter::broadcastByTypeConverter($players, fn(TypeConverter $typeConverter) : array => [$tile->createFakeUpdatePacket($faceHit, $typeConverter)]);
 		}
 	}
 

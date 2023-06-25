@@ -410,15 +410,12 @@ class Block{
 	public function place(BlockTransaction $tx, Item $item, Block $blockReplace, Block $blockClicked, int $face, Vector3 $clickVector, ?Player $player = null) : bool{
 		if($this->getLayer() === 0){
 			if($this->getWaterloggingLevel() >= 1){
-				$water = clone $this->getBlockLayer(0);
-				$water->setLayer(1);
+				$water = $this->getBlockLayer(0);
 				if($water instanceof Water && $this->canWaterlogged($water)){
-					$tx->addBlock($blockReplace->position, $water);
+					$tx->addBlock($blockReplace->position, (clone $water)->setLayer(1));
 				}
 			}elseif($this->getBlockLayer(0)->getTypeId() !== BlockTypeIds::AIR){
-				$air = VanillaBlocks::AIR();
-				$air->setLayer(1);
-				$tx->addBlock($blockReplace->position, $air);
+				$tx->addBlock($blockReplace->position, VanillaBlocks::AIR()->setLayer(1));
 			}
 		}
 		$tx->addBlock($blockReplace->position, $this);

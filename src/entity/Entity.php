@@ -1114,7 +1114,7 @@ abstract class Entity{
 			if($block instanceof Water){
 				$f = ($blockY + 1) - ($block->getFluidHeightPercent() - 0.1111111);
 				return $y < $f;
-			}elseif($layer === 0 && $block instanceof Air){
+			}elseif($layer === 0 && $block->getTypeId() === BlockTypeIds::AIR){
 				return false;
 			}
 		}
