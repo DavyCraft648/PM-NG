@@ -49,10 +49,7 @@ use pocketmine\utils\Binary;
 use pocketmine\utils\ProtocolSingletonTrait;
 use Ramsey\Uuid\Uuid;
 use function array_map;
-use function in_array;
 use function spl_object_id;
-use function str_contains;
-use function var_dump;
 
 final class CraftingDataCache{
 	use ProtocolSingletonTrait;
@@ -98,10 +95,10 @@ final class CraftingDataCache{
 						default => throw new AssumptionFailedError("Unreachable"),
 					};
 
-					$inputs = array_map(function(RecipeIngredient $item) use ($converter) : ?ProtocolRecipeIngredient{
+					$inputs = array_map(function(RecipeIngredient $item) use ($converter) : ProtocolRecipeIngredient{
 						return $converter->coreRecipeIngredientToNet($item);
 					}, $recipe->getIngredientList());
-					$outputs = array_map(function(Item $item) use ($converter) : ?ItemStack{
+					$outputs = array_map(function(Item $item) use ($converter) : ItemStack{
 						return $converter->coreItemStackToNet($item);
 					}, $recipe->getResults());
 
@@ -124,7 +121,7 @@ final class CraftingDataCache{
 						}
 					}
 
-					$outputs = array_map(function(Item $item) use ($converter) : ?ItemStack{
+					$outputs = array_map(function(Item $item) use ($converter) : ItemStack{
 						return $converter->coreItemStackToNet($item);
 					}, $recipe->getResults());
 
@@ -141,7 +138,7 @@ final class CraftingDataCache{
 				}else{
 					//TODO: probably special recipe types
 				}
-			}catch(\InvalidArgumentException|ItemTypeSerializeException $e){
+			}catch(\InvalidArgumentException|ItemTypeSerializeException){
 				continue;
 			}
 		}

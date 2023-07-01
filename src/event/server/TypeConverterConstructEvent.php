@@ -23,12 +23,7 @@ declare(strict_types=1);
 
 namespace pocketmine\event\server;
 
-use pocketmine\event\Cancellable;
-use pocketmine\event\CancellableTrait;
 use pocketmine\network\mcpe\convert\TypeConverter;
-use pocketmine\network\mcpe\NetworkSession;
-use pocketmine\network\mcpe\protocol\ClientboundPacket;
-use pocketmine\utils\Utils;
 
 /**
  * Called when a new type converter is constructed.
