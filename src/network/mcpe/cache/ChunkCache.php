@@ -123,14 +123,7 @@ class ChunkCache implements ChunkListener{
 					$chunk,
 					$typeConverter,
 					$this->caches[$chunkHash][$protocolId],
-					$this->compressor,
-					function() use ($chunkHash, $chunkX, $chunkZ, $protocolId) : void{
-						$this->world->getLogger()->error("Failed preparing chunk $chunkX $chunkZ, retrying");
-
-						if(isset($this->caches[$chunkHash])){
-							$this->restartPendingRequest($chunkX, $chunkZ, $protocolId);
-						}
-					}
+					$this->compressor
 				)
 			);
 

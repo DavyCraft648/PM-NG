@@ -38,7 +38,6 @@ use function xxhash64;
 
 class ChunkRequestTask extends AsyncTask{
 	private const TLS_KEY_PROMISE = "promise";
-	private const TLS_KEY_ERROR_HOOK = "errorHook";
 
 	protected string $chunk;
 	protected int $chunkX;
@@ -48,10 +47,7 @@ class ChunkRequestTask extends AsyncTask{
 	protected int $mappingProtocol;
 	private string $tiles;
 
-	/**
-	 * @phpstan-param (\Closure() : void)|null $onError
-	 */
-	public function __construct(int $chunkX, int $chunkZ, Chunk $chunk, TypeConverter $typeConverter, CachedChunkPromise $promise, Compressor $compressor, ?\Closure $onError = null){
+	public function __construct(int $chunkX, int $chunkZ, Chunk $chunk, TypeConverter $typeConverter, CachedChunkPromise $promise, Compressor $compressor){
 		$this->compressor = new NonThreadSafeValue($compressor);
 		$this->mappingProtocol = $typeConverter->getProtocolId();
 
@@ -61,7 +57,6 @@ class ChunkRequestTask extends AsyncTask{
 		$this->tiles = ChunkSerializer::serializeTiles($chunk, $typeConverter);
 
 		$this->storeLocal(self::TLS_KEY_PROMISE, $promise);
-		$this->storeLocal(self::TLS_KEY_ERROR_HOOK, $onError);
 	}
 
 	public function onRun() : void{
@@ -95,17 +90,6 @@ class ChunkRequestTask extends AsyncTask{
 		);
 
 		$this->setResult($cache);
-	}
-
-	public function onError() : void{
-		/**
-		 * @var \Closure|null $hook
-		 * @phpstan-var (\Closure() : void)|null $hook
-		 */
-		$hook = $this->fetchLocal(self::TLS_KEY_ERROR_HOOK);
-		if($hook !== null){
-			$hook();
-		}
 	}
 
 	public function onCompletion() : void{
