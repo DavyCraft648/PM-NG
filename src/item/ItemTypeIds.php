@@ -302,18 +302,19 @@ final class ItemTypeIds{
 	public const MEDICINE = 20263;
 	public const MANGROVE_BOAT = 20264;
 	public const GLOW_BERRIES = 20265;
-	public const CROSSBOW = 20266;
-	public const ELYTRA = 20267;
-	public const TRIDENT = 20268;
-	public const CARROT_ON_A_STICK = 20269;
-	public const SHIELD = 20270;
-	public const LEATHER_HORSE_ARMOR = 20271;
-	public const IRON_HORSE_ARMOR = 20272;
-	public const GOLDEN_HORSE_ARMOR = 20273;
-	public const DIAMOND_HORSE_ARMOR = 20274;
-	public const ENCHANTED_BOOK = 20275;
+	public const CHERRY_SIGN = 20266;
+	public const CROSSBOW = 20267;
+	public const ELYTRA = 20268;
+	public const TRIDENT = 20269;
+	public const CARROT_ON_A_STICK = 20270;
+	public const SHIELD = 20271;
+	public const LEATHER_HORSE_ARMOR = 20272;
+	public const IRON_HORSE_ARMOR = 20273;
+	public const GOLDEN_HORSE_ARMOR = 20274;
+	public const DIAMOND_HORSE_ARMOR = 20275;
+	public const ENCHANTED_BOOK = 20276;
 
-	public const FIRST_UNUSED_ITEM_ID = 20276;
+	public const FIRST_UNUSED_ITEM_ID = 20278;
 
 	private static int $nextDynamicId = self::FIRST_UNUSED_ITEM_ID;
 
