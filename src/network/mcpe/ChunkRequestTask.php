@@ -47,7 +47,7 @@ class ChunkRequestTask extends AsyncTask{
 	protected int $mappingProtocol;
 	private string $tiles;
 
-	public function __construct(int $chunkX, int $chunkZ, Chunk $chunk, TypeConverter $typeConverter, CompressBatchPromise $promise, Compressor $compressor){
+	public function __construct(int $chunkX, int $chunkZ, Chunk $chunk, TypeConverter $typeConverter, CachedChunkPromise $promise, Compressor $compressor){
 		$this->compressor = new NonThreadSafeValue($compressor);
 		$this->mappingProtocol = $typeConverter->getProtocolId();
 
