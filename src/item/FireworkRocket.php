@@ -94,9 +94,8 @@ class FireworkRocket extends Item{
 		return $this;
 	}
 
-	public function onClickAir(Player $player, Vector3 $directionVector, array &$returnedItems): ItemUseResult
-	{
-		if ($player->isGliding() && $player->getArmorInventory()->getChestplate()->getTypeId() === ItemTypeIds::ELYTRA) {
+	public function onClickAir(Player $player, Vector3 $directionVector, array &$returnedItems) : ItemUseResult{
+		if($player->isGliding() && $player->getArmorInventory()->getChestplate()->getTypeId() === ItemTypeIds::ELYTRA){
 			$randomDuration = (($this->flightDurationMultiplier + 1) * 10) + mt_rand(0, 12);
 
 			$entity = new FireworkEntity(Location::fromObject($player->getPosition()->add(0.5, 0, 0.5), $player->getWorld(), lcg_value() * 360, 90), $randomDuration, $this->explosions);
