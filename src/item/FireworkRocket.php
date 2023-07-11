@@ -94,6 +94,25 @@ class FireworkRocket extends Item{
 		return $this;
 	}
 
+	public function onClickAir(Player $player, Vector3 $directionVector, array &$returnedItems): ItemUseResult
+	{
+		if ($player->isGliding() && $player->getArmorInventory()->getChestplate()->getTypeId() === ItemTypeIds::ELYTRA) {
+			$randomDuration = (($this->flightDurationMultiplier + 1) * 10) + mt_rand(0, 12);
+
+			$entity = new FireworkEntity(Location::fromObject($player->getPosition()->add(0.5, 0, 0.5), $player->getWorld(), lcg_value() * 360, 90), $randomDuration, $this->explosions);
+			$entity->setOwningEntity($player);
+			$entity->setMotion(new Vector3(lcg_value() * 0.001, 0.05, lcg_value() * 0.001));
+			$entity->spawnToAll();
+
+			$this->pop();
+			$player->setMotion($player->getDirectionVector()->multiply(1.8));
+
+			return ItemUseResult::SUCCESS();
+		}
+
+		return parent::onClickAir($player, $directionVector, $returnedItems);
+	}
+
 	public function onInteractBlock(Player $player, Block $blockReplace, Block $blockClicked, int $face, Vector3 $clickVector, array &$returnedItems) : ItemUseResult{
 		$correction = 0.15;
 		$position = $blockClicked->getPosition()->addVector($clickVector);
