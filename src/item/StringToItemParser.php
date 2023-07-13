@@ -1282,6 +1282,9 @@ final class StringToItemParser extends StringToTParser{
 		$result->register("eye_drops", fn() => Items::MEDICINE()->setType(MedicineType::EYE_DROPS()));
 		$result->register("feather", fn() => Items::FEATHER());
 		$result->register("fermented_spider_eye", fn() => Items::FERMENTED_SPIDER_EYE());
+		$result->register("firework_rocket", fn() => Items::FIREWORK_ROCKET());
+		$result->register("firework_star", fn() => Items::FIREWORK_STAR());
+		$result->register("fireworks", fn() => Items::FIREWORK_ROCKET());
 		$result->register("fire_charge", fn() => Items::FIRE_CHARGE());
 		$result->register("fire_resistance_potion", fn() => Items::POTION()->setType(PotionType::FIRE_RESISTANCE()));
 		$result->register("fire_resistance_splash_potion", fn() => Items::SPLASH_POTION()->setType(PotionType::FIRE_RESISTANCE()));
