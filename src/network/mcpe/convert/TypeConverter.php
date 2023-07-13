@@ -41,6 +41,7 @@ use pocketmine\nbt\NbtException;
 use pocketmine\nbt\tag\CompoundTag;
 use pocketmine\network\mcpe\NetworkBroadcastUtils;
 use pocketmine\network\mcpe\protocol\ClientboundPacket;
+use pocketmine\network\mcpe\protocol\ProtocolInfo;
 use pocketmine\network\mcpe\protocol\serializer\ItemTypeDictionary;
 use pocketmine\network\mcpe\protocol\types\GameMode as ProtocolGameMode;
 use pocketmine\network\mcpe\protocol\types\inventory\ItemStack;
@@ -168,6 +169,9 @@ class TypeConverter{
 			}
 			$descriptor = new IntIdMetaItemDescriptor($id, $meta);
 		}elseif($ingredient instanceof TagWildcardRecipeIngredient){
+			if($this->protocolId < ProtocolInfo::PROTOCOL_1_19_30){
+				throw new \InvalidArgumentException("TagWildcardRecipeIngredient: not supported below 1.19.30");
+			}
 			$descriptor = new TagItemDescriptor($ingredient->getTagName());
 		}else{
 			throw new \LogicException("Unsupported recipe ingredient type " . get_class($ingredient) . ", only " . ExactRecipeIngredient::class . " and " . MetaWildcardRecipeIngredient::class . " are supported");
