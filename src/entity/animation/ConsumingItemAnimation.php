@@ -23,7 +23,7 @@ declare(strict_types=1);
 
 namespace pocketmine\entity\animation;
 
-use pocketmine\entity\Human;
+use pocketmine\entity\Living;
 use pocketmine\item\Item;
 use pocketmine\network\mcpe\protocol\ActorEventPacket;
 use pocketmine\network\mcpe\protocol\types\ActorEvent;
@@ -31,7 +31,7 @@ use pocketmine\network\mcpe\protocol\types\ActorEvent;
 final class ConsumingItemAnimation extends ItemAnimation{
 
 	public function __construct(
-		private Human $human, //TODO: maybe this can be expanded to more than just player entities?
+		private Living $entity,
 		Item $item
 	){
 		parent::__construct($item);
@@ -41,7 +41,7 @@ final class ConsumingItemAnimation extends ItemAnimation{
 		[$netId, $netData] = $this->toNetworkId();
 		return [
 			//TODO: need to check the data values
-			ActorEventPacket::create($this->human->getId(), ActorEvent::EATING_ITEM, ($netId << 16) | $netData)
+			ActorEventPacket::create($this->entity->getId(), ActorEvent::EATING_ITEM, ($netId << 16) | $netData)
 		];
 	}
 }
