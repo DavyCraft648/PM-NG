@@ -28,8 +28,10 @@ use pocketmine\item\Book;
 use pocketmine\item\Item;
 use pocketmine\item\VanillaItems;
 use pocketmine\player\Player;
+use pocketmine\utils\Limits;
 use function assert;
 use function count;
+use function random_int;
 
 class EnchantTransaction extends InventoryTransaction{
 	private int $selectedRecipeId = -1;
@@ -99,6 +101,7 @@ class EnchantTransaction extends InventoryTransaction{
 			$networkSession->getEntityEventBroadcaster()->syncAttributes([$networkSession], $this->source, $this->source->getAttributeMap()->getAll());
 			throw $e;
 		}
+		$this->source->setXpSeed(random_int(Limits::INT32_MIN, Limits::INT32_MAX));
 
 		if($this->source->isCreative()){
 			return;
