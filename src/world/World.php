@@ -148,6 +148,7 @@ use const PHP_INT_MIN;
 
 /**
  * @phpstan-type ChunkPosHash int
+ * @phpstan-type TypeConverterHash int|null
  * @phpstan-type BlockPosHash int
  * @phpstan-type ChunkBlockPosHash int
  */
@@ -258,8 +259,8 @@ class World implements ChunkManager{
 	private array $playerChunkListeners = [];
 
 	/**
-	 * @var ClientboundPacket[][] chunkHash => [spl_object_id => ClientboundPacket[]]
-	 * @phpstan-var array<ChunkPosHash, array<?int, list<ClientboundPacket>>>
+	 * @var ClientboundPacket[][] chunkHash => [typeConverterHash => ClientboundPacket[]]
+	 * @phpstan-var array<ChunkPosHash, array<TypeConverterHash, list<ClientboundPacket>>>
 	 */
 	private array $packetBuffersByChunk = [];
 
@@ -826,6 +827,7 @@ class World implements ChunkManager{
 
 	/**
 	 * Broadcasts packets to every player who has the target position within their view distance.
+	 * @phpstan-param \Closure(TypeConverter) : ClientboundPacket[] $closure
 	 */
 	public function broadcastPacketToViewersByTypeConverter(Vector3 $pos, \Closure $closure) : void{
 		Utils::validateCallableSignature(new CallbackType(
@@ -845,6 +847,7 @@ class World implements ChunkManager{
 	}
 
 	private function broadcastPacketToPlayersUsingChunk(int $chunkX, int $chunkZ, ClientboundPacket $packet, ?TypeConverter $typeConverter = null) : void{
+		/** @var int|null $typeConverterId */
 		$typeConverterId = $typeConverter === null ? null : spl_object_id($typeConverter);
 
 		if(!isset($this->packetBuffersByChunk[$index = World::chunkHash($chunkX, $chunkZ)][$typeConverterId])){
