@@ -847,7 +847,7 @@ class World implements ChunkManager{
 	}
 
 	private function broadcastPacketToPlayersUsingChunk(int $chunkX, int $chunkZ, ClientboundPacket $packet, ?TypeConverter $typeConverter = null) : void{
-		/** @var int|null $typeConverterId */
+		/** @phpstan-var int|null $typeConverterId */
 		$typeConverterId = $typeConverter === null ? null : spl_object_id($typeConverter);
 
 		if(!isset($this->packetBuffersByChunk[$index = World::chunkHash($chunkX, $chunkZ)][$typeConverterId])){
