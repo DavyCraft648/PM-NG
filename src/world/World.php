@@ -1096,7 +1096,10 @@ class World implements ChunkManager{
 			[$typeConverters, $converterRecipients] = TypeConverter::sortByConverter($this->getChunkPlayers($chunkX, $chunkZ));
 
 			foreach($typeConverters as $key => $typeConverter){
-				$packets = (array_map(fn(\Closure $closure) => $closure($typeConverter), $entries[$key] ?? [])) + ($this->packetBuffersByChunk[$index] ?? []);
+				$packets = $this->packetBuffersByChunk[$index] ?? [];
+				foreach($entries as $closure){
+					$packets += $closure($typeConverter);
+				}
 
 				if(count($packets) > 0){
 					NetworkBroadcastUtils::broadcastPackets($converterRecipients[$key], $packets);
