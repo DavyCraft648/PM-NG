@@ -118,6 +118,7 @@ use function array_key_exists;
 use function array_keys;
 use function array_map;
 use function array_merge;
+use function array_reduce;
 use function array_sum;
 use function assert;
 use function cos;
@@ -1096,10 +1097,9 @@ class World implements ChunkManager{
 			[$typeConverters, $converterRecipients] = TypeConverter::sortByConverter($this->getChunkPlayers($chunkX, $chunkZ));
 
 			foreach($typeConverters as $key => $typeConverter){
-				$packets = $this->packetBuffersByChunk[$index] ?? [];
-				foreach($entries as $closure){
-					$packets += $closure($typeConverter);
-				}
+				$packets = array_reduce($entries, function(array $carry, \Closure $closure) use ($typeConverter) : int{
+					return $carry + $closure($typeConverter);
+				}, $this->packetBuffersByChunk[$index] ?? []);
 
 				if(count($packets) > 0){
 					NetworkBroadcastUtils::broadcastPackets($converterRecipients[$key], $packets);
