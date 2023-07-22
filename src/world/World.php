@@ -1097,7 +1097,7 @@ class World implements ChunkManager{
 			[$typeConverters, $converterRecipients] = TypeConverter::sortByConverter($this->getChunkPlayers($chunkX, $chunkZ));
 
 			foreach($typeConverters as $key => $typeConverter){
-				$packets = array_reduce($entries, function(array $carry, \Closure $closure) use ($typeConverter) : int{
+				$packets = array_reduce($entries, function(array $carry, \Closure $closure) use ($typeConverter) : array{
 					return $carry + $closure($typeConverter);
 				}, $this->packetBuffersByChunk[$index] ?? []);
 
