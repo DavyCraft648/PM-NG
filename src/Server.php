@@ -1439,7 +1439,7 @@ class Server{
 
 	private function forceShutdownExit() : void{
 		$this->forceShutdown();
-		Process::kill(Process::pid(), true);
+		Process::kill(Process::pid());
 	}
 
 	public function forceShutdown() : void{
@@ -1508,7 +1508,7 @@ class Server{
 		}catch(\Throwable $e){
 			$this->logger->logException($e);
 			$this->logger->emergency("Crashed while crashing, killing process");
-			@Process::kill(Process::pid(), true);
+			@Process::kill(Process::pid());
 		}
 
 	}
@@ -1662,7 +1662,7 @@ class Server{
 			echo "--- Waiting $spacing seconds to throttle automatic restart (you can kill the process safely now) ---" . PHP_EOL;
 			sleep($spacing);
 		}
-		@Process::kill(Process::pid(), true);
+		@Process::kill(Process::pid());
 		exit(1);
 	}
 
