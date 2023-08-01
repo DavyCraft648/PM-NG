@@ -211,7 +211,13 @@ class NetworkSession{
 		$this->setHandler(new LoginPacketHandler(
 			$this->server,
 			$this,
-			$this->onSessionStartSuccess(...)
+			function(PlayerInfo $info) : void{
+				$this->info = $info;
+				$this->logger->info($this->server->getLanguage()->translate(KnownTranslationFactory::pocketmine_network_session_playerName(TextFormat::AQUA . $info->getUsername() . TextFormat::RESET)));
+				$this->logger->setPrefix($this->getLogPrefix());
+				$this->manager->markLoginReceived($this);
+			},
+			$this->setAuthenticationStatus(...)
 		));
 
 		$this->manager->add($this);
@@ -417,7 +423,7 @@ class NetworkSession{
 						$this->enableCompression = false;
 						$this->setHandler(new SessionStartPacketHandler(
 							$this,
-							fn() => $this->onSessionStartSuccess()
+							$this->onSessionStartSuccess(...)
 						));
 
 						$decompressed = $payload;
