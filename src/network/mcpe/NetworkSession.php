@@ -211,13 +211,7 @@ class NetworkSession{
 		$this->setHandler(new LoginPacketHandler(
 			$this->server,
 			$this,
-			function(PlayerInfo $info) : void{
-				$this->info = $info;
-				$this->logger->info($this->server->getLanguage()->translate(KnownTranslationFactory::pocketmine_network_session_playerName(TextFormat::AQUA . $info->getUsername() . TextFormat::RESET)));
-				$this->logger->setPrefix($this->getLogPrefix());
-				$this->manager->markLoginReceived($this);
-			},
-			\Closure::fromCallable([$this, "setAuthenticationStatus"])
+			$this->onSessionStartSuccess(...)
 		));
 
 		$this->manager->add($this);
@@ -245,13 +239,13 @@ class NetworkSession{
 				$this->logger->setPrefix($this->getLogPrefix());
 				$this->manager->markLoginReceived($this);
 			},
-			\Closure::fromCallable([$this, "setAuthenticationStatus"])
+			$this->setAuthenticationStatus(...)
 		));
 	}
 
 	protected function createPlayer() : void{
 		$this->server->createPlayer($this, $this->info, $this->authenticated, $this->cachedOfflinePlayerData)->onCompletion(
-			\Closure::fromCallable([$this, 'onPlayerCreated']),
+			$this->onPlayerCreated(...),
 			function() : void{
 				//TODO: this should never actually occur... right?
 				$this->logger->error("Failed to create player");
@@ -866,9 +860,7 @@ class NetworkSession{
 
 				$this->cipher = EncryptionContext::fakeGCM($encryptionKey);
 
-				$this->setHandler(new HandshakePacketHandler(function() : void{
-					$this->onServerLoginSuccess();
-				}));
+				$this->setHandler(new HandshakePacketHandler($this->onServerLoginSuccess(...)));
 				$this->logger->debug("Enabled encryption");
 			}));
 		}else{
@@ -897,9 +889,7 @@ class NetworkSession{
 	public function notifyTerrainReady() : void{
 		$this->logger->debug("Sending spawn notification, waiting for spawn response");
 		$this->sendDataPacket(PlayStatusPacket::create(PlayStatusPacket::PLAYER_SPAWN));
-		$this->setHandler(new SpawnResponsePacketHandler(function() : void{
-			$this->onClientSpawnResponse();
-		}, $this));
+		$this->setHandler(new SpawnResponsePacketHandler($this->onClientSpawnResponse(...), $this));
 	}
 
 	private function onClientSpawnResponse() : void{
