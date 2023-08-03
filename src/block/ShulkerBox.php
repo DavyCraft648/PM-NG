@@ -25,6 +25,7 @@ namespace pocketmine\block;
 
 use pocketmine\block\tile\ShulkerBox as TileShulkerBox;
 use pocketmine\block\utils\AnyFacingTrait;
+use pocketmine\block\utils\SupportType;
 use pocketmine\data\runtime\RuntimeDataDescriber;
 use pocketmine\item\Item;
 use pocketmine\math\Vector3;
@@ -113,5 +114,9 @@ class ShulkerBox extends Opaque{
 
 	public function getWaterloggingLevel() : int{
 		return 1;
+	}
+
+	public function getSupportType(int $facing) : SupportType{
+		return SupportType::NONE();
 	}
 }
