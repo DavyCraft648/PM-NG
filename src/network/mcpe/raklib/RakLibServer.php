@@ -84,6 +84,7 @@ class RakLibServer extends Thread{
 		gc_enable();
 		ini_set("display_errors", '1');
 		ini_set("display_startup_errors", '1');
+		\GlobalLogger::set($this->logger);
 
 		$socket = new ServerSocket($this->address->deserialize());
 		$manager = new Server(
@@ -104,11 +105,6 @@ class RakLibServer extends Thread{
 			$manager->tickProcessor();
 		}
 		$manager->waitShutdown();
-	}
-
-	protected function onUncaughtException(\Throwable $e) : void{
-		parent::onUncaughtException($e);
-		$this->logger->logException($e);
 	}
 
 	public function getThreadName() : string{
