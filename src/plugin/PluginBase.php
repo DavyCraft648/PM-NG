@@ -30,20 +30,22 @@ use pocketmine\command\PluginCommand;
 use pocketmine\lang\KnownTranslationFactory;
 use pocketmine\scheduler\TaskScheduler;
 use pocketmine\Server;
-use pocketmine\utils\AssumptionFailedError;
 use pocketmine\utils\Config;
 use pocketmine\utils\Utils;
 use Symfony\Component\Filesystem\Path;
+use function copy;
 use function count;
 use function dirname;
-use function fclose;
 use function file_exists;
 use function fopen;
+use function is_dir;
 use function mkdir;
 use function rtrim;
 use function str_contains;
-use function stream_copy_to_stream;
+use function str_replace;
+use function strlen;
 use function strtolower;
+use function substr;
 use function trim;
 use const DIRECTORY_SEPARATOR;
 
@@ -62,11 +64,13 @@ abstract class PluginBase implements Plugin, CommandExecutor{
 		private PluginDescription $description,
 		private string $dataFolder,
 		private string $file,
-		private ResourceProvider $resourceProvider
+		private string $resourceFolder,
 	){
 		$this->dataFolder = rtrim($dataFolder, "/" . DIRECTORY_SEPARATOR) . "/";
 		//TODO: this is accessed externally via reflection, not unused
 		$this->file = rtrim($file, "/" . DIRECTORY_SEPARATOR) . "/";
+		$this->resourceFolder = rtrim(str_replace(DIRECTORY_SEPARATOR, "/", $resourceFolder), "/") . "/";
+
 		$this->configFile = Path::join($this->dataFolder, "config.yml");
 
 		$prefix = $this->getDescription()->getPrefix();
@@ -209,13 +213,21 @@ abstract class PluginBase implements Plugin, CommandExecutor{
 	}
 
 	/**
-	 * Gets an embedded resource on the plugin file.
-	 * WARNING: You must close the resource given using fclose()
-	 *
-	 * @return null|resource Resource data, or null
+	 * Returns the path to the folder where the plugin's embedded resource files are usually located.
+	 * Note: This is NOT the same as the data folder. The files in this folder should be considered read-only.
 	 */
-	public function getResource(string $filename){
-		return $this->resourceProvider->getResource($filename);
+	public function getResourceFolder() : string{
+		return $this->resourceFolder;
+	}
+
+	/**
+	 * Returns the full path to a data file in the plugin's resources folder.
+	 * This path can be used with standard PHP functions like fopen() or file_get_contents().
+	 *
+	 * Note: Any path returned by this function should be considered READ-ONLY.
+	 */
+	public function getResourcePath(string $filename) : string{
+		return Path::join($this->getResourceFolder(), $filename);
 	}
 
 	/**
@@ -226,26 +238,21 @@ abstract class PluginBase implements Plugin, CommandExecutor{
 			return false;
 		}
 
-		if(($resource = $this->getResource($filename)) === null){
+		$source = Path::join($this->resourceFolder, $filename);
+		if(!file_exists($source)){
 			return false;
 		}
 
-		$out = Path::join($this->dataFolder, $filename);
-		if(!file_exists(dirname($out))){
-			mkdir(dirname($out), 0755, true);
-		}
-
-		if(file_exists($out) && !$replace){
+		$destination = Path::join($this->dataFolder, $filename);
+		if(file_exists($destination) && !$replace){
 			return false;
 		}
 
-		$fp = fopen($out, "wb");
-		if($fp === false) throw new AssumptionFailedError("fopen() should not fail with wb flags");
+		if(!file_exists(dirname($destination))){
+			mkdir(dirname($destination), 0755, true);
+		}
 
-		$ret = stream_copy_to_stream($resource, $fp) > 0;
-		fclose($fp);
-		fclose($resource);
-		return $ret;
+		return copy($source, $destination);
 	}
 
 	/**
@@ -254,7 +261,18 @@ abstract class PluginBase implements Plugin, CommandExecutor{
 	 * @return \SplFileInfo[]
 	 */
 	public function getResources() : array{
-		return $this->resourceProvider->getResources();
+		$resources = [];
+		if(is_dir($this->resourceFolder)){
+			/** @var \SplFileInfo $resource */
+			foreach(new \RecursiveIteratorIterator(new \RecursiveDirectoryIterator($this->resourceFolder)) as $resource){
+				if($resource->isFile()){
+					$path = str_replace(DIRECTORY_SEPARATOR, "/", substr((string) $resource, strlen($this->resourceFolder)));
+					$resources[$path] = $resource;
+				}
+			}
+		}
+
+		return $resources;
 	}
 
 	public function getConfig() : Config{

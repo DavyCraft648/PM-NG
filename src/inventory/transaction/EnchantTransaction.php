@@ -23,89 +23,112 @@ declare(strict_types=1);
 
 namespace pocketmine\inventory\transaction;
 
-use pocketmine\block\inventory\EnchantInventory;
-use pocketmine\item\Book;
+use pocketmine\event\player\PlayerItemEnchantEvent;
+use pocketmine\item\enchantment\EnchantmentHelper;
+use pocketmine\item\enchantment\EnchantOption;
 use pocketmine\item\Item;
-use pocketmine\item\VanillaItems;
+use pocketmine\item\ItemTypeIds;
 use pocketmine\player\Player;
-use pocketmine\utils\Limits;
-use function assert;
+use pocketmine\utils\AssumptionFailedError;
 use function count;
-use function random_int;
+use function min;
 
 class EnchantTransaction extends InventoryTransaction{
-	private int $selectedRecipeId = -1;
 
-	public function __construct(Player $source, private Item $item, array $actions = []){
-		parent::__construct($source, $actions);
+	private ?Item $inputItem = null;
+	private ?Item $outputItem = null;
+
+	public function __construct(
+		Player $source,
+		private readonly EnchantOption $option,
+		private readonly int $cost
+	){
+		parent::__construct($source);
 	}
 
-	public function getResult(int $recipeId) : ?Item{
-		$window = $this->source->getCurrentWindow();
-		assert($window instanceof EnchantInventory);
-
-		$entry = $window->getEnchantmentEntry($recipeId);
-		if($entry === null){
-			return null;
+	private function validateOutput() : void{
+		if($this->inputItem === null || $this->outputItem === null){
+			throw new AssumptionFailedError("Expected that inputItem and outputItem are not null before validating output");
 		}
 
-		$this->selectedRecipeId = $recipeId;
+		$enchantedInput = EnchantmentHelper::enchantItem($this->inputItem, $this->option->getEnchantments());
+		if(!$this->outputItem->equalsExact($enchantedInput)){
+			throw new TransactionValidationException("Invalid output item");
+		}
+	}
 
-		$item = $this->item;
-		if($item instanceof Book){
-			$item = VanillaItems::ENCHANTED_BOOK();
+	private function validateFiniteResources(int $lapisSpent) : void{
+		if($lapisSpent !== $this->cost){
+			throw new TransactionValidationException("Expected the amount of lapis lazuli spent to be $this->cost, but received $lapisSpent");
 		}
 
-		foreach($entry->getEnchantments() as $enchantment){
-			$item->addEnchantment($enchantment);
+		$xpLevel = $this->source->getXpManager()->getXpLevel();
+		$requiredXpLevel = $this->option->getRequiredXpLevel();
+
+		if($xpLevel < $requiredXpLevel){
+			throw new TransactionValidationException("Player's XP level $xpLevel is less than the required XP level $requiredXpLevel");
 		}
-		return $item;
+		//XP level cost is intentionally not checked here, as the required level may be lower than the cost, allowing
+		//the option to be used with less XP than the cost - in this case, as much XP as possible will be deducted.
 	}
 
 	public function validate() : void{
-		$this->squashDuplicateSlotChanges();
 		if(count($this->actions) < 1){
 			throw new TransactionValidationException("Transaction must have at least one action to be executable");
 		}
 
-		/** @var Item[] $createdItems */
-		$createdItems = [];
-		/** @var Item[] $deletedItems */
-		$deletedItems = [];
-		$this->matchItems($createdItems, $deletedItems);
-		if(count($createdItems) < 1){
-			throw new TransactionValidationException("No resulting items.");
+		/** @var Item[] $inputs */
+		$inputs = [];
+		/** @var Item[] $outputs */
+		$outputs = [];
+		$this->matchItems($outputs, $inputs);
+
+		$lapisSpent = 0;
+		foreach($inputs as $input){
+			if($input->getTypeId() === ItemTypeIds::LAPIS_LAZULI){
+				$lapisSpent = $input->getCount();
+			}else{
+				if($this->inputItem !== null){
+					throw new TransactionValidationException("Received more than 1 items to enchant");
+				}
+				$this->inputItem = $input;
+			}
 		}
-		if(count($deletedItems) < 1 + ((int) !$this->source->isCreative())){
-			throw new TransactionValidationException("Not enough deleted items.");
+
+		if($this->inputItem === null){
+			throw new TransactionValidationException("No item to enchant received");
+		}
+
+		if(($outputCount = count($outputs)) !== 1){
+			throw new TransactionValidationException("Expected 1 output item, but received $outputCount");
+		}
+		$this->outputItem = $outputs[0];
+
+		$this->validateOutput();
+
+		if($this->source->hasFiniteResources()){
+			$this->validateFiniteResources($lapisSpent);
 		}
 	}
 
 	public function execute() : void{
-		$window = $this->source->getCurrentWindow();
-		assert($window instanceof EnchantInventory);
+		parent::execute();
 
-		$entry = $window->getEnchantmentEntry($this->selectedRecipeId);
-		if($entry === null){
-			throw new TransactionValidationException("No such option exists.");
+		if($this->source->hasFiniteResources()){
+			//If the required XP level is less than the XP cost, the option can be selected with less XP than the cost.
+			//In this case, as much XP as possible will be taken.
+			$this->source->getXpManager()->subtractXpLevels(min($this->cost, $this->source->getXpManager()->getXpLevel()));
+		}
+		$this->source->setEnchantmentSeed($this->source->generateEnchantmentSeed());
+	}
+
+	protected function callExecuteEvent() : bool{
+		if($this->inputItem === null || $this->outputItem === null){
+			throw new AssumptionFailedError("Expected that inputItem and outputItem are not null before executing the event");
 		}
 
-		$cost = $entry->getIndex() + 1;
-		if(!$this->source->isCreative() && $this->source->getXpManager()->getXpLevel() < $cost){
-			throw new TransactionValidationException("Not enough XP.");
-		}
-		try{
-			parent::execute();
-		}catch(TransactionValidationException $e){
-			$networkSession = $this->source->getNetworkSession();
-			$networkSession->getEntityEventBroadcaster()->syncAttributes([$networkSession], $this->source, $this->source->getAttributeMap()->getAll());
-			throw $e;
-		}
-		$this->source->setXpSeed(random_int(Limits::INT32_MIN, Limits::INT32_MAX));
-
-		if($this->source->isCreative()){
-			return;
-		}
-		$this->source->getXpManager()->subtractXpLevels($cost);
+		$event = new PlayerItemEnchantEvent($this->source, $this, $this->option, $this->inputItem, $this->outputItem, $this->cost);
+		$event->call();
+		return !$event->isCancelled();
 	}
 }

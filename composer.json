@@ -22,7 +22,7 @@
       "ext-openssl": "*",
       "ext-pcre": "*",
       "ext-phar": "*",
-      "ext-pmmpthread": "^6.0.4",
+      "ext-pmmpthread": "^6.0.7",
       "ext-reflection": "*",
       "ext-simplexml": "*",
       "ext-sockets": "*",
@@ -43,7 +43,7 @@
       "pocketmine/errorhandler": "^0.6.0",
       "pocketmine/locale-data": "~2.19.0",
       "pocketmine/log": "^0.4.0",
-      "pocketmine/math": "^0.4.0",
+      "pocketmine/math": "~1.0.0",
       "pocketmine/nbt": "^0.3.2",
       "pocketmine/raklib": "^0.15.0",
       "pocketmine/raklib-ipc": "^0.2.0",
@@ -78,7 +78,6 @@
       "sort-packages": true
    },
    "scripts": {
-      "make-devtools": "@php -dphar.readonly=0 tests/plugins/DevTools/src/ConsoleScript.php --make ./ --relative tests/plugins/DevTools --out plugins/DevTools.phar",
       "make-server": [
          "@composer install --no-dev --classmap-authoritative --ignore-platform-reqs",
          "@php -dphar.readonly=0 build/server-phar.php"

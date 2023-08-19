@@ -23,13 +23,11 @@ declare(strict_types=1);
 
 namespace pocketmine\network\mcpe\handler;
 
-use pocketmine\block\inventory\AnvilInventory;
 use pocketmine\block\inventory\EnchantInventory;
 use pocketmine\inventory\Inventory;
 use pocketmine\inventory\transaction\action\CreateItemAction;
 use pocketmine\inventory\transaction\action\DestroyItemAction;
 use pocketmine\inventory\transaction\action\DropItemAction;
-use pocketmine\inventory\transaction\AnvilTransaction;
 use pocketmine\inventory\transaction\CraftingTransaction;
 use pocketmine\inventory\transaction\EnchantTransaction;
 use pocketmine\inventory\transaction\InventoryTransaction;
@@ -41,7 +39,6 @@ use pocketmine\network\mcpe\protocol\types\inventory\ContainerUIIds;
 use pocketmine\network\mcpe\protocol\types\inventory\stackrequest\CraftingConsumeInputStackRequestAction;
 use pocketmine\network\mcpe\protocol\types\inventory\stackrequest\CraftingCreateSpecificResultStackRequestAction;
 use pocketmine\network\mcpe\protocol\types\inventory\stackrequest\CraftRecipeAutoStackRequestAction;
-use pocketmine\network\mcpe\protocol\types\inventory\stackrequest\CraftRecipeOptionalStackRequestAction;
 use pocketmine\network\mcpe\protocol\types\inventory\stackrequest\CraftRecipeStackRequestAction;
 use pocketmine\network\mcpe\protocol\types\inventory\stackrequest\CreativeCreateStackRequestAction;
 use pocketmine\network\mcpe\protocol\types\inventory\stackrequest\DeprecatedCraftingResultsStackRequestAction;
@@ -223,17 +220,10 @@ class ItemStackRequestExecutor{
 	/**
 	 * @throws ItemStackRequestProcessException
 	 */
-	private function assertFirstSpecialTransaction() : void{
+	protected function beginCrafting(int $recipeId, int $repetitions) : void{
 		if($this->specialTransaction !== null){
 			throw new ItemStackRequestProcessException("Another special transaction is already in progress");
 		}
-	}
-
-	/**
-	 * @throws ItemStackRequestProcessException
-	 */
-	protected function beginCrafting(int $recipeId, int $repetitions) : void{
-		$this->assertFirstSpecialTransaction();
 		if($repetitions < 1){
 			throw new ItemStackRequestProcessException("Cannot craft a recipe less than 1 time");
 		}
@@ -269,42 +259,6 @@ class ItemStackRequestExecutor{
 	/**
 	 * @throws ItemStackRequestProcessException
 	 */
-	protected function beginAnvilTransaction(?string $rename) : void{
-		$this->assertFirstSpecialTransaction();
-
-		$currentWindow = $this->player->getCurrentWindow();
-		if(!$currentWindow instanceof AnvilInventory){
-			throw new ItemStackRequestProcessException("Player's current window is not an anvil inventory");
-		}
-
-		$this->specialTransaction = new AnvilTransaction(
-			$this->player,
-			$this->player->getWorld()->getBlock($currentWindow->getHolder()),
-			clone $currentWindow->getItem(0),
-			clone $currentWindow->getItem(1),
-			$rename, []
-		);
-		$this->setNextCreatedItem($this->specialTransaction->getResult());
-	}
-
-	/**
-	 * @throws ItemStackRequestProcessException
-	 */
-	protected function beginEnchantTransaction(int $recipeId) : void{
-		$this->assertFirstSpecialTransaction();
-
-		$currentWindow = $this->player->getCurrentWindow();
-		if(!$currentWindow instanceof EnchantInventory){
-			throw new ItemStackRequestProcessException("Player's current window is not an enchanting inventory");
-		}
-
-		$this->specialTransaction = new EnchantTransaction($this->player, clone $currentWindow->getItem(0), []);
-		$this->setNextCreatedItem($this->specialTransaction->getResult($recipeId));
-	}
-
-	/**
-	 * @throws ItemStackRequestProcessException
-	 */
 	protected function takeCreatedItem(int $count) : Item{
 		if($count < 1){
 			//this should be impossible at the protocol level, but in case of buggy core code this will prevent exploits
@@ -335,7 +289,7 @@ class ItemStackRequestExecutor{
 	 * @throws ItemStackRequestProcessException
 	 */
 	private function assertDoingCrafting() : void{
-		if(!$this->specialTransaction instanceof CraftingTransaction){
+		if(!$this->specialTransaction instanceof CraftingTransaction && !$this->specialTransaction instanceof EnchantTransaction){
 			if($this->specialTransaction === null){
 				throw new ItemStackRequestProcessException("Expected CraftRecipe or CraftRecipeAuto action to precede this action");
 			}else{
@@ -383,28 +337,20 @@ class ItemStackRequestExecutor{
 		}elseif($action instanceof CraftRecipeStackRequestAction){
 			$window = $this->player->getCurrentWindow();
 			if($window instanceof EnchantInventory){
-				$this->beginEnchantTransaction($action->getRecipeId());
+				$optionId = $this->inventoryManager->getEnchantingTableOptionIndex($action->getRecipeId());
+				if($optionId !== null && ($option = $window->getOption($optionId)) !== null){
+					$this->specialTransaction = new EnchantTransaction($this->player, $option, $optionId + 1);
+					$this->setNextCreatedItem($window->getOutput($optionId));
+				}
 			}else{
 				$this->beginCrafting($action->getRecipeId(), 1);
 			}
 		}elseif($action instanceof CraftRecipeAutoStackRequestAction){
 			$this->beginCrafting($action->getRecipeId(), $action->getRepetitions());
-		}elseif($action instanceof CraftRecipeOptionalStackRequestAction){
-			$filterStrings = $this->request->getFilterStrings();
-			$filterStringIndex = $action->getFilterStringIndex();
-			$this->beginAnvilTransaction($filterStringIndex >= 0 ? ($filterStrings[$filterStringIndex] ?? null) : null);
 		}elseif($action instanceof CraftingConsumeInputStackRequestAction){
-			if(
-				$this->specialTransaction instanceof CraftingTransaction ||
-				$this->specialTransaction instanceof AnvilTransaction ||
-				$this->specialTransaction instanceof EnchantTransaction
-			){
-				$this->removeItemFromSlot($action->getSource(), $action->getCount()); //output discarded - we allow the transaction to verify the balance
-			}elseif($this->specialTransaction === null){
-				throw new ItemStackRequestProcessException("Expected CraftRecipe or CraftRecipeAuto action to precede this action");
-			}else{
-				throw new ItemStackRequestProcessException("A different special transaction is already in progress");
-			}
+			$this->assertDoingCrafting();
+			$this->removeItemFromSlot($action->getSource(), $action->getCount()); //output discarded - we allow CraftingTransaction to verify the balance
+
 		}elseif($action instanceof CraftingCreateSpecificResultStackRequestAction){
 			$this->assertDoingCrafting();
 

@@ -21,21 +21,26 @@
 
 declare(strict_types=1);
 
-namespace pocketmine\plugin;
+namespace pocketmine\world\sound;
 
-interface ResourceProvider{
-	/**
-	 * Gets an embedded resource on the plugin file.
-	 * WARNING: You must close the resource given using fclose()
-	 *
-	 * @return null|resource Resource data, or null
-	 */
-	public function getResource(string $filename);
+use pocketmine\block\Block;
+use pocketmine\math\Vector3;
+use pocketmine\network\mcpe\convert\TypeConverter;
+use pocketmine\network\mcpe\protocol\LevelSoundEventPacket;
+use pocketmine\network\mcpe\protocol\types\LevelSoundEvent;
 
-	/**
-	 * Returns all the resources packaged with the plugin in the form ["path/in/resources" => SplFileInfo]
-	 *
-	 * @return \SplFileInfo[]
-	 */
-	public function getResources() : array;
+final class PressurePlateDeactivateSound implements Sound{
+
+	public function __construct(
+		private readonly Block $block
+	){}
+
+	public function encode(Vector3 $pos) : array{
+		return [LevelSoundEventPacket::nonActorSound(
+			LevelSoundEvent::PRESSURE_PLATE_CLICK_OFF,
+			$pos,
+			false,
+			TypeConverter::getInstance()->getBlockTranslator()->internalIdToNetworkId($this->block->getStateId())
+		)];
+	}
 }
