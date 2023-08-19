@@ -306,7 +306,7 @@ class Server{
 	private array $packetSerializerContexts = [];
 	/** @var array<int, PacketBroadcaster> */
 	private array $packetBroadcasters = [];
-	/** @var array<int, EntityEventBroadcaster> */
+	/** @var array<string, EntityEventBroadcaster> */
 	private array $entityEventBroadcasters = [];
 
 	public function getName() : string{
@@ -1889,6 +1889,6 @@ class Server{
 		return $this->packetBroadcasters[spl_object_id($packetSerializerContext)] ??= new StandardPacketBroadcaster($this, $packetSerializerContext);
 	}
 	public function getEntityEventBroadcaster(PacketBroadcaster $packetBroadcaster, TypeConverter $typeConverter) : EntityEventBroadcaster{
-		return $this->entityEventBroadcasters[spl_object_id($typeConverter)] ??= new StandardEntityEventBroadcaster($packetBroadcaster, $typeConverter);
+		return $this->entityEventBroadcasters[spl_object_id($packetBroadcaster) . ':' . spl_object_id($typeConverter)] ??= new StandardEntityEventBroadcaster($packetBroadcaster, $typeConverter);
 	}
 }
