@@ -171,7 +171,7 @@ class NetworkSession{
 	private \SplQueue $compressedQueue;
 	private bool $forceAsyncCompression = true;
 	private ?int $protocolId = null;
-	private bool $enableCompression = false; //disabled until handshake completed
+	protected bool $enableCompression = false; //disabled until handshake completed
 
 	private ?InventoryManager $invManager = null;
 
