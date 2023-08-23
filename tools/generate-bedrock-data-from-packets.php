@@ -357,7 +357,7 @@ class ParserPacketHandler extends PacketHandler{
 
 	private function smithingRecipeToJson(SmithingTransformRecipe $recipe) : SmithingTransformRecipeData{
 		return new SmithingTransformRecipeData(
-			$this->recipeIngredientToJson($recipe->getTemplate() ?? throw new \UnexpectedValueException("Smithing recipe has no template")),
+			$this->recipeIngredientToJson($recipe->getTemplate()),
 			$this->recipeIngredientToJson($recipe->getInput()),
 			$this->recipeIngredientToJson($recipe->getAddition()),
 			$this->itemStackToJson($recipe->getOutput()),
