@@ -126,12 +126,12 @@
             "source": {
                 "type": "git",
                 "url": "https://github.com/NetherGamesMC/BedrockData.git",
-                "reference": "cc5aebd5dc6a30aafc02d43a15e9c34d92d0f32d"
+                "reference": "285cdbb07a8fb188972e9564bf2b9ece11670452"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/NetherGamesMC/BedrockData/zipball/cc5aebd5dc6a30aafc02d43a15e9c34d92d0f32d",
-                "reference": "cc5aebd5dc6a30aafc02d43a15e9c34d92d0f32d",
+                "url": "https://api.github.com/repos/NetherGamesMC/BedrockData/zipball/285cdbb07a8fb188972e9564bf2b9ece11670452",
+                "reference": "285cdbb07a8fb188972e9564bf2b9ece11670452",
                 "shasum": ""
             },
             "default-branch": true,
@@ -143,7 +143,7 @@
             "support": {
                 "source": "https://github.com/NetherGamesMC/BedrockData/tree/master"
             },
-            "time": "2023-07-12T12:04:04+00:00"
+            "time": "2023-08-23T14:54:51+00:00"
         },
         {
             "name": "nethergamesmc/bedrock-protocol",
@@ -151,12 +151,12 @@
             "source": {
                 "type": "git",
                 "url": "https://github.com/NetherGamesMC/BedrockProtocol.git",
-                "reference": "7dd1e7f76740011b3de3e6a13767bcaa4c3a2e15"
+                "reference": "47a7e6fb44bb1623ff4f7d7d60bae9062e8cfba3"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/NetherGamesMC/BedrockProtocol/zipball/7dd1e7f76740011b3de3e6a13767bcaa4c3a2e15",
-                "reference": "7dd1e7f76740011b3de3e6a13767bcaa4c3a2e15",
+                "url": "https://api.github.com/repos/NetherGamesMC/BedrockProtocol/zipball/47a7e6fb44bb1623ff4f7d7d60bae9062e8cfba3",
+                "reference": "47a7e6fb44bb1623ff4f7d7d60bae9062e8cfba3",
                 "shasum": ""
             },
             "require": {
@@ -199,7 +199,7 @@
             "support": {
                 "source": "https://github.com/NetherGamesMC/BedrockProtocol/tree/master"
             },
-            "time": "2023-08-08T18:23:42+00:00"
+            "time": "2023-08-23T14:52:33+00:00"
         },
         {
             "name": "pocketmine/bedrock-block-upgrade-schema",

@@ -25,10 +25,8 @@ namespace pocketmine\plugin;
 
 use pocketmine\lang\KnownTranslationFactory;
 use pocketmine\lang\Translatable;
-use pocketmine\network\mcpe\protocol\ProtocolInfo;
 use pocketmine\utils\Utils;
 use pocketmine\utils\VersionString;
-use function array_intersect;
 use function count;
 use function extension_loaded;
 use function implode;

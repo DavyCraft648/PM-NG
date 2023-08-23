@@ -83,17 +83,6 @@ class LoginPacketHandler extends ChunkRequestPacketHandler{
 
 		$clientData = $this->parseClientData($packet->clientDataJwt);
 
-		//Mojang forgot to bump the protocol version when they changed protocol in 1.19.62. Check the game version instead.
-		if(preg_match('/^(\d+)\.(\d+)\.(\d+)/', $clientData->GameVersion, $matches) !== 1){
-			throw new PacketHandlingException("Invalid game version format, expected at least 3 digits");
-		}
-		$major = (int) $matches[1];
-		$minor = (int) $matches[2];
-		$patch = (int) $matches[3];
-		if($major === 1 && $minor === 19 && $patch === 62){
-			$this->session->setProtocolId(ProtocolInfo::PROTOCOL_1_19_63);
-		}
-
 		try{
 			$skin = $this->session->getTypeConverter()->getSkinAdapter()->fromSkinData(ClientDataToSkinDataHelper::fromClientData($clientData));
 		}catch(\InvalidArgumentException | InvalidSkinException $e){

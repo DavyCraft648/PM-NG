@@ -739,30 +739,6 @@ class InGamePacketHandler extends ChunkRequestPacketHandler{
 		return true; //this is a broken useless packet, so we don't use it
 	}
 
-	public function handleAdventureSettings(AdventureSettingsPacket $packet) : bool{
-		if($this->session->getProtocolId() >= ProtocolInfo::PROTOCOL_1_19_0){
-			return true; //no longer used, but the client still sends it for flight changes
-		}
-
-		if($packet->targetActorUniqueId !== $this->player->getId()){
-			return false; //TODO: operators can change other people's permissions using this
-		}
-
-		$handled = false;
-
-		$isFlying = $packet->getFlag(AdventureSettingsPacket::FLYING);
-		if($isFlying !== $this->player->isFlying()){
-			if(!$this->player->toggleFlight($isFlying)){
-				$this->session->syncAbilities($this->player);
-			}
-			$handled = true;
-		}
-
-		//TODO: check for other changes
-
-		return $handled;
-	}
-
 	public function handleBlockActorData(BlockActorDataPacket $packet) : bool{
 		$pos = new Vector3($packet->blockPosition->getX(), $packet->blockPosition->getY(), $packet->blockPosition->getZ());
 		if($pos->distanceSquared($this->player->getLocation()) > 10000){
@@ -774,15 +750,11 @@ class InGamePacketHandler extends ChunkRequestPacketHandler{
 		if(!($nbt instanceof CompoundTag)) throw new AssumptionFailedError("PHPStan should ensure this is a CompoundTag"); //for phpstorm's benefit
 
 		if($block instanceof BaseSign){
-			if($this->session->getProtocolId() >= ProtocolInfo::PROTOCOL_1_19_80){
-				$frontTextTag = $nbt->getTag(Sign::TAG_FRONT_TEXT);
-				if(!$frontTextTag instanceof CompoundTag){
-					throw new PacketHandlingException("Invalid tag type " . get_debug_type($frontTextTag) . " for tag \"" . Sign::TAG_FRONT_TEXT . "\" in sign update data");
-				}
-				$textBlobTag = $frontTextTag->getTag(Sign::TAG_TEXT_BLOB);
-			}else{
-				$textBlobTag = $nbt->getTag(Sign::TAG_TEXT_BLOB);
+			$frontTextTag = $nbt->getTag(Sign::TAG_FRONT_TEXT);
+			if(!$frontTextTag instanceof CompoundTag){
+				throw new PacketHandlingException("Invalid tag type " . get_debug_type($frontTextTag) . " for tag \"" . Sign::TAG_FRONT_TEXT . "\" in sign update data");
 			}
+			$textBlobTag = $frontTextTag->getTag(Sign::TAG_TEXT_BLOB);
 
 			if(!$textBlobTag instanceof StringTag){
 				throw new PacketHandlingException("Invalid tag type " . get_debug_type($textBlobTag) . " for tag \"" . Sign::TAG_TEXT_BLOB . "\" in sign update data");
@@ -1067,10 +1039,6 @@ class InGamePacketHandler extends ChunkRequestPacketHandler{
 	}
 
 	public function handleRequestAbility(RequestAbilityPacket $packet) : bool{
-		if($this->session->getProtocolId() < ProtocolInfo::PROTOCOL_1_19_0){
-			return false;
-		}
-
 		if($packet->getAbilityId() === RequestAbilityPacket::ABILITY_FLYING){
 			$isFlying = $packet->getAbilityValue();
 			if(!is_bool($isFlying)){
