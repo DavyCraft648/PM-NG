@@ -164,4 +164,8 @@ class Lectern extends Transparent{
 			$this->position->getWorld()->setBlock($this->position, $this);
 		}
 	}
+
+	public function getWaterloggingLevel() : int{
+		return 1;
+	}
 }

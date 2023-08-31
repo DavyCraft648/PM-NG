@@ -167,4 +167,8 @@ class SmallDripleaf extends Transparent{
 	protected function recalculateCollisionBoxes() : array{
 		return [];
 	}
+
+	public function getWaterloggingLevel() : int{
+		return 1;
+	}
 }

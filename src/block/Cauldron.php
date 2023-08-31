@@ -101,4 +101,8 @@ final class Cauldron extends Transparent{
 			$world->addSound($this->position->add(0.5, 0.5, 0.5), $cauldron->getFillSound());
 		}
 	}
+
+	public function getWaterloggingLevel() : int{
+		return 1;
+	}
 }

@@ -55,4 +55,8 @@ final class HangingRoots extends Flowable{
 		}
 		return [];
 	}
+
+	public function getWaterloggingLevel() : int{
+		return 1;
+	}
 }

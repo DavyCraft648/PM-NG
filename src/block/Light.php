@@ -65,4 +65,8 @@ final class Light extends Flowable{
 
 		return true;
 	}
+
+	public function getWaterloggingLevel() : int{
+		return 1;
+	}
 }

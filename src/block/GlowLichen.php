@@ -274,4 +274,8 @@ class GlowLichen extends Transparent{
 		}
 		return $faces;
 	}
+
+	public function getWaterloggingLevel() : int{
+		return 1;
+	}
 }

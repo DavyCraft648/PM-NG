@@ -320,7 +320,11 @@ class LevelDB extends BaseWorldProvider implements WritableWorldProvider{
 					break;
 				}
 			}catch(BinaryDataException $e){
-				throw new CorruptedChunkException("Failed to deserialize biome palette $i: " . $e->getMessage(), 0, $e);
+				//throw new CorruptedChunkException("Failed to deserialize biome palette $i: " . $e->getMessage(), 0, $e);
+				for($i = 0; $i < $expectedCount; ++$i){
+					$result[$i] = new PalettedBlockArray(BiomeIds::OCEAN); //polyfill
+				}
+				return $result;
 			}
 		}
 		if(!$stream->feof()){

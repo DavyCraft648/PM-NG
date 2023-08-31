@@ -45,4 +45,8 @@ final class Chain extends Transparent{
 		}
 		return [$bb];
 	}
+
+	public function getWaterloggingLevel() : int{
+		return 1;
+	}
 }

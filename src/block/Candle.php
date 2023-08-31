@@ -122,4 +122,8 @@ class Candle extends Transparent{
 	public function getDropsForCompatibleTool(Item $item) : array{
 		return [$this->asItem()->setCount($this->count)];
 	}
+
+	public function getWaterloggingLevel() : int{
+		return 1;
+	}
 }

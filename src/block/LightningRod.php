@@ -52,4 +52,8 @@ final class LightningRod extends Transparent{
 		$this->facing = $face;
 		return parent::place($tx, $item, $blockReplace, $blockClicked, $face, $clickVector, $player);
 	}
+
+	public function getWaterloggingLevel() : int{
+		return 1;
+	}
 }
