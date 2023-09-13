@@ -23,6 +23,7 @@ declare(strict_types=1);
 
 namespace pocketmine\network\mcpe\handler;
 
+use pocketmine\block\inventory\AnvilInventory;
 use pocketmine\block\inventory\EnchantInventory;
 use pocketmine\inventory\Inventory;
 use pocketmine\inventory\transaction\action\CreateItemAction;
@@ -284,21 +285,6 @@ class ItemStackRequestExecutor{
 			$rename, []
 		);
 		$this->setNextCreatedItem($this->specialTransaction->getResult());
-	}
-
-	/**
-	 * @throws ItemStackRequestProcessException
-	 */
-	protected function beginEnchantTransaction(int $recipeId) : void{
-		$this->assertFirstSpecialTransaction();
-
-		$currentWindow = $this->player->getCurrentWindow();
-		if(!$currentWindow instanceof EnchantInventory){
-			throw new ItemStackRequestProcessException("Player's current window is not an enchanting inventory");
-		}
-
-		$this->specialTransaction = new EnchantTransaction($this->player, clone $currentWindow->getItem(0), []);
-		$this->setNextCreatedItem($this->specialTransaction->getResult($recipeId));
 	}
 
 	/**

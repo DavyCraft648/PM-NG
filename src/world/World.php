@@ -788,7 +788,7 @@ class World implements ChunkManager{
 						$this->broadcastPacketToViewers($pos, $e);
 					}
 				}else{
-					NetworkBroadcastUtils::broadcastPackets($this->filterViewersForPosition($pos, $ev->getRecipients()), $pk);
+					NetworkBroadcastUtils::broadcastPackets($this->filterViewersForPosition($pos, $players), $pk);
 				}
 			}
 		}

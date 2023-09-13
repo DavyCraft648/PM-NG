@@ -24,14 +24,12 @@ declare(strict_types=1);
 namespace pocketmine\block;
 
 use pocketmine\block\inventory\EnchantInventory;
-use pocketmine\block\utils\HorizontalFacing8;
 use pocketmine\block\utils\SupportType;
 use pocketmine\item\Item;
 use pocketmine\math\AxisAlignedBB;
 use pocketmine\math\Facing;
 use pocketmine\math\Vector3;
 use pocketmine\player\Player;
-use function abs;
 
 class EnchantingTable extends Transparent{
 
