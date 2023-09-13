@@ -29,7 +29,6 @@ use pocketmine\player\Player;
 use pocketmine\promise\Promise;
 use pocketmine\utils\ObjectSet;
 use pocketmine\utils\Utils;
-use pocketmine\utils\WaitGroup;
 use function is_a;
 
 /**
