@@ -23,46 +23,44 @@ declare(strict_types=1);
 
 namespace pocketmine\item\enchantment;
 
-use pocketmine\data\bedrock\EnchantmentIdMap;
-use pocketmine\network\mcpe\protocol\types\Enchant;
-use pocketmine\network\mcpe\protocol\types\EnchantOption;
-use function array_map;
+/**
+ * Represents an option on the enchanting table menu.
+ * If selected, all the enchantments in the option will be applied to the item.
+ */
+class EnchantingOption{
 
-final class EnchantmentEntry{
 	/**
 	 * @param EnchantmentInstance[] $enchantments
 	 */
 	public function __construct(
-		private int $index,
-		private int $level,
+		private int $requiredXpLevel,
 		private string $displayName,
 		private array $enchantments
-	){
-	}
+	){}
 
-	public function getIndex() : int{
-		return $this->index;
-	}
-
-	public function getLevel() : int{
-		return $this->level;
+	/**
+	 * Returns the minimum amount of XP levels required to select this enchantment option.
+	 * It's NOT the number of XP levels that will be subtracted after enchanting.
+	 */
+	public function getRequiredXpLevel() : int{
+		return $this->requiredXpLevel;
 	}
 
 	/**
+	 * Returns the name that will be translated to the 'Standard Galactic Alphabet' client-side.
+	 * This can be any arbitrary text string, since the vanilla client cannot read the text anyway.
+	 * Example: 'bless creature range free'.
+	 */
+	public function getDisplayName() : string{
+		return $this->displayName;
+	}
+
+	/**
+	 * Returns the enchantments that will be applied to the item when this option is clicked.
+	 *
 	 * @return EnchantmentInstance[]
 	 */
 	public function getEnchantments() : array{
 		return $this->enchantments;
-	}
-
-	public function toEnchantOption() : EnchantOption{
-		$map = EnchantmentIdMap::getInstance();
-		return new EnchantOption(
-			$this->getLevel(),
-			$this->enchantments[0]->getType()->getPrimaryItemFlags(),
-			[], [], array_map(fn(EnchantmentInstance $e) => new Enchant($map->toId($e->getType()), $e->getLevel()), $this->enchantments),
-			$this->displayName,
-			$this->getIndex()
-		);
 	}
 }

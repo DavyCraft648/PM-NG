@@ -111,6 +111,7 @@ use pocketmine\utils\BinaryStream;
 use pocketmine\utils\ObjectSet;
 use pocketmine\utils\TextFormat;
 use pocketmine\world\Position;
+use pocketmine\YmlServerProperties;
 use function array_keys;
 use function array_map;
 use function array_replace;
@@ -456,10 +457,12 @@ class NetworkSession{
 		$timings->startTiming();
 
 		try{
-			$ev = new DataPacketDecodeEvent($this, $packet->pid(), $buffer);
-			$ev->call();
-			if($ev->isCancelled()){
-				return;
+			if(DataPacketDecodeEvent::hasHandlers()){
+				$ev = new DataPacketDecodeEvent($this, $packet->pid(), $buffer);
+				$ev->call();
+				if($ev->isCancelled()){
+					return;
+				}
 			}
 
 			$decodeTimings = Timings::getDecodeDataPacketTimings($packet);
@@ -479,18 +482,21 @@ class NetworkSession{
 				$decodeTimings->stopTiming();
 			}
 
-			$ev = new DataPacketReceiveEvent($this, $packet);
-			$ev->call();
-			if(!$ev->isCancelled()){
-				$handlerTimings = Timings::getHandleDataPacketTimings($packet);
-				$handlerTimings->startTiming();
-				try{
-					if($this->handler === null || !$packet->handle($this->handler)){
-						$this->logger->debug("Unhandled " . $packet->getName() . ": " . base64_encode($stream->getBuffer()));
-					}
-				}finally{
-					$handlerTimings->stopTiming();
+			if(DataPacketReceiveEvent::hasHandlers()){
+				$ev = new DataPacketReceiveEvent($this, $packet);
+				$ev->call();
+				if($ev->isCancelled()){
+					return;
 				}
+			}
+			$handlerTimings = Timings::getHandleDataPacketTimings($packet);
+			$handlerTimings->startTiming();
+			try{
+				if($this->handler === null || !$packet->handle($this->handler)){
+					$this->logger->debug("Unhandled " . $packet->getName() . ": " . base64_encode($stream->getBuffer()));
+				}
+			}finally{
+				$handlerTimings->stopTiming();
 			}
 		}finally{
 			$timings->stopTiming();
@@ -509,12 +515,16 @@ class NetworkSession{
 		$timings = Timings::getSendDataPacketTimings($packet);
 		$timings->startTiming();
 		try{
-			$ev = new DataPacketSendEvent([$this], [$packet]);
-			$ev->call();
-			if($ev->isCancelled()){
-				return false;
+			if(DataPacketSendEvent::hasHandlers()){
+				$ev = new DataPacketSendEvent([$this], [$packet]);
+				$ev->call();
+				if($ev->isCancelled()){
+					return false;
+				}
+				$packets = $ev->getPackets();
+			}else{
+				$packets = [$packet];
 			}
-			$packets = $ev->getPackets();
 
 			foreach($packets as $evPacket){
 				$this->addToSendBuffer(self::encodePacketTimed(PacketSerializer::encoder($this->packetSerializerContext), $evPacket));
@@ -786,7 +796,7 @@ class NetworkSession{
 		}
 		$this->logger->debug("Xbox Live authenticated: " . ($this->authenticated ? "YES" : "NO"));
 
-		$checkXUID = $this->server->getConfigGroup()->getPropertyBool("player.verify-xuid", true);
+		$checkXUID = $this->server->getConfigGroup()->getPropertyBool(YmlServerProperties::PLAYER_VERIFY_XUID, true);
 		$myXUID = $this->info instanceof XboxLivePlayerInfo ? $this->info->getXuid() : "";
 		$kickForXUIDMismatch = function(string $xuid) use ($checkXUID, $myXUID) : bool{
 			if($checkXUID && $myXUID !== $xuid){

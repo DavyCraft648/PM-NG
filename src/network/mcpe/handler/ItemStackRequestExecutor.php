@@ -23,7 +23,6 @@ declare(strict_types=1);
 
 namespace pocketmine\network\mcpe\handler;
 
-use pocketmine\block\inventory\AnvilInventory;
 use pocketmine\block\inventory\EnchantInventory;
 use pocketmine\inventory\Inventory;
 use pocketmine\inventory\transaction\action\CreateItemAction;
@@ -31,7 +30,7 @@ use pocketmine\inventory\transaction\action\DestroyItemAction;
 use pocketmine\inventory\transaction\action\DropItemAction;
 use pocketmine\inventory\transaction\AnvilTransaction;
 use pocketmine\inventory\transaction\CraftingTransaction;
-use pocketmine\inventory\transaction\EnchantTransaction;
+use pocketmine\inventory\transaction\EnchantingTransaction;
 use pocketmine\inventory\transaction\InventoryTransaction;
 use pocketmine\inventory\transaction\TransactionBuilder;
 use pocketmine\inventory\transaction\TransactionBuilderInventory;
@@ -335,7 +334,7 @@ class ItemStackRequestExecutor{
 	 * @throws ItemStackRequestProcessException
 	 */
 	private function assertDoingCrafting() : void{
-		if(!$this->specialTransaction instanceof CraftingTransaction){
+		if(!$this->specialTransaction instanceof CraftingTransaction && !$this->specialTransaction instanceof EnchantingTransaction){
 			if($this->specialTransaction === null){
 				throw new ItemStackRequestProcessException("Expected CraftRecipe or CraftRecipeAuto action to precede this action");
 			}else{
@@ -383,7 +382,11 @@ class ItemStackRequestExecutor{
 		}elseif($action instanceof CraftRecipeStackRequestAction){
 			$window = $this->player->getCurrentWindow();
 			if($window instanceof EnchantInventory){
-				$this->beginEnchantTransaction($action->getRecipeId());
+				$optionId = $this->inventoryManager->getEnchantingTableOptionIndex($action->getRecipeId());
+				if($optionId !== null && ($option = $window->getOption($optionId)) !== null){
+					$this->specialTransaction = new EnchantingTransaction($this->player, $option, $optionId + 1);
+					$this->setNextCreatedItem($window->getOutput($optionId));
+				}
 			}else{
 				$this->beginCrafting($action->getRecipeId(), 1);
 			}
@@ -396,8 +399,7 @@ class ItemStackRequestExecutor{
 		}elseif($action instanceof CraftingConsumeInputStackRequestAction){
 			if(
 				$this->specialTransaction instanceof CraftingTransaction ||
-				$this->specialTransaction instanceof AnvilTransaction ||
-				$this->specialTransaction instanceof EnchantTransaction
+				$this->specialTransaction instanceof AnvilTransaction
 			){
 				$this->removeItemFromSlot($action->getSource(), $action->getCount()); //output discarded - we allow the transaction to verify the balance
 			}elseif($this->specialTransaction === null){

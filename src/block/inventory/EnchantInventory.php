@@ -23,18 +23,14 @@ declare(strict_types=1);
 
 namespace pocketmine\block\inventory;
 
-use pocketmine\event\player\PlayerEnchantOptionsRequestEvent;
+use pocketmine\event\player\PlayerEnchantingOptionsRequestEvent;
 use pocketmine\inventory\SimpleInventory;
 use pocketmine\inventory\TemporaryInventory;
-use pocketmine\item\enchantment\EnchantingMechanics;
-use pocketmine\item\enchantment\EnchantmentEntry;
+use pocketmine\item\enchantment\EnchantingHelper as Helper;
+use pocketmine\item\enchantment\EnchantingOption;
 use pocketmine\item\Item;
-use pocketmine\network\mcpe\protocol\PlayerEnchantOptionsPacket;
-use pocketmine\player\Player;
-use pocketmine\utils\Random;
 use pocketmine\world\Position;
-use function array_map;
-use function assert;
+use function array_values;
 use function count;
 
 class EnchantInventory extends SimpleInventory implements BlockInventory, TemporaryInventory{
@@ -43,42 +39,47 @@ class EnchantInventory extends SimpleInventory implements BlockInventory, Tempor
 	public const SLOT_INPUT = 0;
 	public const SLOT_LAPIS = 1;
 
-	/** @var EnchantmentEntry[] */
+	/** @var EnchantingOption[] $options */
 	private array $options = [];
 
-	public function __construct(Position $holder, private int $bookshelfCount = 0){
+	public function __construct(Position $holder){
 		$this->holder = $holder;
 		parent::__construct(2);
 	}
 
 	protected function onSlotChange(int $index, Item $before) : void{
-		parent::onSlotChange($index, $before);
-		$viewers = $this->getViewers();
-		assert(count($viewers) === 1);
-		if($index !== self::SLOT_INPUT){
-			return;
-		}
-		foreach($viewers as $player){
-			$this->refreshEnchantOptions($player, clone $this->getItem(self::SLOT_INPUT));
-			$player->getNetworkSession()->sendDataPacket(PlayerEnchantOptionsPacket::create(array_map(
-				fn(EnchantmentEntry $entry) => $entry->toEnchantOption(), $this->options
-			)));
-		}
-	}
+		if($index === self::SLOT_INPUT){
+			foreach($this->viewers as $viewer){
+				$this->options = [];
+				$item = $this->getInput();
+				$options = Helper::generateOptions($this->holder, $item, $viewer->getEnchantmentSeed());
 
-	private function refreshEnchantOptions(Player $player, Item $item) : void{
-		($ev = new PlayerEnchantOptionsRequestEvent($player, $item, EnchantingMechanics::generateEnchantOptions(
-			new Random($player->getXpSeed()), $this->bookshelfCount, $item
-		)))->call();
-		$this->options = $ev->getOptions();
-	}
-
-	public function getEnchantmentEntry(int $index) : ?EnchantmentEntry{
-		foreach($this->options as $option){
-			if($option->getIndex() === $index){
-				return $option;
+				$event = new PlayerEnchantingOptionsRequestEvent($viewer, $this, $options);
+				$event->call();
+				if(!$event->isCancelled() && count($event->getOptions()) > 0){
+					$this->options = array_values($event->getOptions());
+					$viewer->getNetworkSession()->getInvManager()?->syncEnchantingTableOptions($this->options);
+				}
 			}
 		}
-		return null;
+
+		parent::onSlotChange($index, $before);
+	}
+
+	public function getInput() : Item{
+		return $this->getItem(self::SLOT_INPUT);
+	}
+
+	public function getLapis() : Item{
+		return $this->getItem(self::SLOT_LAPIS);
+	}
+
+	public function getOutput(int $optionId) : ?Item{
+		$option = $this->getOption($optionId);
+		return $option === null ? null : Helper::enchantItem($this->getInput(), $option->getEnchantments());
+	}
+
+	public function getOption(int $optionId) : ?EnchantingOption{
+		return $this->options[$optionId] ?? null;
 	}
 }
