@@ -53,7 +53,6 @@ use pocketmine\network\mcpe\NetworkBroadcastUtils;
 use pocketmine\network\mcpe\protocol\AddPlayerPacket;
 use pocketmine\network\mcpe\protocol\PlayerListPacket;
 use pocketmine\network\mcpe\protocol\PlayerSkinPacket;
-use pocketmine\network\mcpe\protocol\ProtocolInfo;
 use pocketmine\network\mcpe\protocol\types\AbilitiesData;
 use pocketmine\network\mcpe\protocol\types\AbilitiesLayer;
 use pocketmine\network\mcpe\protocol\types\command\CommandPermissions;
@@ -71,7 +70,6 @@ use pocketmine\player\Player;
 use pocketmine\world\sound\TotemUseSound;
 use Ramsey\Uuid\Uuid;
 use Ramsey\Uuid\UuidInterface;
-use function array_diff;
 use function array_fill;
 use function array_filter;
 use function array_key_exists;
@@ -166,10 +164,6 @@ class Human extends Living implements ProjectileSource, InventoryHolder{
 	 * @param Player[]|null $targets
 	 */
 	public function sendSkin(?array $targets = null) : void{
-		if($this instanceof Player && $this->getNetworkSession()->getProtocolId() === ProtocolInfo::PROTOCOL_1_19_60){
-			$targets = array_diff($targets ?? $this->hasSpawned, [$this]);
-		}
-
 		TypeConverter::broadcastByTypeConverter($targets ?? $this->hasSpawned, function(TypeConverter $typeConverter) : array{
 			return [
 				PlayerSkinPacket::create($this->getUniqueId(), "", "", $typeConverter->getSkinAdapter()->toSkinData($this->skin))
@@ -244,14 +238,6 @@ class Human extends Living implements ProjectileSource, InventoryHolder{
 
 	public function getEnderInventory() : PlayerEnderInventory{
 		return $this->enderInventory;
-	}
-
-	public function getXpSeed() : int{
-		return $this->xpSeed;
-	}
-
-	public function setXpSeed(int $xpSeed) : void{
-		$this->xpSeed = $xpSeed;
 	}
 
 	/**

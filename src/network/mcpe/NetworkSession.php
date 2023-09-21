@@ -164,7 +164,6 @@ class NetworkSession{
 	/** @var string[] */
 	private array $chunkCacheBlobs = [];
 	private bool $chunkCacheEnabled = false;
-	private bool $isFirstPacket = true;
 
 	/**
 	 * @var \SplQueue|CompressBatchPromise[]
@@ -173,7 +172,7 @@ class NetworkSession{
 	private \SplQueue $compressedQueue;
 	private bool $forceAsyncCompression = true;
 	private ?int $protocolId = null;
-	private bool $enableCompression = true;
+	protected bool $enableCompression = false; //disabled until handshake completed
 
 	private ?InventoryManager $invManager = null;
 
@@ -206,16 +205,9 @@ class NetworkSession{
 		$this->packetBatchLimiter = new PacketRateLimiter("Packet Batches", self::INCOMING_PACKET_BATCH_PER_TICK, self::INCOMING_PACKET_BATCH_BUFFER_TICKS);
 		$this->gamePacketLimiter = new PacketRateLimiter("Game Packets", self::INCOMING_GAME_PACKETS_PER_TICK, self::INCOMING_GAME_PACKETS_BUFFER_TICKS);
 
-		$this->setHandler(new LoginPacketHandler(
-			$this->server,
+		$this->setHandler(new SessionStartPacketHandler(
 			$this,
-			function(PlayerInfo $info) : void{
-				$this->info = $info;
-				$this->logger->info($this->server->getLanguage()->translate(KnownTranslationFactory::pocketmine_network_session_playerName(TextFormat::AQUA . $info->getUsername() . TextFormat::RESET)));
-				$this->logger->setPrefix($this->getLogPrefix());
-				$this->manager->markLoginReceived($this);
-			},
-			$this->setAuthenticationStatus(...)
+			$this->onSessionStartSuccess(...)
 		));
 
 		$this->manager->add($this);
@@ -415,20 +407,8 @@ class NetworkSession{
 				try{
 					$decompressed = $this->compressor->decompress($payload);
 				}catch(DecompressionException $e){
-					if($this->isFirstPacket){
-						$this->logger->debug("Failed to decompress packet, assuming client is using the new compression method");
-
-						$this->enableCompression = false;
-						$this->setHandler(new SessionStartPacketHandler(
-							$this,
-							$this->onSessionStartSuccess(...)
-						));
-
-						$decompressed = $payload;
-					}else{
-						$this->logger->debug("Failed to decompress packet: " . base64_encode($payload));
-						throw PacketHandlingException::wrap($e, "Compressed packet batch decode error");
-					}
+					$this->logger->debug("Failed to decompress packet: " . base64_encode($payload));
+					throw PacketHandlingException::wrap($e, "Compressed packet batch decode error");
 				}finally{
 					Timings::$playerNetworkReceiveDecompress->stopTiming();
 				}
@@ -461,7 +441,6 @@ class NetworkSession{
 				throw PacketHandlingException::wrap($e, "Packet batch decode error");
 			}
 		}finally{
-			$this->isFirstPacket = false;
 			Timings::$playerNetworkReceive->stopTiming();
 		}
 	}

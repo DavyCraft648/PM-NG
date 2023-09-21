@@ -735,7 +735,6 @@ class World implements ChunkManager{
 			}
 		}else{
 			$pk = $sound->encode($pos);
-
 			if(count($pk) > 0){
 				if($players === $this->getViewersForPosition($pos)){
 					foreach($pk as $e){
@@ -783,14 +782,13 @@ class World implements ChunkManager{
 			}
 		}else{
 			$pk = $particle->encode($pos);
-
 			if(count($pk) > 0){
 				if($players === $this->getViewersForPosition($pos)){
 					foreach($pk as $e){
 						$this->broadcastPacketToViewers($pos, $e);
 					}
 				}else{
-					NetworkBroadcastUtils::broadcastPackets($this->filterViewersForPosition($pos, $ev->getRecipients()), $pk);
+					NetworkBroadcastUtils::broadcastPackets($this->filterViewersForPosition($pos, $players), $pk);
 				}
 			}
 		}

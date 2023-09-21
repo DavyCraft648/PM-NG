@@ -56,7 +56,6 @@ final class ItemRepairUtils{
 		ItemTypeIds::CROSSBOW => 0x10000, // according to features/Enchants
 		ItemTypeIds::ELYTRA => ItemFlags::ELYTRA,
 		ItemTypeIds::TRIDENT => ItemFlags::TRIDENT,
-		ItemTypeIds::CARROT_ON_A_STICK => ItemFlags::CARROT_STICK,
 	];
 
 	private function __construct(){
