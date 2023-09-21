@@ -53,6 +53,7 @@ use pocketmine\world\format\PalettedBlockArray;
 use pocketmine\world\format\SubChunk;
 use pocketmine\world\WorldCreationOptions;
 use Symfony\Component\Filesystem\Path;
+use function array_fill;
 use function array_map;
 use function array_values;
 use function chr;
@@ -321,10 +322,7 @@ class LevelDB extends BaseWorldProvider implements WritableWorldProvider{
 				}
 			}catch(BinaryDataException $e){
 				//throw new CorruptedChunkException("Failed to deserialize biome palette $i: " . $e->getMessage(), 0, $e);
-				for($i = 0; $i < $expectedCount; ++$i){
-					$result[$i] = new PalettedBlockArray(BiomeIds::OCEAN); //polyfill
-				}
-				return $result;
+				return array_fill(0, $expectedCount, new PalettedBlockArray(BiomeIds::OCEAN));
 			}
 		}
 		if(!$stream->feof()){
