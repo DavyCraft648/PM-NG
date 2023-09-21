@@ -113,6 +113,7 @@ use pocketmine\world\sound\BlockPlaceSound;
 use pocketmine\world\sound\BlockSound;
 use pocketmine\world\sound\Sound;
 use pocketmine\world\utils\SubChunkExplorer;
+use pocketmine\YmlServerProperties;
 use function abs;
 use function array_filter;
 use function array_key_exists;
@@ -528,14 +529,14 @@ class World implements ChunkManager{
 		$this->time = $this->provider->getWorldData()->getTime();
 
 		$cfg = $this->server->getConfigGroup();
-		$this->chunkTickRadius = min($this->server->getViewDistance(), max(0, $cfg->getPropertyInt("chunk-ticking.tick-radius", 4)));
+		$this->chunkTickRadius = min($this->server->getViewDistance(), max(0, $cfg->getPropertyInt(YmlServerProperties::CHUNK_TICKING_TICK_RADIUS, 4)));
 		if($cfg->getPropertyInt("chunk-ticking.per-tick", 40) <= 0){
 			//TODO: this needs l10n
 			$this->logger->warning("\"chunk-ticking.per-tick\" setting is deprecated, but you've used it to disable chunk ticking. Set \"chunk-ticking.tick-radius\" to 0 in \"pocketmine.yml\" instead.");
 			$this->chunkTickRadius = 0;
 		}
-		$this->tickedBlocksPerSubchunkPerTick = $cfg->getPropertyInt("chunk-ticking.blocks-per-subchunk-per-tick", self::DEFAULT_TICKED_BLOCKS_PER_SUBCHUNK_PER_TICK);
-		$this->maxConcurrentChunkPopulationTasks = $cfg->getPropertyInt("chunk-generation.population-queue-size", 2);
+		$this->tickedBlocksPerSubchunkPerTick = $cfg->getPropertyInt(YmlServerProperties::CHUNK_TICKING_BLOCKS_PER_SUBCHUNK_PER_TICK, self::DEFAULT_TICKED_BLOCKS_PER_SUBCHUNK_PER_TICK);
+		$this->maxConcurrentChunkPopulationTasks = $cfg->getPropertyInt(YmlServerProperties::CHUNK_GENERATION_POPULATION_QUEUE_SIZE, 2);
 
 		$this->initRandomTickBlocksFromConfig($cfg);
 
@@ -556,7 +557,7 @@ class World implements ChunkManager{
 	private function initRandomTickBlocksFromConfig(ServerConfigGroup $cfg) : void{
 		$dontTickBlocks = [];
 		$parser = StringToItemParser::getInstance();
-		foreach($cfg->getProperty("chunk-ticking.disable-block-ticking", []) as $name){
+		foreach($cfg->getProperty(YmlServerProperties::CHUNK_TICKING_DISABLE_BLOCK_TICKING, []) as $name){
 			$name = (string) $name;
 			$item = $parser->parse($name);
 			if($item !== null){
@@ -709,15 +710,18 @@ class World implements ChunkManager{
 	 */
 	public function addSound(Vector3 $pos, Sound $sound, ?array $players = null) : void{
 		$players ??= $this->getViewersForPosition($pos);
-		$ev = new WorldSoundEvent($this, $sound, $pos, $players);
 
-		$ev->call();
+		if(WorldSoundEvent::hasHandlers()){
+			$ev = new WorldSoundEvent($this, $sound, $pos, $players);
+			$ev->call();
+			if($ev->isCancelled()){
+				return;
+			}
 
-		if($ev->isCancelled()){
-			return;
+			$sound = $ev->getSound();
+			$players = $ev->getRecipients();
 		}
 
-		$players = $ev->getRecipients();
 		if($sound instanceof BlockSound){
 			$closure = function(TypeConverter $typeConverter) use ($sound, $pos) : array{
 				$sound->setBlockTranslator($typeConverter->getBlockTranslator());
@@ -749,15 +753,18 @@ class World implements ChunkManager{
 	 */
 	public function addParticle(Vector3 $pos, Particle $particle, ?array $players = null) : void{
 		$players ??= $this->getViewersForPosition($pos);
-		$ev = new WorldParticleEvent($this, $particle, $pos, $players);
 
-		$ev->call();
+		if(WorldParticleEvent::hasHandlers()){
+			$ev = new WorldParticleEvent($this, $particle, $pos, $players);
+			$ev->call();
+			if($ev->isCancelled()){
+				return;
+			}
 
-		if($ev->isCancelled()){
-			return;
+			$particle = $ev->getParticle();
+			$players = $ev->getRecipients();
 		}
 
-		$players = $ev->getRecipients();
 		if($particle instanceof BlockParticle || $particle instanceof ItemParticle){
 			$closure = function(TypeConverter $typeConverter) use ($particle, $pos) : array{
 				if($particle instanceof ItemParticle){
@@ -2243,8 +2250,8 @@ class World implements ChunkManager{
 				}
 
 				$result = $item->onInteractBlock($player, $blockReplace, $blockClicked, $face, $clickVector, $returnedItems);
-				if(!$result->equals(ItemUseResult::NONE())){
-					return $result->equals(ItemUseResult::SUCCESS());
+				if($result !== ItemUseResult::NONE){
+					return $result === ItemUseResult::SUCCESS;
 				}
 			}else{
 				return false;
@@ -2640,7 +2647,9 @@ class World implements ChunkManager{
 		}
 
 		if($oldChunk === null){
-			(new ChunkLoadEvent($this, $chunkX, $chunkZ, $chunk, true))->call();
+			if(ChunkLoadEvent::hasHandlers()){
+				(new ChunkLoadEvent($this, $chunkX, $chunkZ, $chunk, true))->call();
+			}
 
 			foreach($this->getChunkListeners($chunkX, $chunkZ) as $listener){
 				$listener->onChunkLoaded($chunkX, $chunkZ, $chunk);
@@ -2914,7 +2923,9 @@ class World implements ChunkManager{
 
 		$this->initChunk($x, $z, $chunkData);
 
-		(new ChunkLoadEvent($this, $x, $z, $this->chunks[$chunkHash], false))->call();
+		if(ChunkLoadEvent::hasHandlers()){
+			(new ChunkLoadEvent($this, $x, $z, $this->chunks[$chunkHash], false))->call();
+		}
 
 		if(!$this->isChunkInUse($x, $z)){
 			$this->logger->debug("Newly loaded chunk $x $z has no loaders registered, will be unloaded at next available opportunity");
@@ -3027,12 +3038,14 @@ class World implements ChunkManager{
 		$chunk = $this->chunks[$chunkHash] ?? null;
 
 		if($chunk !== null){
-			$ev = new ChunkUnloadEvent($this, $x, $z, $chunk);
-			$ev->call();
-			if($ev->isCancelled()){
-				$this->timings->doChunkUnload->stopTiming();
+			if(ChunkUnloadEvent::hasHandlers()){
+				$ev = new ChunkUnloadEvent($this, $x, $z, $chunk);
+				$ev->call();
+				if($ev->isCancelled()){
+					$this->timings->doChunkUnload->stopTiming();
 
-				return false;
+					return false;
+				}
 			}
 
 			if($trySave && $this->getAutoSave()){
@@ -3489,7 +3502,9 @@ class World implements ChunkManager{
 				}
 
 				if(($oldChunk === null || !$oldChunk->isPopulated()) && $chunk->isPopulated()){
-					(new ChunkPopulateEvent($this, $x, $z, $chunk))->call();
+					if(ChunkPopulateEvent::hasHandlers()){
+						(new ChunkPopulateEvent($this, $x, $z, $chunk))->call();
+					}
 
 					foreach($this->getChunkListeners($x, $z) as $listener){
 						$listener->onChunkPopulated($x, $z, $chunk);

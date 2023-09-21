@@ -31,7 +31,7 @@ use pocketmine\inventory\transaction\action\DestroyItemAction;
 use pocketmine\inventory\transaction\action\DropItemAction;
 use pocketmine\inventory\transaction\AnvilTransaction;
 use pocketmine\inventory\transaction\CraftingTransaction;
-use pocketmine\inventory\transaction\EnchantTransaction;
+use pocketmine\inventory\transaction\EnchantingTransaction;
 use pocketmine\inventory\transaction\InventoryTransaction;
 use pocketmine\inventory\transaction\TransactionBuilder;
 use pocketmine\inventory\transaction\TransactionBuilderInventory;
@@ -292,7 +292,7 @@ class ItemStackRequestExecutor{
 	 * @throws ItemStackRequestProcessException
 	 */
 	private function assertDoingCrafting() : void{
-		if(!$this->specialTransaction instanceof CraftingTransaction && !$this->specialTransaction instanceof EnchantTransaction && !$this->specialTransaction instanceof AnvilTransaction){
+		if(!$this->specialTransaction instanceof CraftingTransaction && !$this->specialTransaction instanceof EnchantingTransaction && !$this->specialTransaction instanceof AnvilTransaction){
 			if($this->specialTransaction === null){
 				throw new ItemStackRequestProcessException("Expected CraftRecipe or CraftRecipeAuto action to precede this action");
 			}else{
@@ -342,7 +342,7 @@ class ItemStackRequestExecutor{
 			if($window instanceof EnchantInventory){
 				$optionId = $this->inventoryManager->getEnchantingTableOptionIndex($action->getRecipeId());
 				if($optionId !== null && ($option = $window->getOption($optionId)) !== null){
-					$this->specialTransaction = new EnchantTransaction($this->player, $option, $optionId + 1);
+					$this->specialTransaction = new EnchantingTransaction($this->player, $option, $optionId + 1);
 					$this->setNextCreatedItem($window->getOutput($optionId));
 				}
 			}else{

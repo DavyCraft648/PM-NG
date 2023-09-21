@@ -63,12 +63,12 @@ class LiquidBucket extends Item{
 		$toReplace = $blockReplace->canBeReplaced() ? $blockReplace : $toReplace;
 		$toReplace = $blockClicked->canWaterlogged($resultBlock) ? $blockClicked->getBlockLayer(1) : $toReplace;
 		if($toReplace === null){
-			return ItemUseResult::NONE();
+			return ItemUseResult::NONE;
 		}
 
 		if(!in_array(1, $resultBlock->getSupportedLayers(), true)){
 			if(!$blockReplace->canBeReplaced()){
-				return ItemUseResult::NONE();
+				return ItemUseResult::NONE;
 			}
 			$toReplace = $blockReplace;
 		}
@@ -81,10 +81,10 @@ class LiquidBucket extends Item{
 
 			$this->pop();
 			$returnedItems[] = $ev->getItem();
-			return ItemUseResult::SUCCESS();
+			return ItemUseResult::SUCCESS;
 		}
 
-		return ItemUseResult::FAIL();
+		return ItemUseResult::FAIL;
 	}
 
 	public function getLiquid() : Liquid{
