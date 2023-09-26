@@ -95,12 +95,12 @@ final class ItemRepairUtils{
 	 */
 	public static function getRepairMaterial(Durable $target) : ?array{
 		if($target instanceof TieredTool){
-			return match ($target->getTier()->id()) {
-				ToolTier::WOOD()->id() => [VanillaBlocks::OAK_PLANKS()->asItem()],
-				ToolTier::STONE()->id() => [VanillaBlocks::COBBLESTONE()->asItem()],
-				ToolTier::GOLD()->id() => [VanillaItems::GOLD_INGOT()],
-				ToolTier::IRON()->id() => [VanillaItems::IRON_INGOT()],
-				ToolTier::DIAMOND()->id() => [VanillaItems::DIAMOND()],
+			return match ($target->getTier()) {
+				ToolTier::WOOD => [VanillaBlocks::OAK_PLANKS()->asItem()],
+				ToolTier::STONE => [VanillaBlocks::COBBLESTONE()->asItem()],
+				ToolTier::GOLD => [VanillaItems::GOLD_INGOT()],
+				ToolTier::IRON => [VanillaItems::IRON_INGOT()],
+				ToolTier::DIAMOND => [VanillaItems::DIAMOND()],
 				default => null
 				// TODO: Netherite tools
 			};

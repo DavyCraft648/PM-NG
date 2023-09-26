@@ -106,7 +106,7 @@ class FireworkRocket extends Item{
 			$this->pop();
 			$player->setMotion($player->getDirectionVector()->multiply(1.8));
 
-			return ItemUseResult::SUCCESS();
+			return ItemUseResult::SUCCESS;
 		}
 
 		return parent::onClickAir($player, $directionVector, $returnedItems);
@@ -134,7 +134,7 @@ class FireworkRocket extends Item{
 
 		$this->pop();
 
-		return ItemUseResult::SUCCESS();
+		return ItemUseResult::SUCCESS;
 	}
 
 	protected function deserializeCompoundTag(CompoundTag $tag) : void{
