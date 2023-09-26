@@ -2216,8 +2216,8 @@ class World implements ChunkManager{
 				}
 
 				$result = $item->onInteractBlock($player, $blockReplace, $blockClicked, $face, $clickVector, $returnedItems);
-				if(!$result->equals(ItemUseResult::NONE())){
-					return $result->equals(ItemUseResult::SUCCESS());
+				if($result !== ItemUseResult::NONE){
+					return $result === ItemUseResult::SUCCESS;
 				}
 			}else{
 				return false;
