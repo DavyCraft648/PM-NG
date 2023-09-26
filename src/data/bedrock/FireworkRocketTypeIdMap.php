@@ -42,11 +42,11 @@ final class FireworkRocketTypeIdMap{
 	private array $enumToId = [];
 
 	private function __construct(){
-		$this->register(FireworkRocketTypeIds::SMALL_BALL, FireworkRocketType::SMALL_BALL());
-		$this->register(FireworkRocketTypeIds::LARGE_BALL, FireworkRocketType::LARGE_BALL());
-		$this->register(FireworkRocketTypeIds::STAR, FireworkRocketType::STAR());
-		$this->register(FireworkRocketTypeIds::CREEPER, FireworkRocketType::CREEPER());
-		$this->register(FireworkRocketTypeIds::BURST, FireworkRocketType::BURST());
+		$this->register(FireworkRocketTypeIds::SMALL_BALL, FireworkRocketType::SMALL_BALL);
+		$this->register(FireworkRocketTypeIds::LARGE_BALL, FireworkRocketType::LARGE_BALL);
+		$this->register(FireworkRocketTypeIds::STAR, FireworkRocketType::STAR);
+		$this->register(FireworkRocketTypeIds::CREEPER, FireworkRocketType::CREEPER);
+		$this->register(FireworkRocketTypeIds::BURST, FireworkRocketType::BURST);
 	}
 
 	private function register(int $id, FireworkRocketType $type) : void{
