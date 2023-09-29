@@ -383,16 +383,10 @@ class ItemStackRequestExecutor{
 			$filterStringIndex = $action->getFilterStringIndex();
 			$this->beginAnvilTransaction($filterStringIndex >= 0 ? ($filterStrings[$filterStringIndex] ?? null) : null);
 		}elseif($action instanceof CraftingConsumeInputStackRequestAction){
-			if(
-				$this->specialTransaction instanceof CraftingTransaction ||
-				$this->specialTransaction instanceof AnvilTransaction
-			){
-				$this->removeItemFromSlot($action->getSource(), $action->getCount()); //output discarded - we allow the transaction to verify the balance
-			}elseif($this->specialTransaction === null){
-				throw new ItemStackRequestProcessException("Expected CraftRecipe or CraftRecipeAuto action to precede this action");
-			}else{
-				throw new ItemStackRequestProcessException("A different special transaction is already in progress");
+			if(!$this->specialTransaction instanceof AnvilTransaction){
+				$this->assertDoingCrafting();
 			}
+			$this->removeItemFromSlot($action->getSource(), $action->getCount()); //output discarded - we allow the transaction to verify the balance
 		}elseif($action instanceof CraftingCreateSpecificResultStackRequestAction){
 			$this->assertDoingCrafting();
 
