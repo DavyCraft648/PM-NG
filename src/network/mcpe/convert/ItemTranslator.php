@@ -73,13 +73,12 @@ final class ItemTranslator{
 	public function toNetworkId(Item $item) : array{
 		//TODO: we should probably come up with a cache for this
 
-		$itemData = $this->itemSerializer->serializeType($item);
+		$itemData = $this->itemSerializer->serializeType($item, $this->itemDataDowngrader);
 
-		[$name, $meta] = $this->itemDataDowngrader->downgrade($itemData->getName(), $itemData->getMeta());
 		try {
-			$numericId = $this->itemTypeDictionary->fromStringId($name);
+			$numericId = $this->itemTypeDictionary->fromStringId($itemData->getName());
 		} catch (\InvalidArgumentException) {
-			throw new ItemTypeSerializeException("Unknown item type $name");
+			throw new ItemTypeSerializeException("Unknown item type " . $itemData->getName());
 		}
 
 		$blockStateData = $itemData->getBlock();
@@ -93,7 +92,7 @@ final class ItemTranslator{
 			$blockRuntimeId = null;
 		}
 
-		return [$numericId, $meta ?? $itemData->getMeta(), $blockRuntimeId];
+		return [$numericId, $itemData->getMeta(), $blockRuntimeId];
 	}
 
 	/**
@@ -103,7 +102,7 @@ final class ItemTranslator{
 		//TODO: this relies on the assumption that network item NBT is the same as disk item NBT, which may not always
 		//be true - if we stick on an older world version while updating network version, this could be a problem (and
 		//may be a problem for multi version implementations)
-		return $this->itemSerializer->serializeStack($item)->toNbt();
+		return $this->itemSerializer->serializeStack($item, null, $this->itemDataDowngrader)->toNbt();
 	}
 
 	/**
