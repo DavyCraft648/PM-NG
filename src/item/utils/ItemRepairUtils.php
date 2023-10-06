@@ -36,43 +36,8 @@ use pocketmine\item\ToolTier;
 use pocketmine\item\VanillaItems;
 
 final class ItemRepairUtils{
-	private const ARMOR_SLOT_TO_ITEM_FLAG = [
-		ArmorInventory::SLOT_HEAD => ItemFlags::HEAD,
-		ArmorInventory::SLOT_CHEST => ItemFlags::TORSO,
-		ArmorInventory::SLOT_LEGS => ItemFlags::LEGS,
-		ArmorInventory::SLOT_FEET => ItemFlags::FEET,
-	];
-	private const TOOL_TYPE_TO_ITEM_FLAG = [
-		BlockToolType::SHOVEL => ItemFlags::SHOVEL,
-		BlockToolType::PICKAXE => ItemFlags::PICKAXE,
-		BlockToolType::AXE => ItemFlags::AXE,
-		BlockToolType::SHEARS => ItemFlags::SHEARS,
-		BlockToolType::HOE => ItemFlags::HOE,
-		BlockToolType::SWORD => ItemFlags::SWORD,
-	];
-	private const ITEM_ID_TO_ITEM_FLAG = [
-		ItemTypeIds::FISHING_ROD => ItemFlags::FISHING_ROD,
-		ItemTypeIds::BOW => ItemFlags::BOW,
-		ItemTypeIds::CROSSBOW => 0x10000, // according to features/Enchants
-		ItemTypeIds::ELYTRA => ItemFlags::ELYTRA,
-		ItemTypeIds::TRIDENT => ItemFlags::TRIDENT,
-	];
-
 	private function __construct(){
 		//NOOP
-	}
-
-	public static function getItemFlagFor(Item $item) : int{
-		if($item instanceof Armor){
-			return self::ARMOR_SLOT_TO_ITEM_FLAG[$item->getArmorSlot()] ?? ItemFlags::NONE;
-		}
-
-		$flag = self::ITEM_ID_TO_ITEM_FLAG[$item->getTypeId()] ?? ItemFlags::NONE;
-		if($flag === ItemFlags::NONE){
-			return self::TOOL_TYPE_TO_ITEM_FLAG[$item->getBlockToolType()] ?? ItemFlags::NONE;
-		}
-
-		return $flag;
 	}
 
 	public static function isRepairableWith(Durable $target, Item $sacrifice) : bool{
