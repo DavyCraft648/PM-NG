@@ -23,12 +23,8 @@ declare(strict_types=1);
 
 namespace pocketmine\item\utils;
 
-use pocketmine\block\BlockToolType;
 use pocketmine\block\VanillaBlocks;
-use pocketmine\inventory\ArmorInventory;
-use pocketmine\item\Armor;
 use pocketmine\item\Durable;
-use pocketmine\item\enchantment\ItemFlags;
 use pocketmine\item\Item;
 use pocketmine\item\ItemTypeIds;
 use pocketmine\item\TieredTool;

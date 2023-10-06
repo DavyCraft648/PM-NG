@@ -37,6 +37,8 @@ use pocketmine\item\utils\ItemRepairUtils;
 use pocketmine\player\Player;
 use pocketmine\utils\Limits;
 use pocketmine\world\sound\AnvilUseSound;
+use function array_intersect;
+use function array_merge;
 use function count;
 use function floor;
 use function log;
@@ -216,7 +218,7 @@ class AnvilTransaction extends InventoryTransaction{
 		$applicableEnchants = [];
 
 		$availableEnchantRegistry = AvailableEnchantmentRegistry::getInstance();
-		$canEnchant = fn(Enchantment $enchantmentType) => count(
+		$canEnchant = fn(Enchantment $enchantmentType) => (bool) count(
 			array_intersect($target->getEnchantmentTags(), array_merge(
 				$availableEnchantRegistry->getPrimaryItemTags($enchantmentType),
 				$availableEnchantRegistry->getSecondaryItemTags($enchantmentType)
