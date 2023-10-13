@@ -1702,16 +1702,7 @@ abstract class Entity{
 	 */
 	public function broadcastSound(Sound $sound, ?array $targets = null) : void{
 		if(!$this->silent){
-			$targets = $targets ?? $this->getViewers();
-
-			if($sound instanceof BlockSound){
-				TypeConverter::broadcastByTypeConverter($targets, function(TypeConverter $typeConverter) use ($sound) : array{
-					$sound->setBlockTranslator($typeConverter->getBlockTranslator());
-					return $sound->encode($this->location);
-				});
-			}else{
-				NetworkBroadcastUtils::broadcastPackets($targets, $sound->encode($this->location));
-			}
+			$this->getWorld()->addSound($this->location->asVector3(), $sound, $targets ?? $this->getViewers());
 		}
 	}
 
