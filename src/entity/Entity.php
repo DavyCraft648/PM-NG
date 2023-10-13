@@ -65,7 +65,6 @@ use pocketmine\utils\Utils;
 use pocketmine\VersionInfo;
 use pocketmine\world\format\Chunk;
 use pocketmine\world\Position;
-use pocketmine\world\sound\BlockSound;
 use pocketmine\world\sound\Sound;
 use pocketmine\world\World;
 use function abs;
