@@ -591,6 +591,7 @@ class Server{
 				return;
 			}
 
+			/** @see Player::__construct() */
 			$player = new $class($this, $session, $playerInfo, $authenticated, $location, $offlinePlayerData);
 			if(!$player->hasPlayedBefore()){
 				$player->onGround = true; //TODO: this hack is needed for new players in-air ticks - they don't get detected as on-ground until they move
@@ -1888,12 +1889,15 @@ class Server{
 			$this->nextTick += self::TARGET_SECONDS_PER_TICK;
 		}
 	}
+
 	public function getPacketSerializerContext(TypeConverter $typeConverter) : PacketSerializerContext{
 		return $this->packetSerializerContexts[spl_object_id($typeConverter)] ??= new PacketSerializerContext($typeConverter->getItemTypeDictionary(), $typeConverter->getProtocolId());
 	}
+
 	public function getPacketBroadcaster(PacketSerializerContext $packetSerializerContext) : PacketBroadcaster{
 		return $this->packetBroadcasters[spl_object_id($packetSerializerContext)] ??= new StandardPacketBroadcaster($this, $packetSerializerContext);
 	}
+
 	public function getEntityEventBroadcaster(PacketBroadcaster $packetBroadcaster, TypeConverter $typeConverter) : EntityEventBroadcaster{
 		return $this->entityEventBroadcasters[spl_object_id($packetBroadcaster) . ':' . spl_object_id($typeConverter)] ??= new StandardEntityEventBroadcaster($packetBroadcaster, $typeConverter);
 	}

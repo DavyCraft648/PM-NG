@@ -66,7 +66,6 @@ use pocketmine\utils\Utils;
 use pocketmine\VersionInfo;
 use pocketmine\world\format\Chunk;
 use pocketmine\world\Position;
-use pocketmine\world\sound\BlockSound;
 use pocketmine\world\sound\Sound;
 use pocketmine\world\World;
 use function abs;
@@ -653,7 +652,7 @@ abstract class Entity{
 		}
 		$this->checkBlockIntersectionsNextTick = true;
 
-		if($this->location->y <= 0 && $this->isAlive()){
+		if($this->location->y <= World::Y_MIN - 16 && $this->isAlive()){
 			$ev = new EntityDamageEvent($this, EntityDamageEvent::CAUSE_VOID, 10);
 			$this->attack($ev);
 			$hasUpdate = true;
@@ -1116,15 +1115,17 @@ abstract class Entity{
 	}
 
 	public function isUnderwater() : bool{
-		foreach([0, 1] as $layer){
-			$block = $this->getWorld()->getBlockAtLayer((int) floor($this->location->x), $blockY = (int) floor($y = ($this->location->y + $this->getEyeHeight())), (int) floor($this->location->z), $layer);
-
-			if($block instanceof Water){
-				$f = ($blockY + 1) - ($block->getFluidHeightPercent() - 0.1111111);
-				return $y < $f;
-			}elseif($layer === 0 && $block->getTypeId() === BlockTypeIds::AIR){
+		$block = $this->getWorld()->getBlockAt((int) floor($this->location->x), $blockY = (int) floor($y = ($this->location->y + $this->getEyeHeight())), (int) floor($this->location->z));
+		if(!($block instanceof Water)){
+			if($block->getTypeId() === BlockTypeIds::AIR){
 				return false;
 			}
+			$block = $block->getBlockLayer(1);
+		}
+
+		if($block instanceof Water){
+			$f = ($blockY + 1) - ($block->getFluidHeightPercent() - 0.1111111);
+			return $y < $f;
 		}
 
 		return false;
@@ -1277,11 +1278,16 @@ abstract class Entity{
 		for($z = $minZ; $z <= $maxZ; ++$z){
 			for($x = $minX; $x <= $maxX; ++$x){
 				for($y = $minY; $y <= $maxY; ++$y){
-					foreach([0, 1] as $layer){
-						$block = $world->getBlockAtLayer($x, $y, $z, $layer);
-						if($layer !== 0 && $block->getTypeId() === BlockTypeIds::AIR){
-							continue 2;
-						}
+					yield $world->getBlockAt($x, $y, $z);
+				}
+			}
+		}
+
+		for($z = $minZ; $z <= $maxZ; ++$z){
+			for($x = $minX; $x <= $maxX; ++$x){
+				for($y = $minY; $y <= $maxY; ++$y){
+					$block = $world->getBlockAtLayer($x, $y, $z, 1);
+					if($block->getTypeId() !== BlockTypeIds::AIR){
 						yield $block;
 					}
 				}
@@ -1716,16 +1722,7 @@ abstract class Entity{
 	 */
 	public function broadcastSound(Sound $sound, ?array $targets = null) : void{
 		if(!$this->silent){
-			$targets = $targets ?? $this->getViewers();
-
-			if($sound instanceof BlockSound){
-				TypeConverter::broadcastByTypeConverter($targets, function(TypeConverter $typeConverter) use ($sound) : array{
-					$sound->setBlockTranslator($typeConverter->getBlockTranslator());
-					return $sound->encode($this->location);
-				});
-			}else{
-				NetworkBroadcastUtils::broadcastPackets($targets, $sound->encode($this->location));
-			}
+			$this->getWorld()->addSound($this->location->asVector3(), $sound, $targets ?? $this->getViewers());
 		}
 	}
 
