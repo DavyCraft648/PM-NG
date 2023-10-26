@@ -696,7 +696,7 @@ class NetworkSession{
 		}else{
 			$translated = $message;
 		}
-		$this->sendDataPacket(DisconnectPacket::create($translated));
+		$this->sendDataPacket(DisconnectPacket::create(0, $translated));
 	}
 
 	/**

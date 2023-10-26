@@ -590,6 +590,7 @@ class Server{
 				return;
 			}
 
+			/** @see Player::__construct() */
 			$player = new $class($this, $session, $playerInfo, $authenticated, $location, $offlinePlayerData);
 			if(!$player->hasPlayedBefore()){
 				$player->onGround = true; //TODO: this hack is needed for new players in-air ticks - they don't get detected as on-ground until they move
