@@ -1018,9 +1018,7 @@ class World implements ChunkManager{
 			$this->providerGarbageCollectionTicker = 0;
 		}
 
-		//Do block updates
 		$this->timings->scheduledBlockUpdates->startTiming();
-
 		//Delayed updates
 		while($this->scheduledBlockUpdateQueue->count() > 0 && $this->scheduledBlockUpdateQueue->current()["priority"] <= $currentTick){
 			/** @var Vector3 $vec */
@@ -1034,7 +1032,9 @@ class World implements ChunkManager{
 				$block->onScheduledUpdate();
 			}
 		}
+		$this->timings->scheduledBlockUpdates->stopTiming();
 
+		$this->timings->neighbourBlockUpdates->startTiming();
 		//Normal updates
 		while($this->neighbourBlockUpdateQueue->count() > 0){
 			$index = $this->neighbourBlockUpdateQueue->dequeue();
@@ -1045,12 +1045,7 @@ class World implements ChunkManager{
 			}
 
 			foreach([0, 1] as $layer){
-				$block = $this->getBlockAtLayer($x, $y, $z, $layer);
-				$replacement = $block->readStateFromWorld(); //for blocks like fences, force recalculation of connected AABBs
-				if($replacement !== $block){
-					$replacement->position($this, $x, $y, $z);
-					$block = $replacement;
-				}
+				$block = $this->getBlockAt($x, $y, $z);
 
 				if(BlockUpdateEvent::hasHandlers()){
 					$ev = new BlockUpdateEvent($block);
@@ -1066,7 +1061,7 @@ class World implements ChunkManager{
 			}
 		}
 
-		$this->timings->scheduledBlockUpdates->stopTiming();
+		$this->timings->neighbourBlockUpdates->stopTiming();
 
 		$this->timings->entityTick->startTiming();
 		//Update entities that need update
