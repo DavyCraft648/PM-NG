@@ -39,9 +39,11 @@ final class BedrockDataFiles{
 	public const BLOCK_ID_TO_ITEM_ID_MAP_JSON = BEDROCK_DATA_PATH . '/block_id_to_item_id_map.json';
 	public const BLOCK_STATE_META_MAP_1_20_0_JSON = BEDROCK_DATA_PATH . '/block_state_meta_map-1.20.0.json';
 	public const BLOCK_STATE_META_MAP_1_20_10_JSON = BEDROCK_DATA_PATH . '/block_state_meta_map-1.20.10.json';
+	public const BLOCK_STATE_META_MAP_1_20_30_JSON = BEDROCK_DATA_PATH . '/block_state_meta_map-1.20.30.json';
 	public const BLOCK_STATE_META_MAP_JSON = BEDROCK_DATA_PATH . '/block_state_meta_map.json';
 	public const CANONICAL_BLOCK_STATES_1_20_0_NBT = BEDROCK_DATA_PATH . '/canonical_block_states-1.20.0.nbt';
 	public const CANONICAL_BLOCK_STATES_1_20_10_NBT = BEDROCK_DATA_PATH . '/canonical_block_states-1.20.10.nbt';
+	public const CANONICAL_BLOCK_STATES_1_20_30_NBT = BEDROCK_DATA_PATH . '/canonical_block_states-1.20.30.nbt';
 	public const CANONICAL_BLOCK_STATES_NBT = BEDROCK_DATA_PATH . '/canonical_block_states.nbt';
 	public const COMMAND_ARG_TYPES_JSON = BEDROCK_DATA_PATH . '/command_arg_types.json';
 	public const CREATIVEITEMS_JSON = BEDROCK_DATA_PATH . '/creativeitems.json';
@@ -52,6 +54,7 @@ final class BedrockDataFiles{
 	public const PARTICLE_ID_MAP_JSON = BEDROCK_DATA_PATH . '/particle_id_map.json';
 	public const R12_TO_CURRENT_BLOCK_MAP_1_20_0_BIN = BEDROCK_DATA_PATH . '/r12_to_current_block_map-1.20.0.bin';
 	public const R12_TO_CURRENT_BLOCK_MAP_1_20_10_BIN = BEDROCK_DATA_PATH . '/r12_to_current_block_map-1.20.10.bin';
+	public const R12_TO_CURRENT_BLOCK_MAP_1_20_30_BIN = BEDROCK_DATA_PATH . '/r12_to_current_block_map-1.20.30.bin';
 	public const R12_TO_CURRENT_BLOCK_MAP_BIN = BEDROCK_DATA_PATH . '/r12_to_current_block_map.bin';
 	public const R16_TO_CURRENT_ITEM_MAP_JSON = BEDROCK_DATA_PATH . '/r16_to_current_item_map.json';
 	public const REQUIRED_ITEM_LIST_1_20_0_JSON = BEDROCK_DATA_PATH . '/required_item_list-1.20.0.json';

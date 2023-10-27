@@ -125,7 +125,7 @@ final class CraftingDataCache{
 			}
 		}
 
-		foreach(FurnaceType::getAll() as $furnaceType){
+		foreach(FurnaceType::cases() as $furnaceType){
 			try{
 				$typeTag = match($furnaceType){
 					FurnaceType::FURNACE => FurnaceRecipeBlockName::FURNACE,
