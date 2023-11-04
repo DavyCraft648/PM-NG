@@ -29,6 +29,7 @@ use pocketmine\data\bedrock\LegacyBiomeIdToStringIdMap;
 use pocketmine\nbt\TreeRoot;
 use pocketmine\network\mcpe\convert\BlockTranslator;
 use pocketmine\network\mcpe\convert\TypeConverter;
+use pocketmine\network\mcpe\protocol\ProtocolInfo;
 use pocketmine\network\mcpe\protocol\serializer\NetworkNbtSerializer;
 use pocketmine\network\mcpe\protocol\serializer\PacketSerializer;
 use pocketmine\network\mcpe\protocol\serializer\PacketSerializerContext;
@@ -135,6 +136,8 @@ final class ChunkSerializer{
 
 		$blockStateDictionary = $blockTranslator->getBlockStateDictionary();
 
+		$p_1_20_40 = $stream->getProtocolId() === ProtocolInfo::PROTOCOL_1_20_40;
+		$states = $p_1_20_40 ? $blockStateDictionary->getStates() : [];
 		foreach($layers as $blocks){
 			$bitsPerBlock = $blocks->getBitsPerBlock();
 			$words = $blocks->getWordArray();
@@ -161,7 +164,15 @@ final class ChunkSerializer{
 				}
 			}else{
 				foreach($palette as $p){
-					$stream->put(Binary::writeUnsignedVarInt($blockTranslator->internalIdToNetworkId($p) << 1));
+					$networkId = $blockTranslator->internalIdToNetworkId($p);
+					if($p_1_20_40){
+						$name = $states[$networkId]->getStateName();
+						//TODO: these blocks is known to cause crashes on 1.20.40 clients if they are sent in LevelChunk packet
+						if($name === "minecraft:chiseled_bookshelf" || $name === "minecraft:dispenser" || $name === "minecraft:dropper"){
+							$networkId = $blockStateDictionary->lookupStateIdFromData($blockTranslator->getFallbackStateData());
+						}
+					}
+					$stream->put(Binary::writeUnsignedVarInt($networkId << 1));
 				}
 			}
 		}
