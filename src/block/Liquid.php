@@ -263,7 +263,7 @@ abstract class Liquid extends Transparent{
 			}
 		}
 		if(!$this->checkForHarden()){
-			$world->scheduleDelayedBlockUpdate($this->position, $this->tickRate());
+			$world->scheduleDelayedBlockUpdate($this->position, $this->tickRate(), $this->layer);
 		}
 	}
 
@@ -355,11 +355,12 @@ abstract class Liquid extends Transparent{
 			$ev->call();
 			if(!$ev->isCancelled()){
 				$world = $this->position->getWorld();
-				if($block->getTypeId() !== BlockTypeIds::AIR){
+				$waterlogging = $this->isLayerSupported(1) && $block->canWaterlogged($this);
+				if($block->getTypeId() !== BlockTypeIds::AIR && !$waterlogging){
 					$world->useBreakOn($block->position);
 				}
 
-				$world->setBlockLayer($block->position, $ev->getNewState(), (in_array(1, $this->getSupportedLayers(), true) && $block->canWaterlogged($this)) ? 1 : 0);
+				$world->setBlockLayer($block->position, $ev->getNewState(), $waterlogging ? 1 : 0);
 			}
 		}
 	}
@@ -370,6 +371,17 @@ abstract class Liquid extends Transparent{
 		if(!($block instanceof Liquid) || !$block->hasSameTypeId($this)){
 			$block = $block->getBlockLayer(1);
 			if(!($block instanceof Liquid) || !$block->hasSameTypeId($this)){
+				return $decay;
+			}
+		}
+
+		if($block->layer === 1 && $block->position->y === $this->position->y){
+			$facing = [
+				0 => [-1 => Facing::NORTH, +1 => Facing::SOUTH],
+				-1 => [0 => Facing::WEST],
+				1 => [0 => Facing::EAST]
+			][$this->position->x - $block->position->x][$this->position->z - $block->position->z] ?? null;
+			if($facing !== null && $block->getBlockLayer(0)->getSupportType($facing) === SupportType::FULL){
 				return $decay;
 			}
 		}
@@ -397,14 +409,16 @@ abstract class Liquid extends Transparent{
 	}
 
 	protected function canFlowInto(Block $block) : bool{
+		if(!$this->position->getWorld()->isInWorld($block->position->x, $block->position->y, $block->position->z)){
+			return false;
+		}
+
 		$waterlogging = false;
-		if(in_array(1, $this->getSupportedLayers(), true) && $block->canWaterlogged($this)){
+		if($this->isLayerSupported(1) && $block->canWaterlogged($this)){
 			$layer2 = $block->getBlockLayer(1);
 			$waterlogging = !($layer2 instanceof Liquid && $layer2->isSource());
 		}
-		return
-			$this->position->getWorld()->isInWorld($block->position->x, $block->position->y, $block->position->z) &&
-			($block->canBeFlowedInto() || $waterlogging) &&
+		return ($block->canBeFlowedInto() || $waterlogging) &&
 			!($block instanceof Liquid && $block->isSource()); //TODO: I think this should only be liquids of the same type
 	}
 }

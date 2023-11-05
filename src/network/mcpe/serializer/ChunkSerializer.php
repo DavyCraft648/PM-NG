@@ -78,7 +78,7 @@ final class ChunkSerializer{
 			default => throw new AssumptionFailedError("Unknown DimensionId " . $dimensionId)
 		};
 		$subChunkCount = self::getSubChunkCount($chunk);
-		for($y = $dimensionId === DimensionIds::OVERWORLD ? Chunk::MIN_SUBCHUNK_INDEX : 0, $writtenCount = 0; $writtenCount < min($subChunkCount, $maxSubChunkIndex + 1); ++$y, ++$writtenCount){
+		for($y = $minSubChunkIndex = $dimensionId === DimensionIds::OVERWORLD ? Chunk::MIN_SUBCHUNK_INDEX : 0, $writtenCount = 0; $writtenCount < min($subChunkCount, $maxSubChunkIndex - $minSubChunkIndex + 1); ++$y, ++$writtenCount){
 			$subChunkStream = clone $stream;
 			self::serializeSubChunk($chunk->getSubChunk($y), $blockTranslator, $subChunkStream, false);
 			$subChunks[] = $subChunkStream->getBuffer();

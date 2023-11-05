@@ -66,7 +66,7 @@ class LiquidBucket extends Item{
 			return ItemUseResult::NONE;
 		}
 
-		if(!in_array(1, $resultBlock->getSupportedLayers(), true)){
+		if(!$resultBlock->isLayerSupported(1)){
 			if(!$blockReplace->canBeReplaced()){
 				return ItemUseResult::NONE;
 			}

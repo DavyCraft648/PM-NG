@@ -58,9 +58,8 @@ class SmallDripleaf extends Transparent{
 
 	private function canBeSupportedBy(Block $block) : bool{
 		//TODO: Moss
-		//TODO: Small Dripleaf also can be placed on dirt, coarse dirt, farmland, grass blocks,
-		// podzol, rooted dirt, mycelium, and mud if these blocks are underwater (needs waterlogging)
-		return $block->getTypeId() === BlockTypeIds::CLAY;
+		return $block->getTypeId() === BlockTypeIds::CLAY ||
+			($block->getSide(Facing::UP) instanceof Water && $block->hasTypeTag(BlockTypeTags::DIRT) && $block->hasTypeTag(BlockTypeTags::MUD));
 	}
 
 	public function onNearbyBlockChange() : void{
@@ -169,6 +168,6 @@ class SmallDripleaf extends Transparent{
 	}
 
 	public function getWaterloggingLevel() : int{
-		return 1;
+		return 2;
 	}
 }

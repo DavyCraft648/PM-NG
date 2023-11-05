@@ -1024,15 +1024,13 @@ class World implements ChunkManager{
 		//Delayed updates
 		while($this->scheduledBlockUpdateQueue->count() > 0 && $this->scheduledBlockUpdateQueue->current()["priority"] <= $currentTick){
 			/** @var Vector3 $vec */
-			$vec = $this->scheduledBlockUpdateQueue->extract()["data"];
+			[$vec, $layer] = $this->scheduledBlockUpdateQueue->extract()["data"];
 			unset($this->scheduledBlockUpdateQueueIndex[World::blockHash($vec->x, $vec->y, $vec->z)]);
 			if(!$this->isInLoadedTerrain($vec)){
 				continue;
 			}
-			foreach([0, 1] as $layer){
-				$block = $this->getBlockLayer($vec, $layer);
-				$block->onScheduledUpdate();
-			}
+			$block = $this->getBlockLayer($vec, $layer);
+			$block->onScheduledUpdate();
 		}
 		$this->timings->scheduledBlockUpdates->stopTiming();
 
@@ -1047,7 +1045,10 @@ class World implements ChunkManager{
 			}
 
 			foreach([0, 1] as $layer){
-				$block = $this->getBlockAt($x, $y, $z);
+				$block = $this->getBlockAtLayer($x, $y, $z, $layer);
+				if($block->getTypeId() === BlockTypeIds::AIR){
+					break;
+				}
 
 				if(BlockUpdateEvent::hasHandlers()){
 					$ev = new BlockUpdateEvent($block);
@@ -1096,7 +1097,7 @@ class World implements ChunkManager{
 							$p->onChunkChanged($chunkX, $chunkZ, $chunk);
 						}
 					}else{
-						$this->broadcastPacketToPlayersByTypeConverterUsingChunk($chunkX, $chunkZ, fn(TypeConverter $typeConverter) : array => $this->createBlockUpdatePackets($typeConverter, $blocks));
+						$this->broadcastPacketToPlayersByTypeConverterUsingChunk($chunkX, $chunkZ, fn(TypeConverter $typeConverter) : array => $this->createBlockUpdatePackets($typeConverter, $blocks, true));
 					}
 				}
 			}
@@ -1169,7 +1170,7 @@ class World implements ChunkManager{
 	 * @return ClientboundPacket[]
 	 * @phpstan-return list<ClientboundPacket>
 	 */
-	public function createBlockUpdatePackets(TypeConverter $typeConverter, array $blocks) : array{
+	public function createBlockUpdatePackets(TypeConverter $typeConverter, array $blocks, bool $secondLayer = false) : array{
 		$packets = [];
 
 		$blockTranslator = $typeConverter->getBlockTranslator();
@@ -1206,6 +1207,15 @@ class World implements ChunkManager{
 				UpdateBlockPacket::FLAG_NETWORK,
 				UpdateBlockPacket::DATA_LAYER_NORMAL
 			);
+
+			if($secondLayer){
+				$packets[] = UpdateBlockPacket::create(
+					$blockPosition,
+					$blockTranslator->internalIdToNetworkId($this->getBlockAtLayer($b->x, $b->y, $b->z, 1)->getStateId()),
+					UpdateBlockPacket::FLAG_NETWORK,
+					UpdateBlockPacket::DATA_LAYER_LIQUID
+				);
+			}
 
 			if($tile instanceof Spawnable){
 				$packets[] = BlockActorDataPacket::create($blockPosition, $tile->getSerializedSpawnCompound($typeConverter));
@@ -1531,7 +1541,7 @@ class World implements ChunkManager{
 	 * Schedules a block update to be executed after the specified number of ticks.
 	 * Blocks will be updated with the scheduled update type.
 	 */
-	public function scheduleDelayedBlockUpdate(Vector3 $pos, int $delay) : void{
+	public function scheduleDelayedBlockUpdate(Vector3 $pos, int $delay, int $layer = 0) : void{
 		if(
 			!$this->isInWorld($pos->x, $pos->y, $pos->z) ||
 			(isset($this->scheduledBlockUpdateQueueIndex[$index = World::blockHash($pos->x, $pos->y, $pos->z)]) && $this->scheduledBlockUpdateQueueIndex[$index] <= $delay)
@@ -1539,7 +1549,7 @@ class World implements ChunkManager{
 			return;
 		}
 		$this->scheduledBlockUpdateQueueIndex[$index] = $delay;
-		$this->scheduledBlockUpdateQueue->insert(new Vector3((int) $pos->x, (int) $pos->y, (int) $pos->z), $delay + $this->server->getTick());
+		$this->scheduledBlockUpdateQueue->insert([new Vector3((int) $pos->x, (int) $pos->y, (int) $pos->z), $layer], $delay + $this->server->getTick());
 	}
 
 	private function tryAddToNeighbourUpdateQueue(int $x, int $y, int $z) : void{
@@ -2046,7 +2056,7 @@ class World implements ChunkManager{
 		$chunkHash = World::chunkHash($chunkX, $chunkZ);
 		$relativeBlockHash = World::chunkBlockHash($x, $y, $z);
 
-		unset($this->blockCache[$chunkHash][$relativeBlockHash]);
+		unset($this->blockCache[$chunkHash][$relativeBlockHash][$layer]);
 		unset($this->blockCollisionBoxCache[$chunkHash][$relativeBlockHash]);
 		//blocks like fences have collision boxes that reach into neighbouring blocks, so we need to invalidate the
 		//caches for those blocks as well

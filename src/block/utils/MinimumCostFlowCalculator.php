@@ -109,6 +109,9 @@ final class MinimumCostFlowCalculator{
 
 			if(!$this->world->isInWorld($x, $y, $z) || !$this->canFlowInto($block = $this->world->getBlockAt($x, $y, $z))){
 				$this->flowCostVisited[World::blockHash($x, $y, $z)] = self::BLOCKED;
+			}elseif($this->world->getBlockAt($originX, $originY, $originZ)->getSupportType($j) === SupportType::FULL){
+				$this->flowCostVisited[World::blockHash($x, $y, $z)] = self::BLOCKED;
+				unset($flowCost[$j]);
 			}elseif(($down = $this->world->getBlockAt($x, $y - 1, $z))->canBeFlowedInto() || $down->mayWaterloggingFlowInto()){
 				$this->flowCostVisited[World::blockHash($x, $y, $z)] = self::CAN_FLOW_DOWN;
 				$flowCost[$j] = $maxCost = 0;

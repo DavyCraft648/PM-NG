@@ -530,15 +530,19 @@ class InGamePacketHandler extends ChunkRequestPacketHandler{
 	private function onFailedBlockAction(Vector3 $blockPos, ?int $face) : void{
 		if($blockPos->distanceSquared($this->player->getLocation()) < 10000){
 			$blocks = $blockPos->sidesArray();
+			$world = $this->player->getWorld();
+			$typeConverter = $this->session->getTypeConverter();
 			if($face !== null){
 				$sidePos = $blockPos->getSide($face);
 
 				/** @var Vector3[] $blocks */
 				array_push($blocks, ...$sidePos->sidesArray()); //getAllSides() on each of these will include $blockPos and $sidePos because they are next to each other
 			}else{
-				$blocks[] = $blockPos;
+				foreach($world->createBlockUpdatePackets($typeConverter, [$blockPos], true) as $packet){
+					$this->session->sendDataPacket($packet);
+				}
 			}
-			foreach($this->player->getWorld()->createBlockUpdatePackets($this->session->getTypeConverter(), $blocks) as $packet){
+			foreach($world->createBlockUpdatePackets($typeConverter, $blocks) as $packet){
 				$this->session->sendDataPacket($packet);
 			}
 		}

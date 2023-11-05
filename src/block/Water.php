@@ -59,7 +59,7 @@ class Water extends Liquid{
 		return true;
 	}
 
-	public function getSupportedLayers() : array{
-		return array_merge(parent::getSupportedLayers(), [1]);
+	public function isLayerSupported(int $layer) : bool{
+		return parent::isLayerSupported($layer) || $layer === 1;
 	}
 }

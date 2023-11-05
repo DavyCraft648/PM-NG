@@ -135,6 +135,6 @@ abstract class BaseBigDripleaf extends Transparent{
 	}
 
 	public function getWaterloggingLevel() : int{
-		return 1;
+		return 2;
 	}
 }

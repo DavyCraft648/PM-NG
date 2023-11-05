@@ -485,7 +485,14 @@ class Block{
 		if(($t = $world->getTile($this->position)) !== null){
 			$t->onBlockDestroyed();
 		}
-		$world->setBlockLayer($this->position, VanillaBlocks::AIR(), $this->layer);
+
+		$block = VanillaBlocks::AIR();
+		$layer1 = $this->getBlockLayer(1);
+		if($layer1->getTypeId() !== BlockTypeIds::AIR){
+			$world->setBlockLayer($this->position, $block, 1);
+			$block = $layer1;
+		}
+		$world->setBlockLayer($this->position, $block, $this->layer);
 		return true;
 	}
 
@@ -999,12 +1006,8 @@ class Block{
 		return $this;
 	}
 
-	/**
-	 * Returns layers that this block can be set into it.
-	 * @return int[]
-	 */
-	public function getSupportedLayers() : array{
-		return [0];
+	public function isLayerSupported(int $layer) : bool{
+		return $layer === 0;
 	}
 
 	/**
