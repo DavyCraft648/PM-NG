@@ -129,6 +129,10 @@ final class MinimumCostFlowCalculator{
 
 		$this->flowCostVisited = [];
 
+		if($flowCost === []){
+			return [];
+		}
+
 		$minCost = min($flowCost);
 
 		$isOptimalFlowDirection = [];
