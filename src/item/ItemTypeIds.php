@@ -304,11 +304,12 @@ final class ItemTypeIds{
 	public const GLOW_BERRIES = 20265;
 	public const CHERRY_SIGN = 20266;
 	public const ENCHANTED_BOOK = 20267;
-	public const FIREWORK_ROCKET = 20268;
-	public const FIREWORK_STAR = 20269;
-	public const CROSSBOW = 20270;
-	public const ELYTRA = 20271;
-	public const TRIDENT = 20272;
+	public const TORCHFLOWER_SEEDS = 20268;
+	public const FIREWORK_ROCKET = 20269;
+	public const FIREWORK_STAR = 20270;
+	public const CROSSBOW = 20271;
+	public const ELYTRA = 20272;
+	public const TRIDENT = 20273;
 	public const SHIELD = 20274;
 
 	public const FIRST_UNUSED_ITEM_ID = 20275;

@@ -896,14 +896,15 @@ class World implements ChunkManager{
 		$chunkHash = World::chunkHash($chunkX, $chunkZ);
 		$loaderId = spl_object_id($loader);
 		if(isset($this->chunkLoaders[$chunkHash][$loaderId])){
-			unset($this->chunkLoaders[$chunkHash][$loaderId]);
-			if(count($this->chunkLoaders[$chunkHash]) === 0){
+			if(count($this->chunkLoaders[$chunkHash]) === 1){
 				unset($this->chunkLoaders[$chunkHash]);
 				$this->unloadChunkRequest($chunkX, $chunkZ, true);
 				if(isset($this->chunkPopulationRequestMap[$chunkHash]) && !isset($this->activeChunkPopulationTasks[$chunkHash])){
 					$this->chunkPopulationRequestMap[$chunkHash]->reject();
 					unset($this->chunkPopulationRequestMap[$chunkHash]);
 				}
+			}else{
+				unset($this->chunkLoaders[$chunkHash][$loaderId]);
 			}
 		}
 	}
@@ -931,11 +932,12 @@ class World implements ChunkManager{
 	public function unregisterChunkListener(ChunkListener $listener, int $chunkX, int $chunkZ) : void{
 		$hash = World::chunkHash($chunkX, $chunkZ);
 		if(isset($this->chunkListeners[$hash])){
-			unset($this->chunkListeners[$hash][spl_object_id($listener)]);
-			unset($this->playerChunkListeners[$hash][spl_object_id($listener)]);
-			if(count($this->chunkListeners[$hash]) === 0){
+			if(count($this->chunkListeners[$hash]) === 1){
 				unset($this->chunkListeners[$hash]);
 				unset($this->playerChunkListeners[$hash]);
+			}else{
+				unset($this->chunkListeners[$hash][spl_object_id($listener)]);
+				unset($this->playerChunkListeners[$hash][spl_object_id($listener)]);
 			}
 		}
 	}
@@ -1018,9 +1020,7 @@ class World implements ChunkManager{
 			$this->providerGarbageCollectionTicker = 0;
 		}
 
-		//Do block updates
 		$this->timings->scheduledBlockUpdates->startTiming();
-
 		//Delayed updates
 		while($this->scheduledBlockUpdateQueue->count() > 0 && $this->scheduledBlockUpdateQueue->current()["priority"] <= $currentTick){
 			/** @var Vector3 $vec */
@@ -1032,7 +1032,9 @@ class World implements ChunkManager{
 			$block = $this->getBlock($vec);
 			$block->onScheduledUpdate();
 		}
+		$this->timings->scheduledBlockUpdates->stopTiming();
 
+		$this->timings->neighbourBlockUpdates->startTiming();
 		//Normal updates
 		while($this->neighbourBlockUpdateQueue->count() > 0){
 			$index = $this->neighbourBlockUpdateQueue->dequeue();
@@ -1043,11 +1045,6 @@ class World implements ChunkManager{
 			}
 
 			$block = $this->getBlockAt($x, $y, $z);
-			$replacement = $block->readStateFromWorld(); //for blocks like fences, force recalculation of connected AABBs
-			if($replacement !== $block){
-				$replacement->position($this, $x, $y, $z);
-				$block = $replacement;
-			}
 
 			if(BlockUpdateEvent::hasHandlers()){
 				$ev = new BlockUpdateEvent($block);
@@ -1062,7 +1059,7 @@ class World implements ChunkManager{
 			$block->onNearbyBlockChange();
 		}
 
-		$this->timings->scheduledBlockUpdates->stopTiming();
+		$this->timings->neighbourBlockUpdates->stopTiming();
 
 		$this->timings->entityTick->startTiming();
 		//Update entities that need update
@@ -1089,8 +1086,12 @@ class World implements ChunkManager{
 						continue;
 					}
 					World::getXZ($index, $chunkX, $chunkZ);
+					if(!$this->isChunkLoaded($chunkX, $chunkZ)){
+						//a previous chunk may have caused this one to be unloaded by a ChunkListener
+						continue;
+					}
 					if(count($blocks) > 512){
-						$chunk = $this->getChunk($chunkX, $chunkZ);
+						$chunk = $this->getChunk($chunkX, $chunkZ) ?? throw new AssumptionFailedError("We already checked that the chunk is loaded");
 						foreach($this->getChunkPlayers($chunkX, $chunkZ) as $p){
 							$p->onChunkChanged($chunkX, $chunkZ, $chunk);
 						}
@@ -1304,13 +1305,14 @@ class World implements ChunkManager{
 		$chunkHash = World::chunkHash($chunkX, $chunkZ);
 		$tickerId = spl_object_id($ticker);
 		if(isset($this->registeredTickingChunks[$chunkHash][$tickerId])){
-			unset($this->registeredTickingChunks[$chunkHash][$tickerId]);
-			if(count($this->registeredTickingChunks[$chunkHash]) === 0){
+			if(count($this->registeredTickingChunks[$chunkHash]) === 1){
 				unset(
 					$this->registeredTickingChunks[$chunkHash],
 					$this->recheckTickingChunks[$chunkHash],
 					$this->validTickingChunks[$chunkHash]
 				);
+			}else{
+				unset($this->registeredTickingChunks[$chunkHash][$tickerId]);
 			}
 		}
 	}
@@ -1538,9 +1540,9 @@ class World implements ChunkManager{
 		$this->scheduledBlockUpdateQueue->insert(new Vector3((int) $pos->x, (int) $pos->y, (int) $pos->z), $delay + $this->server->getTick());
 	}
 
-	private function tryAddToNeighbourUpdateQueue(Vector3 $pos) : void{
-		if($this->isInWorld($pos->x, $pos->y, $pos->z)){
-			$hash = World::blockHash($pos->x, $pos->y, $pos->z);
+	private function tryAddToNeighbourUpdateQueue(int $x, int $y, int $z) : void{
+		if($this->isInWorld($x, $y, $z)){
+			$hash = World::blockHash($x, $y, $z);
 			if(!isset($this->neighbourBlockUpdateQueueIndex[$hash])){
 				$this->neighbourBlockUpdateQueue->enqueue($hash);
 				$this->neighbourBlockUpdateQueueIndex[$hash] = true;
@@ -1549,16 +1551,27 @@ class World implements ChunkManager{
 	}
 
 	/**
+	 * Identical to {@link World::notifyNeighbourBlockUpdate()}, but without the Vector3 requirement. We don't want or
+	 * need Vector3 in the places where this is called.
+	 *
+	 * TODO: make this the primary method in PM6
+	 */
+	private function internalNotifyNeighbourBlockUpdate(int $x, int $y, int $z) : void{
+		$this->tryAddToNeighbourUpdateQueue($x, $y, $z);
+		foreach(Facing::OFFSET as [$dx, $dy, $dz]){
+			$this->tryAddToNeighbourUpdateQueue($x + $dx, $y + $dy, $z + $dz);
+		}
+	}
+
+	/**
 	 * Notify the blocks at and around the position that the block at the position may have changed.
 	 * This will cause onNearbyBlockChange() to be called for these blocks.
+	 * TODO: Accept plain integers in PM6 - the Vector3 requirement is an unnecessary inconvenience
 	 *
 	 * @see Block::onNearbyBlockChange()
 	 */
 	public function notifyNeighbourBlockUpdate(Vector3 $pos) : void{
-		$this->tryAddToNeighbourUpdateQueue($pos);
-		foreach($pos->sides() as $side){
-			$this->tryAddToNeighbourUpdateQueue($side);
-		}
+		$this->internalNotifyNeighbourBlockUpdate($pos->getFloorX(), $pos->getFloorY(), $pos->getFloorZ());
 	}
 
 	/**
@@ -1609,13 +1622,13 @@ class World implements ChunkManager{
 	 *
 	 * @return AxisAlignedBB[]
 	 */
-	private function getCollisionBoxesForCell(int $x, int $y, int $z) : array{
+	private function getBlockCollisionBoxesForCell(int $x, int $y, int $z) : array{
 		$block = $this->getBlockAt($x, $y, $z);
 		$boxes = $block->getCollisionBoxes();
 
 		$cellBB = AxisAlignedBB::one()->offset($x, $y, $z);
-		foreach(Facing::ALL as $facing){
-			$extraBoxes = $block->getSide($facing)->getCollisionBoxes();
+		foreach(Facing::OFFSET as [$dx, $dy, $dz]){
+			$extraBoxes = $this->getBlockAt($x + $dx, $y + $dy, $z + $dz)->getCollisionBoxes();
 			foreach($extraBoxes as $extraBox){
 				if($extraBox->intersectsWith($cellBB)){
 					$boxes[] = $extraBox;
@@ -1630,7 +1643,7 @@ class World implements ChunkManager{
 	 * @return AxisAlignedBB[]
 	 * @phpstan-return list<AxisAlignedBB>
 	 */
-	public function getCollisionBoxes(Entity $entity, AxisAlignedBB $bb, bool $entities = true) : array{
+	public function getBlockCollisionBoxes(AxisAlignedBB $bb) : array{
 		$minX = (int) floor($bb->minX);
 		$minY = (int) floor($bb->minY);
 		$minZ = (int) floor($bb->minZ);
@@ -1646,7 +1659,7 @@ class World implements ChunkManager{
 				for($y = $minY; $y <= $maxY; ++$y){
 					$relativeBlockHash = World::chunkBlockHash($x, $y, $z);
 
-					$boxes = $this->blockCollisionBoxCache[$chunkPosHash][$relativeBlockHash] ??= $this->getCollisionBoxesForCell($x, $y, $z);
+					$boxes = $this->blockCollisionBoxCache[$chunkPosHash][$relativeBlockHash] ??= $this->getBlockCollisionBoxesForCell($x, $y, $z);
 
 					foreach($boxes as $blockBB){
 						if($blockBB->intersectsWith($bb)){
@@ -1656,6 +1669,19 @@ class World implements ChunkManager{
 				}
 			}
 		}
+
+		return $collides;
+	}
+
+	/**
+	 * @deprecated Use {@link World::getBlockCollisionBoxes()} instead (alongside {@link World::getCollidingEntities()}
+	 * if entity collision boxes are also required).
+	 *
+	 * @return AxisAlignedBB[]
+	 * @phpstan-return list<AxisAlignedBB>
+	 */
+	public function getCollisionBoxes(Entity $entity, AxisAlignedBB $bb, bool $entities = true) : array{
+		$collides = $this->getBlockCollisionBoxes($bb);
 
 		if($entities){
 			foreach($this->getCollidingEntities($bb->expandedCopy(0.25, 0.25, 0.25), $entity) as $ent){
@@ -2013,7 +2039,7 @@ class World implements ChunkManager{
 
 		if($update){
 			$this->updateAllLight($x, $y, $z);
-			$this->notifyNeighbourBlockUpdate($pos);
+			$this->internalNotifyNeighbourBlockUpdate($x, $y, $z);
 		}
 
 		$this->timings->setBlock->stopTiming();
@@ -2362,9 +2388,6 @@ class World implements ChunkManager{
 
 		for($x = $minX; $x <= $maxX; ++$x){
 			for($z = $minZ; $z <= $maxZ; ++$z){
-				if(!$this->isChunkLoaded($x, $z)){
-					continue;
-				}
 				foreach($this->getChunkEntities($x, $z) as $ent){
 					if($ent !== $entity && $ent->boundingBox->intersectsWith($bb)){
 						$nearby[] = $ent;
@@ -2405,9 +2428,6 @@ class World implements ChunkManager{
 
 		for($x = $minX; $x <= $maxX; ++$x){
 			for($z = $minZ; $z <= $maxZ; ++$z){
-				if(!$this->isChunkLoaded($x, $z)){
-					continue;
-				}
 				foreach($this->getChunkEntities($x, $z) as $entity){
 					if(!($entity instanceof $entityType) || $entity->isFlaggedForDespawn() || (!$includeDead && !$entity->isAlive())){
 						continue;
@@ -2734,9 +2754,10 @@ class World implements ChunkManager{
 		$pos = $this->entityLastKnownPositions[$entity->getId()];
 		$chunkHash = World::chunkHash($pos->getFloorX() >> Chunk::COORD_BIT_SIZE, $pos->getFloorZ() >> Chunk::COORD_BIT_SIZE);
 		if(isset($this->entitiesByChunk[$chunkHash][$entity->getId()])){
-			unset($this->entitiesByChunk[$chunkHash][$entity->getId()]);
-			if(count($this->entitiesByChunk[$chunkHash]) === 0){
+			if(count($this->entitiesByChunk[$chunkHash]) === 1){
 				unset($this->entitiesByChunk[$chunkHash]);
+			}else{
+				unset($this->entitiesByChunk[$chunkHash][$entity->getId()]);
 			}
 		}
 		unset($this->entityLastKnownPositions[$entity->getId()]);
@@ -2769,9 +2790,10 @@ class World implements ChunkManager{
 		if($oldChunkX !== $newChunkX || $oldChunkZ !== $newChunkZ){
 			$oldChunkHash = World::chunkHash($oldChunkX, $oldChunkZ);
 			if(isset($this->entitiesByChunk[$oldChunkHash][$entity->getId()])){
-				unset($this->entitiesByChunk[$oldChunkHash][$entity->getId()]);
-				if(count($this->entitiesByChunk[$oldChunkHash]) === 0){
+				if(count($this->entitiesByChunk[$oldChunkHash]) === 1){
 					unset($this->entitiesByChunk[$oldChunkHash]);
+				}else{
+					unset($this->entitiesByChunk[$oldChunkHash][$entity->getId()]);
 				}
 			}
 

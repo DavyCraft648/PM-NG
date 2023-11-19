@@ -23,29 +23,31 @@ declare(strict_types=1);
 
 namespace pocketmine\block\utils;
 
-use pocketmine\data\runtime\RuntimeDataDescriber;
-use function floor;
+enum ChiseledBookshelfSlot : int{
+	case TOP_LEFT = 0;
+	case TOP_MIDDLE = 1;
+	case TOP_RIGHT = 2;
+	case BOTTOM_LEFT = 3;
+	case BOTTOM_MIDDLE = 4;
+	case BOTTOM_RIGHT = 5;
 
-trait SignLikeRotationTrait{
-	/** @var int */
-	private $rotation = 0;
+	private const SLOTS_PER_SHELF = 3;
 
-	protected function describeBlockOnlyState(RuntimeDataDescriber $w) : void{
-		$w->boundedIntAuto(0, 15, $this->rotation);
-	}
-
-	public function getRotation() : int{ return $this->rotation; }
-
-	/** @return $this */
-	public function setRotation(int $rotation) : self{
-		if($rotation < 0 || $rotation > 15){
-			throw new \InvalidArgumentException("Rotation must be in range 0-15");
+	public static function fromBlockFaceCoordinates(float $x, float $y) : self{
+		if($x < 0 || $x > 1){
+			throw new \InvalidArgumentException("X must be between 0 and 1, got $x");
 		}
-		$this->rotation = $rotation;
-		return $this;
-	}
+		if($y < 0 || $y > 1){
+			throw new \InvalidArgumentException("Y must be between 0 and 1, got $y");
+		}
 
-	private static function getRotationFromYaw(float $yaw) : int{
-		return ((int) floor((($yaw + 180) * 16 / 360) + 0.5)) & 0xf;
+		$slot = ($y < 0.5 ? self::SLOTS_PER_SHELF : 0) + match(true){
+			//we can't use simple maths here as the action is aligned to the 16x16 pixel grid :(
+			$x < 6 / 16 => 0,
+			$x < 11 / 16 => 1,
+			default => 2
+		};
+
+		return self::from($slot);
 	}
 }

@@ -21,17 +21,20 @@
 
 declare(strict_types=1);
 
-namespace pocketmine\block;
+namespace pocketmine\block\utils;
 
-use pocketmine\block\utils\FortuneDropHelper;
-use pocketmine\item\Item;
-use pocketmine\item\VanillaItems;
+use pocketmine\block\Block;
+use pocketmine\entity\projectile\Projectile;
+use pocketmine\math\RayTraceResult;
+use pocketmine\world\sound\AmethystBlockChimeSound;
+use pocketmine\world\sound\BlockPunchSound;
 
-final class IronOre extends Opaque{
-
-	public function getDropsForCompatibleTool(Item $item) : array{
-		return [VanillaItems::RAW_IRON()->setCount(FortuneDropHelper::weighted($item, min: 1, maxBase: 1))];
+trait AmethystTrait{
+	/**
+	 * @see Block::onProjectileHit()
+	 */
+	public function onProjectileHit(Projectile $projectile, RayTraceResult $hitResult) : void{
+		$this->position->getWorld()->addSound($this->position, new AmethystBlockChimeSound());
+		$this->position->getWorld()->addSound($this->position, new BlockPunchSound($this));
 	}
-
-	public function isAffectedBySilkTouch() : bool{ return true; }
 }

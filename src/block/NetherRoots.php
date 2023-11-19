@@ -23,15 +23,17 @@ declare(strict_types=1);
 
 namespace pocketmine\block;
 
-use pocketmine\block\utils\FortuneDropHelper;
-use pocketmine\item\Item;
-use pocketmine\item\VanillaItems;
+use pocketmine\block\utils\StaticSupportTrait;
+use pocketmine\math\Facing;
 
-final class IronOre extends Opaque{
+final class NetherRoots extends Flowable{
+	use StaticSupportTrait;
 
-	public function getDropsForCompatibleTool(Item $item) : array{
-		return [VanillaItems::RAW_IRON()->setCount(FortuneDropHelper::weighted($item, min: 1, maxBase: 1))];
+	private function canBeSupportedAt(Block $block) : bool{
+		//TODO: nylium, moss
+		$supportBlock = $block->getSide(Facing::DOWN);
+		return
+			$supportBlock->hasTypeTag(BlockTypeTags::DIRT) ||
+			$supportBlock->hasTypeTag(BlockTypeTags::MUD);
 	}
-
-	public function isAffectedBySilkTouch() : bool{ return true; }
 }
