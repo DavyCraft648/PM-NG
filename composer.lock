@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "476eac6ef5b98985a610e16a7ed9f1fb",
+    "content-hash": "8711a8f3feda17f168f69c55dc4a8a65",
     "packages": [
         {
             "name": "adhocore/json-comment",
@@ -151,12 +151,12 @@
             "source": {
                 "type": "git",
                 "url": "https://github.com/NetherGamesMC/BedrockProtocol.git",
-                "reference": "24523cd9a133b69bf62bc9edf26b9cb588819e15"
+                "reference": "fe56990e778e15b46aab62666990c65a30b139bc"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/NetherGamesMC/BedrockProtocol/zipball/24523cd9a133b69bf62bc9edf26b9cb588819e15",
-                "reference": "24523cd9a133b69bf62bc9edf26b9cb588819e15",
+                "url": "https://api.github.com/repos/NetherGamesMC/BedrockProtocol/zipball/fe56990e778e15b46aab62666990c65a30b139bc",
+                "reference": "fe56990e778e15b46aab62666990c65a30b139bc",
                 "shasum": ""
             },
             "require": {
@@ -173,7 +173,7 @@
                 "phpstan/phpstan": "1.10.39",
                 "phpstan/phpstan-phpunit": "^1.0.0",
                 "phpstan/phpstan-strict-rules": "^1.0.0",
-                "phpunit/phpunit": "^9.5"
+                "phpunit/phpunit": "^9.5 || ^10.0"
             },
             "default-branch": true,
             "type": "library",
@@ -199,7 +199,7 @@
             "support": {
                 "source": "https://github.com/NetherGamesMC/BedrockProtocol/tree/master"
             },
-            "time": "2023-10-26T11:19:10+00:00"
+            "time": "2023-11-19T21:20:49+00:00"
         },
         {
             "name": "pocketmine/bedrock-block-upgrade-schema",
