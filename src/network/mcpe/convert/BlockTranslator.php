@@ -46,6 +46,10 @@ final class BlockTranslator{
 			self::CANONICAL_BLOCK_STATES_PATH => '',
 			self::BLOCK_STATE_META_MAP_PATH => '',
 		],
+		ProtocolInfo::PROTOCOL_1_20_40 => [
+			self::CANONICAL_BLOCK_STATES_PATH => '-1.20.40',
+			self::BLOCK_STATE_META_MAP_PATH => '-1.20.40',
+		],
 		ProtocolInfo::PROTOCOL_1_20_30 => [
 			self::CANONICAL_BLOCK_STATES_PATH => '-1.20.30',
 			self::BLOCK_STATE_META_MAP_PATH => '-1.20.30',
