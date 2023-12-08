@@ -57,6 +57,7 @@ use pocketmine\network\mcpe\protocol\BossEventPacket;
 use pocketmine\network\mcpe\protocol\CommandBlockUpdatePacket;
 use pocketmine\network\mcpe\protocol\CommandRequestPacket;
 use pocketmine\network\mcpe\protocol\ContainerClosePacket;
+use pocketmine\network\mcpe\protocol\CraftingEventPacket;
 use pocketmine\network\mcpe\protocol\EmotePacket;
 use pocketmine\network\mcpe\protocol\InteractPacket;
 use pocketmine\network\mcpe\protocol\InventoryTransactionPacket;
@@ -734,6 +735,10 @@ class InGamePacketHandler extends ChunkRequestPacketHandler{
 
 	public function handlePlayerHotbar(PlayerHotbarPacket $packet) : bool{
 		return true; //this packet is useless
+	}
+
+	public function handleCraftingEvent(CraftingEventPacket $packet) : bool{
+		return true; //this is a broken useless packet, so we don't use it
 	}
 
 	public function handleBlockActorData(BlockActorDataPacket $packet) : bool{
