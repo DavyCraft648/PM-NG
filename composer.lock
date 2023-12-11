@@ -126,12 +126,12 @@
             "source": {
                 "type": "git",
                 "url": "https://github.com/NetherGamesMC/BedrockData.git",
-                "reference": "4c0a3d3cf5dd20dc225a5c6466d7f3ca496857e0"
+                "reference": "a3803d3864036ef89761800236ab83fdb4068b4c"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/NetherGamesMC/BedrockData/zipball/4c0a3d3cf5dd20dc225a5c6466d7f3ca496857e0",
-                "reference": "4c0a3d3cf5dd20dc225a5c6466d7f3ca496857e0",
+                "url": "https://api.github.com/repos/NetherGamesMC/BedrockData/zipball/a3803d3864036ef89761800236ab83fdb4068b4c",
+                "reference": "a3803d3864036ef89761800236ab83fdb4068b4c",
                 "shasum": ""
             },
             "default-branch": true,
@@ -143,7 +143,7 @@
             "support": {
                 "source": "https://github.com/NetherGamesMC/BedrockData/tree/master"
             },
-            "time": "2023-12-06T15:57:40+00:00"
+            "time": "2023-12-11T23:51:22+00:00"
         },
         {
             "name": "nethergamesmc/bedrock-protocol",

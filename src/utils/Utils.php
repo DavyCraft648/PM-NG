@@ -674,4 +674,8 @@ final class Utils{
 		//jit not available
 		return null;
 	}
+
+	public static function arrayMapPreserveKeys(callable $callback, array $array): array {
+		return array_combine(array_keys($array), array_map($callback, $array));
+	}
 }
