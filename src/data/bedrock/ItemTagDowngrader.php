@@ -23,7 +23,6 @@ declare(strict_types=1);
 
 namespace pocketmine\data\bedrock;
 
-use pocketmine\crafting\ExactRecipeIngredient;
 use pocketmine\crafting\MetaWildcardRecipeIngredient;
 use pocketmine\crafting\RecipeIngredient;
 use pocketmine\crafting\ShapedRecipe;
@@ -113,7 +112,7 @@ final class ItemTagDowngrader{
 
 		$ingredientCombinations = [[]];
 
-		foreach($wildcardToIdsMap as $tagName => $wildcardIds){
+		foreach(Utils::stringifyKeys($wildcardToIdsMap) as $tagName => $wildcardIds){
 			$appendedIngredientCombinations = [];
 
 			foreach ($wildcardIds as $wildcardId){
@@ -133,7 +132,7 @@ final class ItemTagDowngrader{
 	 *
 	 * @param array<string, string> $tagsToIdMap
 	 */
-	private function getDowngradedIngredient(?RecipeIngredient $ingredient, array $tagsToIdMap) : ?RecipeIngredient {
+	private function getDowngradedIngredient(RecipeIngredient $ingredient, array $tagsToIdMap) : RecipeIngredient {
 		if ($ingredient instanceof TagWildcardRecipeIngredient){
 			$tagName = $ingredient->getTagName();
 

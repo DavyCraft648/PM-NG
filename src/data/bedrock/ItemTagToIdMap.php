@@ -117,13 +117,12 @@ final class ItemTagToIdMap{
 	/**
 	 * $this - $other
 	 *
-	* @param ItemTagToIdMap $other
-	* @return array<string, list<string>>
+	 * @return array<string, list<string>>
 	 */
 	public function diff(ItemTagToIdMap $other): array{
 		$diff = [];
-		foreach($this->tagToIdsMap as $tag => $ids){
-			foreach($ids as $id => $_){
+		foreach(Utils::stringifyKeys($this->tagToIdsMap) as $tag => $ids){
+			foreach(Utils::stringifyKeys($ids) as $id => $_){
 				if(!$other->tagContainsId($tag, $id)){
 					$diff[$tag][] = $id;
 				}
