@@ -75,7 +75,7 @@ final class ItemTagDowngrader{
 	 * Get all the ids that are not included in the wildcard ingredients of the current version,
 	 * but are included in the wildcard ingredients of the last version.
 	 *
-	 * @phpstan-param list<RecipeIngredient|null> $ingredients
+	 * @phpstan-param array<RecipeIngredient> $ingredients
 	 * @phpstan-return array<string, list<string>>
 	 */
 	private function getNotIncludedWildcardIds(array $ingredients) : array {
