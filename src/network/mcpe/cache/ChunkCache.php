@@ -154,36 +154,22 @@ class ChunkCache implements ChunkListener{
 	}
 
 	/**
-	 * Restarts an async request for an unresolved chunk.
-	 *
-	 * @throws \InvalidArgumentException
-	 */
-	private function restartPendingRequest(int $chunkX, int $chunkZ, int $protocolId) : void{
-		$chunkHash = World::chunkHash($chunkX, $chunkZ);
-		$existing = $this->caches[$chunkHash][$protocolId] ?? null;
-		if($existing === null || $existing->hasResult()){
-			throw new \InvalidArgumentException("Restart can only be applied to unresolved promises");
-		}
-		$existing->cancel();
-		unset($this->caches[$chunkHash][$protocolId]);
-
-		$this->request($chunkX, $chunkZ, TypeConverter::getInstance($protocolId))->onResolve(...$existing->getResolveCallbacks());
-	}
-
-	/**
 	 * @throws \InvalidArgumentException
 	 */
 	private function destroyOrRestart(int $chunkX, int $chunkZ) : void{
-		$chunkHash = World::chunkHash($chunkX, $chunkZ);
-
-		if(isset($this->caches[$chunkHash])){
-			foreach($this->caches[$chunkHash] as $protocolId => $cache){
+		$chunkPosHash = World::chunkHash($chunkX, $chunkZ);
+		$cache = $this->caches[$chunkPosHash] ?? null;
+		if($cache !== null){
+			foreach($this->caches[$chunkPosHash] as $protocolId => $cache){
 				if(!$cache->hasResult()){
 					//some requesters are waiting for this chunk, so their request needs to be fulfilled
-					$this->restartPendingRequest($chunkX, $chunkZ, $protocolId);
+					$cache->cancel();
+					unset($this->caches[$chunkPosHash][$protocolId]);
+
+					$this->request($chunkX, $chunkZ, TypeConverter::getInstance($protocolId))->onResolve(...$cache->getResolveCallbacks());
 				}else{
 					//dump the cache, it'll be regenerated the next time it's requested
-					$this->destroy($chunkX, $chunkZ, $protocolId);
+					$this->destroy($chunkX, $chunkZ);
 				}
 			}
 		}

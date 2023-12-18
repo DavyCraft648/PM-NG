@@ -82,7 +82,7 @@ class SmallDripleaf extends Transparent{
 			$this->facing = Facing::opposite($player->getHorizontalFacing());
 		}
 
-		$tx->addBlock($block->getPosition(), VanillaBlocks::SMALL_DRIPLEAF()
+		$tx->addBlock($block->position, VanillaBlocks::SMALL_DRIPLEAF()
 			->setFacing($this->facing)
 			->setTop(true)
 		);
@@ -116,7 +116,7 @@ class SmallDripleaf extends Transparent{
 		$height = mt_rand(2, 5);
 		$grown = 0;
 		for($i = 0; $i < $height; $i++){
-			$pos = $bottomBlock->getSide(Facing::UP, $i)->getPosition();
+			$pos = $bottomBlock->getSide(Facing::UP, $i)->position;
 			if(!$this->canGrowTo($pos)){
 				break;
 			}
