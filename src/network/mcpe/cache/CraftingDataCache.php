@@ -29,6 +29,7 @@ use pocketmine\crafting\ShapedRecipe;
 use pocketmine\crafting\ShapelessRecipe;
 use pocketmine\crafting\ShapelessRecipeType;
 use pocketmine\data\bedrock\item\ItemTypeSerializeException;
+use pocketmine\data\bedrock\ItemTagDowngrader;
 use pocketmine\network\mcpe\convert\TypeConverter;
 use pocketmine\network\mcpe\protocol\CraftingDataPacket;
 use pocketmine\network\mcpe\protocol\types\recipe\CraftingRecipeBlockName;
@@ -78,6 +79,7 @@ final class CraftingDataCache{
 
 		$nullUUID = Uuid::fromString(Uuid::NIL);
 		$converter = TypeConverter::getInstance($this->protocolId);
+		$itemTagDowngrader = ItemTagDowngrader::getInstance($this->protocolId);
 		$recipesWithTypeIds = [];
 
 		foreach($manager->getCraftingRecipeIndex() as $index => $recipe){
@@ -89,34 +91,40 @@ final class CraftingDataCache{
 						ShapelessRecipeType::CARTOGRAPHY => CraftingRecipeBlockName::CARTOGRAPHY_TABLE,
 						ShapelessRecipeType::SMITHING => CraftingRecipeBlockName::SMITHING_TABLE,
 					};
-					$recipesWithTypeIds[] = new ProtocolShapelessRecipe(
-						CraftingDataPacket::ENTRY_SHAPELESS,
-						Binary::writeInt($index),
-						array_map($converter->coreRecipeIngredientToNet(...), $recipe->getIngredientList()),
-						array_map($converter->coreItemStackToNet(...), $recipe->getResults()),
-						$nullUUID,
-						$typeTag,
-						50,
-						$index
-					);
-				}elseif($recipe instanceof ShapedRecipe){
-					$inputs = [];
 
-					for($row = 0, $height = $recipe->getHeight(); $row < $height; ++$row){
-						for($column = 0, $width = $recipe->getWidth(); $column < $width; ++$column){
-							$inputs[$row][$column] = $converter->coreRecipeIngredientToNet($recipe->getIngredient($column, $row));
-						}
+					foreach($itemTagDowngrader->downgradeShapelessRecipe($recipe) as $r){
+						$recipesWithTypeIds[] = new ProtocolShapelessRecipe(
+							CraftingDataPacket::ENTRY_SHAPELESS,
+							Binary::writeInt($index),
+							array_map($converter->coreRecipeIngredientToNet(...), $r->getIngredientList()),
+							array_map($converter->coreItemStackToNet(...), $r->getResults()),
+							$nullUUID,
+							$typeTag,
+							50,
+							$index
+						);
 					}
-					$recipesWithTypeIds[] = $r = new ProtocolShapedRecipe(
-						CraftingDataPacket::ENTRY_SHAPED,
-						Binary::writeInt($index),
-						$inputs,
-						array_map($converter->coreItemStackToNet(...), $recipe->getResults()),
-						$nullUUID,
-						CraftingRecipeBlockName::CRAFTING_TABLE,
-						50,
-						$index
-					);
+				}elseif($recipe instanceof ShapedRecipe){
+					foreach($itemTagDowngrader->downgradeShapedRecipe($recipe) as $r){
+						$inputs = [];
+
+						for($row = 0, $height = $r->getHeight(); $row < $height; ++$row){
+							for($column = 0, $width = $r->getWidth(); $column < $width; ++$column){
+								$inputs[$row][$column] = $converter->coreRecipeIngredientToNet($r->getIngredient($column, $row));
+							}
+						}
+
+						$recipesWithTypeIds[] = $p = new ProtocolShapedRecipe(
+							CraftingDataPacket::ENTRY_SHAPED,
+							Binary::writeInt($index),
+							$inputs,
+							array_map($converter->coreItemStackToNet(...), $r->getResults()),
+							$nullUUID,
+							CraftingRecipeBlockName::CRAFTING_TABLE,
+							50,
+							$index
+						);
+					}
 				}else {
 					//TODO: probably special recipe types
 				}
