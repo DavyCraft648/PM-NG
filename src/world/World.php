@@ -1046,9 +1046,6 @@ class World implements ChunkManager{
 
 			foreach([0, 1] as $layer){
 				$block = $this->getBlockAtLayer($x, $y, $z, $layer);
-				if($block->getTypeId() === BlockTypeIds::AIR){
-					break;
-				}
 
 				if(BlockUpdateEvent::hasHandlers()){
 					$ev = new BlockUpdateEvent($block);
