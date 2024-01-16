@@ -671,6 +671,19 @@ class Server{
 	}
 
 	/**
+	 * Returns an online player with the given xuid, or null if not found.
+	 */
+	public function getPlayerByXuid(string $xuid) : ?Player{
+		foreach($this->getOnlinePlayers() as $player){
+			if($player->getXuid() === $xuid){
+				return $player;
+			}
+		}
+
+		return null;
+	}
+
+	/**
 	 * Returns the player online with the specified raw UUID, or null if not found
 	 */
 	public function getPlayerByRawUUID(string $rawUUID) : ?Player{
