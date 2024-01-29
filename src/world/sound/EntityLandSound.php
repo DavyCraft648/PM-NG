@@ -45,7 +45,7 @@ class EntityLandSound extends BlockSound{
 			LevelSoundEvent::LAND,
 			$pos,
 			$this->toRuntimeId(),
-			$this->entity::getNetworkTypeId(),
+			$this->entity->getNetworkTypeId(),
 			false, //TODO: does isBaby have any relevance here?
 			false
 		)];
