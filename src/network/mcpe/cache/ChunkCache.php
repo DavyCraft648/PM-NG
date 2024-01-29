@@ -158,9 +158,10 @@ class ChunkCache implements ChunkListener{
 	 */
 	private function destroyOrRestart(int $chunkX, int $chunkZ) : void{
 		$chunkPosHash = World::chunkHash($chunkX, $chunkZ);
-		$cache = $this->caches[$chunkPosHash] ?? null;
-		if($cache !== null){
-			foreach($this->caches[$chunkPosHash] as $protocolId => $cache){
+		$caches = $this->caches[$chunkPosHash] ?? null;
+
+		if($caches !== null){
+			foreach($caches as $protocolId => $cache){
 				if(!$cache->hasResult()){
 					//some requesters are waiting for this chunk, so their request needs to be fulfilled
 					$cache->cancel();
@@ -169,7 +170,7 @@ class ChunkCache implements ChunkListener{
 					$this->request($chunkX, $chunkZ, TypeConverter::getInstance($protocolId))->onResolve(...$cache->getResolveCallbacks());
 				}else{
 					//dump the cache, it'll be regenerated the next time it's requested
-					$this->destroy($chunkX, $chunkZ);
+					$this->destroy($chunkX, $chunkZ, $protocolId);
 				}
 			}
 		}
