@@ -26,10 +26,13 @@ namespace pocketmine\network\mcpe;
 use BadFunctionCallException;
 use pocketmine\network\mcpe\compression\Compressor;
 use pocketmine\network\mcpe\protocol\LevelChunkPacket;
+use pocketmine\network\mcpe\protocol\ProtocolInfo;
 use pocketmine\network\mcpe\protocol\serializer\PacketBatch;
 use pocketmine\network\mcpe\protocol\serializer\PacketSerializerContext;
 use pocketmine\network\mcpe\protocol\types\ChunkPosition;
+use pocketmine\network\mcpe\protocol\types\DimensionIds;
 use pocketmine\utils\BinaryStream;
+use function chr;
 use function count;
 use function strlen;
 
@@ -79,14 +82,18 @@ class CachedChunk{
 		return $map;
 	}
 
-	public function compressPackets(int $chunkX, int $chunkZ, string $chunkData, Compressor $compressor, PacketSerializerContext $encoderContext) : void{
+	/**
+	 * @phpstan-param DimensionIds::* $dimensionId
+	 */
+	public function compressPackets(int $chunkX, int $chunkZ, int $dimensionId, string $chunkData, Compressor $compressor, PacketSerializerContext $encoderContext, int $protocolId) : void{
+		$protocolAddition = $protocolId >= ProtocolInfo::PROTOCOL_1_20_60 ? chr($compressor->getNetworkId()) : '';
 		$stream = new BinaryStream();
-		PacketBatch::encodePackets($stream, $encoderContext, [$this->createPacket($chunkX, $chunkZ, $chunkData)]);
-		$this->packet = $compressor->compress($stream->getBuffer());
+		PacketBatch::encodePackets($stream, $encoderContext, [$this->createPacket($chunkX, $chunkZ, $dimensionId, $chunkData)]);
+		$this->packet = $protocolAddition . $compressor->compress($stream->getBuffer());
 
 		$stream = new BinaryStream();
-		PacketBatch::encodePackets($stream, $encoderContext, [$this->createCachablePacket($chunkX, $chunkZ, $chunkData)]);
-		$this->cachablePacket = $compressor->compress($stream->getBuffer());
+		PacketBatch::encodePackets($stream, $encoderContext, [$this->createCachablePacket($chunkX, $chunkZ, $dimensionId, $chunkData)]);
+		$this->cachablePacket = $protocolAddition . $compressor->compress($stream->getBuffer());
 	}
 
 	public function getCacheablePacket() : string{
@@ -105,7 +112,10 @@ class CachedChunk{
 		return $this->packet;
 	}
 
-	private function createPacket(int $chunkX, int $chunkZ, string $chunkData) : LevelChunkPacket{
+	/**
+	 * @phpstan-param DimensionIds::* $dimensionId
+	 */
+	private function createPacket(int $chunkX, int $chunkZ, int $dimensionId, string $chunkData) : LevelChunkPacket{
 		$stream = new BinaryStream();
 
 		foreach($this->blobs as $subChunk){
@@ -116,6 +126,7 @@ class CachedChunk{
 
 		return LevelChunkPacket::create(
 			new ChunkPosition($chunkX, $chunkZ),
+			$dimensionId,
 			count($this->hashes),
 			false,
 			null,
@@ -123,9 +134,13 @@ class CachedChunk{
 		);
 	}
 
-	private function createCachablePacket(int $chunkX, int $chunkZ, string $chunkData) : LevelChunkPacket{
+	/**
+	 * @phpstan-param DimensionIds::* $dimensionId
+	 */
+	private function createCachablePacket(int $chunkX, int $chunkZ, int $dimensionId, string $chunkData) : LevelChunkPacket{
 		return LevelChunkPacket::create(
 			new ChunkPosition($chunkX, $chunkZ),
+			$dimensionId,
 			count($this->hashes),
 			false,
 			$this->getHashes(),

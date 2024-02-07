@@ -23,12 +23,17 @@ declare(strict_types=1);
 
 namespace pocketmine\world\particle;
 
+use pocketmine\block\Block;
 use pocketmine\math\Vector3;
+use pocketmine\network\mcpe\convert\TypeConverter;
 use pocketmine\network\mcpe\protocol\LevelEventPacket;
 use pocketmine\network\mcpe\protocol\types\ParticleIds;
 
-class TerrainParticle extends BlockParticle{
+class TerrainParticle extends ProtocolParticle{ // BlockParticle
+	public function __construct(protected Block $b){}
+
 	public function encode(Vector3 $pos) : array{
-		return [LevelEventPacket::standardParticle(ParticleIds::TERRAIN, $this->toRuntimeId(), $pos)];
+		$runtimeId = TypeConverter::getInstance($this->protocolId)->getBlockTranslator()->internalIdToNetworkId($this->b->getStateId());
+		return [LevelEventPacket::standardParticle(ParticleIds::TERRAIN, $runtimeId, $pos, $this->protocolId)];
 	}
 }

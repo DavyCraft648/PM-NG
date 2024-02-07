@@ -109,6 +109,7 @@ use pocketmine\world\particle\BlockBreakParticle;
 use pocketmine\world\particle\BlockParticle;
 use pocketmine\world\particle\ItemParticle;
 use pocketmine\world\particle\Particle;
+use pocketmine\world\particle\ProtocolParticle;
 use pocketmine\world\sound\BlockPlaceSound;
 use pocketmine\world\sound\BlockSound;
 use pocketmine\world\sound\Sound;
@@ -764,10 +765,12 @@ class World implements ChunkManager{
 			$players = $ev->getRecipients();
 		}
 
-		if($particle instanceof BlockParticle || $particle instanceof ItemParticle){
+		if($particle instanceof BlockParticle || $particle instanceof ItemParticle || $particle instanceof ProtocolParticle){
 			$closure = function(TypeConverter $typeConverter) use ($particle, $pos) : array{
 				if($particle instanceof ItemParticle){
 					$particle->setItemTranslator($typeConverter->getItemTranslator());
+				}elseif($particle instanceof ProtocolParticle){
+					$particle->setProtocolId($typeConverter->getProtocolId());
 				}else{
 					$particle->setBlockTranslator($typeConverter->getBlockTranslator());
 				}

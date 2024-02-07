@@ -34,7 +34,6 @@ use pocketmine\thread\NonThreadSafeValue;
 use pocketmine\utils\Binary;
 use pocketmine\world\format\Chunk;
 use pocketmine\world\format\io\FastChunkSerializer;
-use function chr;
 /** @phpstan-ignore-next-line */
 use function xxhash64;
 
@@ -75,14 +74,14 @@ class ChunkRequestTask extends AsyncTask{
 		$converter = TypeConverter::getInstance($this->mappingProtocol);
 		$encoderContext = new PacketSerializerContext($converter->getItemTypeDictionary(), $this->mappingProtocol);
 
-		foreach(ChunkSerializer::serializeSubChunks($chunk, $converter->getBlockTranslator(), $encoderContext) as $subChunk){
+		foreach(ChunkSerializer::serializeSubChunks($chunk, $this->dimensionId, $converter->getBlockTranslator(), $encoderContext) as $subChunk){
 			/** @phpstan-ignore-next-line */
 			$cache->addSubChunk(Binary::readLong(xxhash64($subChunk)), $subChunk);
 		}
 
 		$encoder = PacketSerializer::encoder($encoderContext);
 		$biomeEncoder = clone $encoder;
-		ChunkSerializer::serializeBiomes($chunk, $biomeEncoder);
+		ChunkSerializer::serializeBiomes($chunk, $this->dimensionId, $biomeEncoder);
 		/** @phpstan-ignore-next-line */
 		$cache->setBiomes(Binary::readLong(xxhash64($chunkBuffer = $biomeEncoder->getBuffer())), $chunkBuffer);
 
@@ -92,9 +91,11 @@ class ChunkRequestTask extends AsyncTask{
 		$cache->compressPackets(
 			$this->chunkX,
 			$this->chunkZ,
+			$this->dimensionId,
 			$chunkDataEncoder->getBuffer(),
 			$this->compressor->deserialize(),
 			$encoderContext,
+			$this->mappingProtocol
 		);
 
 		$this->setResult($cache);
