@@ -104,6 +104,9 @@ final class ChunkSerializer{
 		return $subChunks;
 	}
 
+	/**
+	 * @phpstan-param DimensionIds::* $dimensionId
+	 */
 	public static function serializeFullChunk(Chunk $chunk, int $dimensionId, TypeConverter $converter, PacketSerializerContext $encoderContext, ?string $tiles = null) : string{
 		$stream = PacketSerializer::encoder($encoderContext);
 
@@ -117,6 +120,9 @@ final class ChunkSerializer{
 		return $stream->getBuffer();
 	}
 
+	/**
+	 * @phpstan-param DimensionIds::* $dimensionId
+	 */
 	public static function serializeBiomes(Chunk $chunk, int $dimensionId, PacketSerializer $stream) : void{
 		[$minSubChunkIndex, $maxSubChunkIndex] = self::getDimensionChunkBounds($dimensionId);
 		$biomeIdMap = LegacyBiomeIdToStringIdMap::getInstance();

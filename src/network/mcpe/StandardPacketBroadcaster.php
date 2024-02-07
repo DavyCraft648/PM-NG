@@ -88,7 +88,7 @@ final class StandardPacketBroadcaster implements PacketBroadcaster{
 				PacketBatch::encodeRaw($stream, $packetBuffers);
 				$batchBuffer = $stream->getBuffer();
 
-				$batch = $this->server->prepareBatch($batchBuffer, $compressor, timings: Timings::$playerNetworkSendCompressBroadcast);
+				$batch = $this->server->prepareBatch($batchBuffer, $this->protocolContext, $compressor, timings: Timings::$playerNetworkSendCompressBroadcast);
 				foreach($compressorTargets as $target){
 					$target->queueCompressed($batch);
 				}

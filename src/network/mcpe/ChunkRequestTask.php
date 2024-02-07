@@ -27,7 +27,6 @@ use pocketmine\network\mcpe\compression\Compressor;
 use pocketmine\network\mcpe\convert\TypeConverter;
 use pocketmine\network\mcpe\protocol\serializer\PacketSerializer;
 use pocketmine\network\mcpe\protocol\serializer\PacketSerializerContext;
-use pocketmine\network\mcpe\protocol\types\ChunkPosition;
 use pocketmine\network\mcpe\protocol\types\DimensionIds;
 use pocketmine\network\mcpe\serializer\ChunkSerializer;
 use pocketmine\scheduler\AsyncTask;
@@ -35,7 +34,6 @@ use pocketmine\thread\NonThreadSafeValue;
 use pocketmine\utils\Binary;
 use pocketmine\world\format\Chunk;
 use pocketmine\world\format\io\FastChunkSerializer;
-use function chr;
 /** @phpstan-ignore-next-line */
 use function xxhash64;
 

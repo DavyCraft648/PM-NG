@@ -413,21 +413,32 @@ class NetworkSession{
 
 			if($this->enableCompression){
 				Timings::$playerNetworkReceiveDecompress->startTiming();
-				$compressionType = ord($payload[0]);
-				$compressed = substr($payload, 1);
-				if($compressionType === CompressionAlgorithm::NONE){
-					$decompressed = $compressed;
-				}elseif($compressionType === $this->compressor->getNetworkId()){
+				if($this->protocolId >= ProtocolInfo::PROTOCOL_1_20_60){
+					$compressionType = ord($payload[0]);
+					$compressed = substr($payload, 1);
+					if($compressionType === CompressionAlgorithm::NONE){
+						$decompressed = $compressed;
+					}elseif($compressionType === $this->compressor->getNetworkId()){
+						try{
+							$decompressed = $this->compressor->decompress($compressed);
+						}catch(DecompressionException $e){
+							$this->logger->debug("Failed to decompress packet: " . base64_encode($compressed));
+							throw PacketHandlingException::wrap($e, "Compressed packet batch decode error");
+						}finally{
+							Timings::$playerNetworkReceiveDecompress->stopTiming();
+						}
+					}else{
+						throw new PacketHandlingException("Packet compressed with unexpected compression type $compressionType");
+					}
+				}else{
 					try{
-						$decompressed = $this->compressor->decompress($compressed);
+						$decompressed = $this->compressor->decompress($payload);
 					}catch(DecompressionException $e){
-						$this->logger->debug("Failed to decompress packet: " . base64_encode($compressed));
+						$this->logger->debug("Failed to decompress packet: " . base64_encode($payload));
 						throw PacketHandlingException::wrap($e, "Compressed packet batch decode error");
 					}finally{
 						Timings::$playerNetworkReceiveDecompress->stopTiming();
 					}
-				}else{
-					throw new PacketHandlingException("Packet compressed with unexpected compression type $compressionType");
 				}
 			}else{
 				$decompressed = $payload;
@@ -592,7 +603,7 @@ class NetworkSession{
 				PacketBatch::encodeRaw($stream, $this->sendBuffer);
 
 				if($this->enableCompression){
-					$batch = $this->server->prepareBatch($stream->getBuffer(), $this->compressor, $syncMode, Timings::$playerNetworkSendCompressSessionBuffer);
+					$batch = $this->server->prepareBatch($stream->getBuffer(), $this->packetSerializerContext, $this->compressor, $syncMode, Timings::$playerNetworkSendCompressSessionBuffer);
 				}else{
 					$batch = $stream->getBuffer();
 				}

@@ -25,11 +25,12 @@ namespace pocketmine\world\particle;
 
 use pocketmine\math\Vector3;
 use pocketmine\network\mcpe\protocol\LevelEventPacket;
+use pocketmine\network\mcpe\protocol\ProtocolInfo;
 use pocketmine\network\mcpe\protocol\types\ParticleIds;
 
 class ItemBreakParticle extends ItemParticle{
 	public function encode(Vector3 $pos) : array{
 		[$id, $meta] = $this->toNetworkId();
-		return [LevelEventPacket::standardParticle(ParticleIds::ITEM_BREAK, ($id << 16) | $meta, $pos)];
+		return [LevelEventPacket::standardParticle(ParticleIds::ITEM_BREAK, ($id << 16) | $meta, $pos, ProtocolInfo::CURRENT_PROTOCOL)]; // this particle isn't affected
 	}
 }
