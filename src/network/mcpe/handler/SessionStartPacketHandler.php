@@ -27,7 +27,6 @@ use pocketmine\network\mcpe\NetworkSession;
 use pocketmine\network\mcpe\protocol\NetworkSettingsPacket;
 use pocketmine\network\mcpe\protocol\ProtocolInfo;
 use pocketmine\network\mcpe\protocol\RequestNetworkSettingsPacket;
-use pocketmine\network\mcpe\protocol\types\CompressionAlgorithm;
 use function in_array;
 
 final class SessionStartPacketHandler extends PacketHandler{
@@ -52,7 +51,7 @@ final class SessionStartPacketHandler extends PacketHandler{
 		//TODO: we're filling in the defaults to get pre-1.19.30 behaviour back for now, but we should explore the new options in the future
 		$this->session->sendDataPacket(NetworkSettingsPacket::create(
 			NetworkSettingsPacket::COMPRESS_EVERYTHING,
-			CompressionAlgorithm::ZLIB,
+			$this->session->getCompressor()->getNetworkId(),
 			false,
 			0,
 			0

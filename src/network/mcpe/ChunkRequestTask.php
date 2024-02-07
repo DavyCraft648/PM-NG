@@ -27,12 +27,14 @@ use pocketmine\network\mcpe\compression\Compressor;
 use pocketmine\network\mcpe\convert\TypeConverter;
 use pocketmine\network\mcpe\protocol\serializer\PacketSerializer;
 use pocketmine\network\mcpe\protocol\serializer\PacketSerializerContext;
+use pocketmine\network\mcpe\protocol\types\DimensionIds;
 use pocketmine\network\mcpe\serializer\ChunkSerializer;
 use pocketmine\scheduler\AsyncTask;
 use pocketmine\thread\NonThreadSafeValue;
 use pocketmine\utils\Binary;
 use pocketmine\world\format\Chunk;
 use pocketmine\world\format\io\FastChunkSerializer;
+use function chr;
 /** @phpstan-ignore-next-line */
 use function xxhash64;
 
@@ -42,18 +44,24 @@ class ChunkRequestTask extends AsyncTask{
 	protected string $chunk;
 	protected int $chunkX;
 	protected int $chunkZ;
+	/** @phpstan-var DimensionIds::* */
+	private int $dimensionId;
 	/** @phpstan-var NonThreadSafeValue<Compressor> */
 	protected NonThreadSafeValue $compressor;
 	protected int $mappingProtocol;
 	private string $tiles;
 
-	public function __construct(int $chunkX, int $chunkZ, Chunk $chunk, TypeConverter $typeConverter, CachedChunkPromise $promise, Compressor $compressor){
+	/**
+	 * @phpstan-param DimensionIds::* $dimensionId
+	 */
+	public function __construct(int $chunkX, int $chunkZ, int $dimensionId, Chunk $chunk, TypeConverter $typeConverter, CachedChunkPromise $promise, Compressor $compressor){
 		$this->compressor = new NonThreadSafeValue($compressor);
 		$this->mappingProtocol = $typeConverter->getProtocolId();
 
 		$this->chunk = FastChunkSerializer::serializeTerrain($chunk);
 		$this->chunkX = $chunkX;
 		$this->chunkZ = $chunkZ;
+		$this->dimensionId = $dimensionId;
 		$this->tiles = ChunkSerializer::serializeTiles($chunk, $typeConverter);
 
 		$this->storeLocal(self::TLS_KEY_PROMISE, $promise);
