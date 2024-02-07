@@ -23,14 +23,12 @@ declare(strict_types=1);
 
 namespace pocketmine\item;
 
-use pocketmine\utils\LegacyEnumShimTrait;
 use pocketmine\world\sound\FireworkExplosionSound;
 use pocketmine\world\sound\FireworkLargeExplosionSound;
 use pocketmine\world\sound\Sound;
 use function spl_object_id;
 
 enum FireworkRocketType{
-	use LegacyEnumShimTrait;
 
 	case SMALL_BALL;
 	case LARGE_BALL;

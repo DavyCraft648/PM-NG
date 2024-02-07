@@ -122,6 +122,7 @@ final class MinimumCostFlowCalculator{
 					$this->flowCostVisited[World::blockHash($x, $y, $z)] = self::CAN_FLOW;
 					$opposite = Facing::opposite($j);
 					$flowCost[$j] = $this->calculateFlowCost($x, $y, $z, 1, $maxCost, $opposite, $opposite);
+					/** @phpstan-ignore-next-line */
 					$maxCost = min($maxCost, $flowCost[$j]);
 				}
 			}

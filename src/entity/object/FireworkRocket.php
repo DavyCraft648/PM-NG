@@ -48,7 +48,7 @@ use function sqrt;
 
 class FireworkRocket extends Entity implements Explosive{
 
-	public static function getNetworkTypeId() : string{ return EntityIds::FIREWORKS_ROCKET; }
+	public function getNetworkTypeId() : string{ return EntityIds::FIREWORKS_ROCKET; }
 
 	/* Maximum number of ticks this will live for. */
 	protected int $lifeTicks;

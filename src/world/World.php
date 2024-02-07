@@ -304,7 +304,7 @@ class World implements ChunkManager{
 	 */
 	private array $changedBlocks = [];
 
-	/** @phpstan-var ReversePriorityQueue<int, Vector3> */
+	/** @phpstan-var ReversePriorityQueue<int, array{Vector3, int}> */
 	private ReversePriorityQueue $scheduledBlockUpdateQueue;
 	/**
 	 * @var int[] blockHash => tick delay
