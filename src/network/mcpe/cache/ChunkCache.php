@@ -28,6 +28,7 @@ use pocketmine\network\mcpe\CachedChunkPromise;
 use pocketmine\network\mcpe\ChunkRequestTask;
 use pocketmine\network\mcpe\compression\Compressor;
 use pocketmine\network\mcpe\convert\TypeConverter;
+use pocketmine\network\mcpe\protocol\types\DimensionIds;
 use pocketmine\world\ChunkListener;
 use pocketmine\world\ChunkListenerNoOpTrait;
 use pocketmine\world\format\Chunk;
@@ -120,6 +121,7 @@ class ChunkCache implements ChunkListener{
 				new ChunkRequestTask(
 					$chunkX,
 					$chunkZ,
+					DimensionIds::OVERWORLD, //TODO: not hardcode this
 					$chunk,
 					$typeConverter,
 					$this->caches[$chunkHash][$protocolId],
