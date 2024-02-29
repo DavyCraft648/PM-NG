@@ -1990,6 +1990,10 @@ class Player extends Human implements CommandSender, ChunkListener, IPlayer{
 		return true;
 	}
 
+	public function toggleCrawl(bool $crawl) : bool{
+		return false;
+	}
+
 	public function toggleGlide(bool $glide) : bool{
 		if($glide === $this->gliding){
 			return true;

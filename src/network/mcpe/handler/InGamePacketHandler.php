@@ -225,12 +225,14 @@ class InGamePacketHandler extends ChunkRequestPacketHandler{
 			$swimming = $this->resolveOnOffInputFlags($inputFlags, PlayerAuthInputFlags::START_SWIMMING, PlayerAuthInputFlags::STOP_SWIMMING);
 			$gliding = $this->resolveOnOffInputFlags($inputFlags, PlayerAuthInputFlags::START_GLIDING, PlayerAuthInputFlags::STOP_GLIDING);
 			$flying = $this->resolveOnOffInputFlags($inputFlags, PlayerAuthInputFlags::START_FLYING, PlayerAuthInputFlags::STOP_FLYING);
+			$crawling = $this->resolveOnOffInputFlags($inputFlags, PlayerAuthInputFlags::START_CRAWLING, PlayerAuthInputFlags::STOP_CRAWLING);
 			$mismatch =
 				($sneaking !== null && !$this->player->toggleSneak($sneaking)) |
 				($sprinting !== null && !$this->player->toggleSprint($sprinting)) |
 				($swimming !== null && !$this->player->toggleSwim($swimming)) |
 				($gliding !== null && !$this->player->toggleGlide($gliding)) |
-				($flying !== null && !$this->player->toggleFlight($flying));
+				($flying !== null && !$this->player->toggleFlight($flying)) |
+				($crawling !== null && !$this->player->toggleCrawl($crawling));
 			if((bool) $mismatch){
 				$this->player->sendData([$this->player]);
 			}
@@ -880,8 +882,12 @@ class InGamePacketHandler extends ChunkRequestPacketHandler{
 	}
 
 	public function handleBookEdit(BookEditPacket $packet) : bool{
+		$inventory = $this->player->getInventory();
+		if(!$inventory->slotExists($packet->inventorySlot)){
+			return false;
+		}
 		//TODO: break this up into book API things
-		$oldBook = $this->player->getInventory()->getItem($packet->inventorySlot);
+		$oldBook = $inventory->getItem($packet->inventorySlot);
 		if(!($oldBook instanceof WritableBook)){
 			return false;
 		}
