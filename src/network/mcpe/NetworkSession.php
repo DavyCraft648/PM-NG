@@ -364,8 +364,7 @@ class NetworkSession{
 		$this->protocolId = $protocolId;
 
 		$this->typeConverter = TypeConverter::getInstance($protocolId);
-		$this->packetSerializerContext = $this->server->getPacketSerializerContext($this->typeConverter);
-		$this->broadcaster = $this->server->getPacketBroadcaster($this->packetSerializerContext);
+		$this->broadcaster = $this->server->getPacketBroadcaster($protocolId);
 		$this->entityEventBroadcaster = $this->server->getEntityEventBroadcaster($this->broadcaster, $this->typeConverter);
 	}
 

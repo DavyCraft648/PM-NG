@@ -304,8 +304,6 @@ class Server{
 	 */
 	private array $broadcastSubscribers = [];
 
-	/** @var array<int, PacketSerializerContext> */
-	private array $packetSerializerContexts = [];
 	/** @var array<int, PacketBroadcaster> */
 	private array $packetBroadcasters = [];
 	/** @var array<string, EntityEventBroadcaster> */
@@ -606,8 +604,7 @@ class Server{
 			$playerPromiseResolver->reject();
 		};
 
-		$promise = Promise::all($promises->toArray());
-		$promise->onCompletion(function () use ($playerPos, $world, $createPlayer, $playerCreationRejected) : void{
+		$playerCreationSucceeded = function () use ($playerPos, $world, $createPlayer, $playerCreationRejected) : void{
 			if($playerPos === null){ //new player or no valid position due to world not being loaded
 				$world->requestSafeSpawn()->onCompletion(
 					function(Position $spawn) use ($createPlayer, $world) : void{
@@ -620,9 +617,18 @@ class Server{
 			}else{ //returning player with a valid position - safe spawn not required
 				$createPlayer($playerPos);
 			}
-		}, function () use ($playerCreationRejected) : void{
-			$playerCreationRejected("Failed to create player");
-		});
+		};
+
+		if(count($prs = $promises->toArray()) > 0){
+			/** @phpstan-var non-empty-array<int, Promise<null>> $prs */
+			$promise = Promise::all($prs);
+
+			$promise->onCompletion($playerCreationSucceeded, function () use ($playerCreationRejected) : void{
+				$playerCreationRejected("Failed to create player");
+			});
+		}else{
+			$playerCreationSucceeded();
+		}
 
 		return $playerPromiseResolver->getPromise();
 	}
@@ -1255,7 +1261,7 @@ class Server{
 		$useQuery = $this->configGroup->getConfigBool(ServerProperties::ENABLE_QUERY, true);
 
 		$typeConverter = TypeConverter::getInstance();
-		$packetBroadcaster = $this->getPacketBroadcaster($typeConverter);
+		$packetBroadcaster = $this->getPacketBroadcaster(ProtocolInfo::CURRENT_PROTOCOL);
 		$entityEventBroadcaster = $this->getEntityEventBroadcaster($packetBroadcaster, $typeConverter);
 
 		if(
@@ -1914,12 +1920,11 @@ class Server{
 			$this->nextTick += self::TARGET_SECONDS_PER_TICK;
 		}
 	}
-	public function getPacketSerializerContext(TypeConverter $typeConverter) : PacketSerializerContext{
-		return $this->packetSerializerContexts[spl_object_id($typeConverter)] ??= new PacketSerializerContext($typeConverter->getItemTypeDictionary(), $typeConverter->getProtocolId());
+
+	public function getPacketBroadcaster(int $protocolId) : PacketBroadcaster{
+		return $this->packetBroadcasters[$protocolId] ??= new StandardPacketBroadcaster($this, $protocolId);
 	}
-	public function getPacketBroadcaster(PacketSerializerContext $packetSerializerContext) : PacketBroadcaster{
-		return $this->packetBroadcasters[spl_object_id($packetSerializerContext)] ??= new StandardPacketBroadcaster($this, $packetSerializerContext);
-	}
+
 	public function getEntityEventBroadcaster(PacketBroadcaster $packetBroadcaster, TypeConverter $typeConverter) : EntityEventBroadcaster{
 		return $this->entityEventBroadcasters[spl_object_id($packetBroadcaster) . ':' . spl_object_id($typeConverter)] ??= new StandardEntityEventBroadcaster($packetBroadcaster, $typeConverter);
 	}
