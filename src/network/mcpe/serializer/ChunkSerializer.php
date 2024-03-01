@@ -31,7 +31,6 @@ use pocketmine\network\mcpe\convert\BlockTranslator;
 use pocketmine\network\mcpe\convert\TypeConverter;
 use pocketmine\network\mcpe\protocol\serializer\NetworkNbtSerializer;
 use pocketmine\network\mcpe\protocol\serializer\PacketSerializer;
-use pocketmine\network\mcpe\protocol\serializer\PacketSerializerContext;
 use pocketmine\network\mcpe\protocol\types\DimensionIds;
 use pocketmine\utils\Binary;
 use pocketmine\utils\BinaryStream;
@@ -86,9 +85,9 @@ final class ChunkSerializer{
 	 * @phpstan-param DimensionIds::* $dimensionId
 	 * @return string[]
 	 */
-	public static function serializeSubChunks(Chunk $chunk, int $dimensionId, BlockTranslator $blockTranslator, PacketSerializerContext $encoderContext) : array
+	public static function serializeSubChunks(Chunk $chunk, int $dimensionId, BlockTranslator $blockTranslator, int $protocolId) : array
 	{
-		$stream = PacketSerializer::encoder($encoderContext);
+		$stream = PacketSerializer::encoder($protocolId);
 		$subChunks = [];
 
 		$subChunkCount = self::getSubChunkCount($chunk, $dimensionId);
@@ -107,10 +106,10 @@ final class ChunkSerializer{
 	/**
 	 * @phpstan-param DimensionIds::* $dimensionId
 	 */
-	public static function serializeFullChunk(Chunk $chunk, int $dimensionId, TypeConverter $converter, PacketSerializerContext $encoderContext, ?string $tiles = null) : string{
-		$stream = PacketSerializer::encoder($encoderContext);
+	public static function serializeFullChunk(Chunk $chunk, int $dimensionId, TypeConverter $converter, int $protocolId, ?string $tiles = null) : string{
+		$stream = PacketSerializer::encoder($protocolId);
 
-		foreach(self::serializeSubChunks($chunk, $dimensionId, $converter->getBlockTranslator(), $encoderContext) as $subChunk){
+		foreach(self::serializeSubChunks($chunk, $dimensionId, $converter->getBlockTranslator(), $protocolId) as $subChunk){
 			$stream->put($subChunk);
 		}
 

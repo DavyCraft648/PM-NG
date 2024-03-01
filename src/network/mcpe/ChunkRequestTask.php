@@ -27,6 +27,9 @@ use pocketmine\network\mcpe\compression\Compressor;
 use pocketmine\network\mcpe\convert\TypeConverter;
 use pocketmine\network\mcpe\protocol\serializer\PacketSerializer;
 use pocketmine\network\mcpe\protocol\serializer\PacketSerializerContext;
+use pocketmine\network\mcpe\protocol\LevelChunkPacket;
+use pocketmine\network\mcpe\protocol\serializer\PacketBatch;
+use pocketmine\network\mcpe\protocol\types\ChunkPosition;
 use pocketmine\network\mcpe\protocol\types\DimensionIds;
 use pocketmine\network\mcpe\serializer\ChunkSerializer;
 use pocketmine\scheduler\AsyncTask;
@@ -72,14 +75,12 @@ class ChunkRequestTask extends AsyncTask{
 		$cache = new CachedChunk();
 
 		$converter = TypeConverter::getInstance($this->mappingProtocol);
-		$encoderContext = new PacketSerializerContext($converter->getItemTypeDictionary(), $this->mappingProtocol);
-
-		foreach(ChunkSerializer::serializeSubChunks($chunk, $this->dimensionId, $converter->getBlockTranslator(), $encoderContext) as $subChunk){
+		foreach(ChunkSerializer::serializeSubChunks($chunk, $this->dimensionId, $converter->getBlockTranslator(), $this->mappingProtocol) as $subChunk){
 			/** @phpstan-ignore-next-line */
 			$cache->addSubChunk(Binary::readLong(xxhash64($subChunk)), $subChunk);
 		}
 
-		$encoder = PacketSerializer::encoder($encoderContext);
+		$encoder = PacketSerializer::encoder($this->mappingProtocol);
 		$biomeEncoder = clone $encoder;
 		ChunkSerializer::serializeBiomes($chunk, $this->dimensionId, $biomeEncoder);
 		/** @phpstan-ignore-next-line */
@@ -94,7 +95,6 @@ class ChunkRequestTask extends AsyncTask{
 			$this->dimensionId,
 			$chunkDataEncoder->getBuffer(),
 			$this->compressor->deserialize(),
-			$encoderContext,
 			$this->mappingProtocol
 		);
 
