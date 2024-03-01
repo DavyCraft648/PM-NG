@@ -323,19 +323,20 @@ final class ItemTypeIds{
 	public const EYE_ARMOR_TRIM_SMITHING_TEMPLATE = 20284;
 	public const SPIRE_ARMOR_TRIM_SMITHING_TEMPLATE = 20285;
 	public const PITCHER_POD = 20286;
-	public const FIREWORK_ROCKET = 20287;
-	public const FIREWORK_STAR = 20288;
-	public const CROSSBOW = 20289;
-	public const ELYTRA = 20290;
-	public const TRIDENT = 20291;
-	public const CARROT_ON_A_STICK = 20292;
-	public const SHIELD = 20293;
-	public const LEATHER_HORSE_ARMOR = 20294;
-	public const IRON_HORSE_ARMOR = 20295;
-	public const GOLDEN_HORSE_ARMOR = 20296;
-	public const DIAMOND_HORSE_ARMOR = 20297;
+	public const NAME_TAG = 20287;
+	public const FIREWORK_ROCKET = 20288;
+	public const FIREWORK_STAR = 20289;
+	public const CROSSBOW = 20290;
+	public const ELYTRA = 20291;
+	public const TRIDENT = 20292;
+	public const CARROT_ON_A_STICK = 20293;
+	public const SHIELD = 20294;
+	public const LEATHER_HORSE_ARMOR = 20295;
+	public const IRON_HORSE_ARMOR = 20296;
+	public const GOLDEN_HORSE_ARMOR = 20297;
+	public const DIAMOND_HORSE_ARMOR = 20298;
 
-	public const FIRST_UNUSED_ITEM_ID = 20298;
+	public const FIRST_UNUSED_ITEM_ID = 20299;
 
 	private static int $nextDynamicId = self::FIRST_UNUSED_ITEM_ID;
 
