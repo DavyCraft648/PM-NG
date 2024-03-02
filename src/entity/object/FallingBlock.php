@@ -25,6 +25,7 @@ namespace pocketmine\entity\object;
 
 use pocketmine\block\Block;
 use pocketmine\block\RuntimeBlockStateRegistry;
+use pocketmine\block\SnowLayer;
 use pocketmine\block\utils\Fallable;
 use pocketmine\block\Water;
 use pocketmine\data\bedrock\block\BlockStateDeserializeException;
@@ -143,7 +144,8 @@ class FallingBlock extends Entity{
 
 				$blockResult = $blockTarget ?? $this->block;
 				$block = $world->getBlock($pos);
-				if(!$block->canBeReplaced() || !$world->isInWorld($pos->getFloorX(), $pos->getFloorY(), $pos->getFloorZ()) || ($this->onGround && abs($this->location->y - $this->location->getFloorY()) > 0.001)){
+				$down = $world->getBlock($pos->down());
+				if((!$block->canBeReplaced() || !$world->isInWorld($pos->getFloorX(), $pos->getFloorY(), $pos->getFloorZ()) || ($this->onGround && abs($this->location->y - $this->location->getFloorY()) > 0.001)) && !(($block instanceof SnowLayer || $down instanceof SnowLayer) && $blockResult instanceof SnowLayer)){
 					$world->dropItem($this->location, $this->block->asItem());
 					$world->addSound($pos->add(0.5, 0.5, 0.5), new BlockBreakSound($blockResult));
 				}else{
@@ -151,6 +153,21 @@ class FallingBlock extends Entity{
 					$ev->call();
 					if(!$ev->isCancelled()){
 						$b = $ev->getTo();
+						if($b instanceof SnowLayer){
+							$otherSnow = $down instanceof SnowLayer && $down->getLayers() < SnowLayer::MAX_LAYERS ? $down : $block;
+							if($block->canBeSnowlogged()){
+								$world->setBlockLayer($pos, $block, 1);
+							}elseif($otherSnow instanceof SnowLayer){
+								$layers = $otherSnow->getLayers() + $b->getLayers();
+								$pos = $otherSnow->getPosition();
+								if($layers > SnowLayer::MAX_LAYERS){
+									$world->setBlock($pos->up(), $b->setLayers($layers - SnowLayer::MAX_LAYERS));
+									$b->setLayers(SnowLayer::MAX_LAYERS);
+								}else{
+									$world->setBlock($pos, $b->setLayers($layers));
+								}
+							}
+						}
 						$world->setBlock($pos, $b);
 						if($block instanceof Water && $b->canWaterlogged($block)){
 							$world->setBlockLayer($pos, $block, 1);

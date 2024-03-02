@@ -35,4 +35,8 @@ class TallGrass extends Flowable{
 		$supportBlock = $block->getSide(Facing::DOWN);
 		return $supportBlock->hasTypeTag(BlockTypeTags::DIRT) || $supportBlock->hasTypeTag(BlockTypeTags::MUD);
 	}
+
+	public function canBeSnowlogged() : bool{
+		return true;
+	}
 }

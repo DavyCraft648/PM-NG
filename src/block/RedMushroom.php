@@ -53,4 +53,8 @@ class RedMushroom extends Flowable{
 
 		return false;
 	}
+
+	public function canBeSnowlogged() : bool{
+		return true;
+	}
 }

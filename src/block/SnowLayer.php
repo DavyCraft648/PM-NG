@@ -92,7 +92,13 @@ class SnowLayer extends Flowable implements Fallable{
 			$this->layers = $blockReplace->layers + 1;
 		}
 		if($this->canBeSupportedAt($blockReplace)){
-			return parent::place($tx, $item, $blockReplace, $blockClicked, $face, $clickVector, $player);
+			parent::place($tx, $item, $blockReplace, $blockClicked, $face, $clickVector, $player);
+			if($blockReplace->canBeSnowlogged()){
+				$tx->addBlock($blockReplace->position, $blockReplace->setLayer(1));
+			}elseif($blockReplace->isSnowlogged()){
+				$tx->addBlock($blockReplace->position, $blockReplace->getBlockLayer(1));
+			}
+			return true;
 		}
 
 		return false;
@@ -113,9 +119,5 @@ class SnowLayer extends Flowable implements Fallable{
 		return [
 			VanillaItems::SNOWBALL()->setCount(max(1, (int) floor($this->layers / 2)))
 		];
-	}
-
-	public function isLayerSupported(int $layer) : bool{
-		return parent::isLayerSupported($layer) || $layer === 1;
 	}
 }

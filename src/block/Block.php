@@ -1030,7 +1030,7 @@ class Block{
 	}
 
 	public function isLayerSupported(int $layer) : bool{
-		return $layer === 0;
+		return $layer === 0 || ($this->canBeSnowlogged() && $layer === 1);
 	}
 
 	/**
@@ -1057,5 +1057,13 @@ class Block{
 	 */
 	public function isWaterlogged() : bool{
 		return $this->getBlockLayer(1) instanceof Water;
+	}
+
+	public function canBeSnowlogged() : bool{
+		return false;
+	}
+
+	public function isSnowlogged() : bool{
+		return $this instanceof SnowLayer && $this->getBlockLayer(1)->canBeSnowlogged();
 	}
 }
