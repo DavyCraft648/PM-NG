@@ -124,6 +124,7 @@ abstract class Living extends Entity{
 	protected bool $sneaking = false;
 	protected bool $gliding = false;
 	protected bool $swimming = false;
+	protected bool $crawling = false;
 
 	protected function getInitialDragMultiplier() : float{ return 0.02; }
 
@@ -268,11 +269,21 @@ abstract class Living extends Entity{
 		$this->recalculateSize();
 	}
 
+	public function isCrawling() : bool{
+		return $this->crawling;
+	}
+
+	public function setCrawling(bool $value = true) : void{
+		$this->crawling = $value;
+		$this->networkPropertiesDirty = true;
+		$this->recalculateSize();
+	}
+
 	private function recalculateSize() : void{
 		$size = $this->getInitialSizeInfo();
-		if($this->isSwimming() || $this->isGliding()){
+		if($this->isSwimming() || $this->isGliding() || $this->isCrawling()){
 			$width = $size->getWidth();
-			$this->setSize((new EntitySizeInfo($width, $width, $width * 0.9))->scale($this->getScale()));
+			$this->setSize((new EntitySizeInfo(5 / 8, $width, 5 / 8 * 0.9))->scale($this->getScale()));
 		}elseif($this->isSneaking()){
 			$this->setSize((new EntitySizeInfo(3 / 4 * $size->getHeight(), $size->getWidth(), 3 / 4 * $size->getEyeHeight()))->scale($this->getScale()));
 		}else{
@@ -894,6 +905,7 @@ abstract class Living extends Entity{
 		$properties->setGenericFlag(EntityMetadataFlags::SPRINTING, $this->sprinting);
 		$properties->setGenericFlag(EntityMetadataFlags::GLIDING, $this->gliding);
 		$properties->setGenericFlag(EntityMetadataFlags::SWIMMING, $this->swimming);
+		$properties->setGenericFlag(EntityMetadataFlags::CRAWLING, $this->crawling);
 	}
 
 	protected function onDispose() : void{

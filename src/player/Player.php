@@ -72,6 +72,7 @@ use pocketmine\event\player\PlayerMoveEvent;
 use pocketmine\event\player\PlayerPostChunkSendEvent;
 use pocketmine\event\player\PlayerQuitEvent;
 use pocketmine\event\player\PlayerRespawnEvent;
+use pocketmine\event\player\PlayerToggleCrawlEvent;
 use pocketmine\event\player\PlayerToggleFlightEvent;
 use pocketmine\event\player\PlayerToggleGlideEvent;
 use pocketmine\event\player\PlayerToggleSneakEvent;
@@ -1994,10 +1995,6 @@ class Player extends Human implements CommandSender, ChunkListener, IPlayer{
 		return true;
 	}
 
-	public function toggleCrawl(bool $crawl) : bool{
-		return false;
-	}
-
 	public function toggleGlide(bool $glide) : bool{
 		if($glide === $this->gliding){
 			return true;
@@ -2021,6 +2018,19 @@ class Player extends Human implements CommandSender, ChunkListener, IPlayer{
 			return false;
 		}
 		$this->setSwimming($swim);
+		return true;
+	}
+
+	public function toggleCrawl(bool $crawl) : bool{
+		if($crawl === $this->crawling){
+			return true;
+		}
+		$ev = new PlayerToggleCrawlEvent($this, $crawl);
+		$ev->call();
+		if($ev->isCancelled()){
+			return false;
+		}
+		$this->setCrawling($crawl);
 		return true;
 	}
 
