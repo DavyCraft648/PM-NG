@@ -329,8 +329,8 @@ final class ItemTypeIds{
 	public const CROSSBOW = 20290;
 	public const ELYTRA = 20291;
 	public const TRIDENT = 20292;
-	public const CARROT_ON_A_STICK = 20293;
-	public const SHIELD = 20294;
+	public const SHIELD = 20293;
+	public const CARROT_ON_A_STICK = 20294;
 	public const LEATHER_HORSE_ARMOR = 20295;
 	public const IRON_HORSE_ARMOR = 20296;
 	public const GOLDEN_HORSE_ARMOR = 20297;

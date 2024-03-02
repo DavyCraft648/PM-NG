@@ -605,8 +605,7 @@ class Server{
 			$playerPromiseResolver->reject();
 		};
 
-		$promise = Promise::all($promises->toArray());
-		$promise->onCompletion(function () use ($playerPos, $world, $createPlayer, $playerCreationRejected) : void{
+		$playerCreationSucceeded = function () use ($playerPos, $world, $createPlayer, $playerCreationRejected) : void{
 			if($playerPos === null){ //new player or no valid position due to world not being loaded
 				$world->requestSafeSpawn()->onCompletion(
 					function(Position $spawn) use ($createPlayer, $world) : void{
@@ -619,9 +618,18 @@ class Server{
 			}else{ //returning player with a valid position - safe spawn not required
 				$createPlayer($playerPos);
 			}
-		}, function () use ($playerCreationRejected) : void{
-			$playerCreationRejected("Failed to create player");
-		});
+		};
+
+		if(count($prs = $promises->toArray()) > 0){
+			/** @phpstan-var non-empty-array<int, Promise<null>> $prs */
+			$promise = Promise::all($prs);
+
+			$promise->onCompletion($playerCreationSucceeded, function () use ($playerCreationRejected) : void{
+				$playerCreationRejected("Failed to create player");
+			});
+		}else{
+			$playerCreationSucceeded();
+		}
 
 		return $playerPromiseResolver->getPromise();
 	}
@@ -1255,7 +1263,7 @@ class Server{
 		$useQuery = $this->configGroup->getConfigBool(ServerProperties::ENABLE_QUERY, true);
 
 		$typeConverter = TypeConverter::getInstance();
-		$packetBroadcaster = $this->getPacketBroadcaster($typeConverter->getProtocolId());
+		$packetBroadcaster = $this->getPacketBroadcaster(ProtocolInfo::CURRENT_PROTOCOL);
 		$entityEventBroadcaster = $this->getEntityEventBroadcaster($packetBroadcaster, $typeConverter);
 
 		if(

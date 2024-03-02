@@ -151,12 +151,12 @@
             "source": {
                 "type": "git",
                 "url": "https://github.com/NetherGamesMC/BedrockProtocol.git",
-                "reference": "5df8ad061673a8d3457dc6092d4b77e26134f246"
+                "reference": "e9544c381721044b651fb9dd9b16a03b71a8ed2c"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/NetherGamesMC/BedrockProtocol/zipball/5df8ad061673a8d3457dc6092d4b77e26134f246",
-                "reference": "5df8ad061673a8d3457dc6092d4b77e26134f246",
+                "url": "https://api.github.com/repos/NetherGamesMC/BedrockProtocol/zipball/e9544c381721044b651fb9dd9b16a03b71a8ed2c",
+                "reference": "e9544c381721044b651fb9dd9b16a03b71a8ed2c",
                 "shasum": ""
             },
             "require": {
@@ -169,7 +169,7 @@
                 "ramsey/uuid": "^4.1"
             },
             "require-dev": {
-                "phpstan/phpstan": "1.10.39",
+                "phpstan/phpstan": "1.10.59",
                 "phpstan/phpstan-phpunit": "^1.0.0",
                 "phpstan/phpstan-strict-rules": "^1.0.0",
                 "phpunit/phpunit": "^9.5 || ^10.0"
@@ -198,7 +198,7 @@
             "support": {
                 "source": "https://github.com/NetherGamesMC/BedrockProtocol/tree/master"
             },
-            "time": "2024-02-23T19:54:37+00:00"
+            "time": "2024-03-01T22:49:59+00:00"
         },
         {
             "name": "pocketmine/bedrock-block-upgrade-schema",

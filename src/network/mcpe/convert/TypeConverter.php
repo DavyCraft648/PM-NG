@@ -241,7 +241,7 @@ class TypeConverter{
 		$extraData = $id === $this->shieldRuntimeId ?
 			new ItemStackExtraDataShield($nbt, canPlaceOn: [], canDestroy: [], blockingTick: 0) :
 			new ItemStackExtraData($nbt, canPlaceOn: [], canDestroy: []);
-		$extraDataSerializer = PacketSerializer::encoder();
+		$extraDataSerializer = PacketSerializer::encoder($this->protocolId);
 		$extraData->write($extraDataSerializer);
 
 		return new ItemStack(
@@ -288,7 +288,7 @@ class TypeConverter{
 	}
 
 	public function deserializeItemStackExtraData(string $extraData, int $id) : ItemStackExtraData{
-		$extraDataDeserializer = PacketSerializer::decoder($extraData, 0);
+		$extraDataDeserializer = PacketSerializer::decoder($this->protocolId, $extraData, 0);
 		return $id === $this->shieldRuntimeId ?
 			ItemStackExtraDataShield::read($extraDataDeserializer) :
 			ItemStackExtraData::read($extraDataDeserializer);

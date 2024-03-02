@@ -409,7 +409,6 @@ class NetworkSession{
 			}
 
 			if($this->enableCompression){
-				Timings::$playerNetworkReceiveDecompress->startTiming();
 				if($this->protocolId >= ProtocolInfo::PROTOCOL_1_20_60){
 					$compressionType = ord($payload[0]);
 					$compressed = substr($payload, 1);
@@ -417,6 +416,7 @@ class NetworkSession{
 						$decompressed = $compressed;
 					}elseif($compressionType === $this->compressor->getNetworkId()){
 						try{
+							Timings::$playerNetworkReceiveDecompress->startTiming();
 							$decompressed = $this->compressor->decompress($compressed);
 						}catch(DecompressionException $e){
 							$this->logger->debug("Failed to decompress packet: " . base64_encode($compressed));
@@ -429,6 +429,7 @@ class NetworkSession{
 					}
 				}else{
 					try{
+						Timings::$playerNetworkReceiveDecompress->startTiming();
 						$decompressed = $this->compressor->decompress($payload);
 					}catch(DecompressionException $e){
 						$this->logger->debug("Failed to decompress packet: " . base64_encode($payload));
@@ -493,7 +494,7 @@ class NetworkSession{
 			$decodeTimings = Timings::getDecodeDataPacketTimings($packet);
 			$decodeTimings->startTiming();
 			try{
-				$stream = PacketSerializer::decoder($buffer, 0, $this->protocolId);
+				$stream = PacketSerializer::decoder($this->protocolId, $buffer, 0);
 				try{
 					$packet->decode($stream);
 				}catch(PacketDecodeException $e){
