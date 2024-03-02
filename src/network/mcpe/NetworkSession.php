@@ -494,7 +494,7 @@ class NetworkSession{
 			$decodeTimings = Timings::getDecodeDataPacketTimings($packet);
 			$decodeTimings->startTiming();
 			try{
-				$stream = PacketSerializer::decoder($this->protocolId, $buffer, 0);
+				$stream = PacketSerializer::decoder($this->getProtocolId(), $buffer, 0);
 				try{
 					$packet->decode($stream);
 				}catch(PacketDecodeException $e){
@@ -553,7 +553,7 @@ class NetworkSession{
 			}
 
 			foreach($packets as $evPacket){
-				$this->addToSendBuffer(self::encodePacketTimed(PacketSerializer::encoder($this->protocolId), $evPacket));
+				$this->addToSendBuffer(self::encodePacketTimed(PacketSerializer::encoder($this->getProtocolId()), $evPacket));
 			}
 			if($immediate){
 				$this->flushSendBuffer(true);
@@ -601,7 +601,7 @@ class NetworkSession{
 				PacketBatch::encodeRaw($stream, $this->sendBuffer);
 
 				if($this->enableCompression){
-					$batch = $this->server->prepareBatch($stream->getBuffer(), $this->protocolId, $this->compressor, $syncMode, Timings::$playerNetworkSendCompressSessionBuffer);
+					$batch = $this->server->prepareBatch($stream->getBuffer(), $this->getProtocolId(), $this->compressor, $syncMode, Timings::$playerNetworkSendCompressSessionBuffer);
 				}else{
 					$batch = $stream->getBuffer();
 				}

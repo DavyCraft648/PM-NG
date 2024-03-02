@@ -35,7 +35,6 @@ use pocketmine\math\Facing;
 use pocketmine\math\Vector3;
 use pocketmine\world\sound\FizzSound;
 use pocketmine\world\sound\Sound;
-use function in_array;
 use function lcg_value;
 
 abstract class Liquid extends Transparent{

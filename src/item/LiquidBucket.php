@@ -29,7 +29,6 @@ use pocketmine\block\Liquid;
 use pocketmine\event\player\PlayerBucketEmptyEvent;
 use pocketmine\math\Vector3;
 use pocketmine\player\Player;
-use function in_array;
 
 class LiquidBucket extends Item{
 	private Liquid $liquid;
